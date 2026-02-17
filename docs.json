@@ -2,6 +2,11 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "TalkOS",
+  "description": "Enterprise AI Voice Calling Platform - Official API Documentation",
+  "modeToggle": {
+    "default": "light",
+    "isHidden": false
+  },
   "colors": {
     "primary": "#6366F1",
     "light": "#818CF8",
