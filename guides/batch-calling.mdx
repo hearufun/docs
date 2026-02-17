@@ -1,0 +1,408 @@
+---
+title: 'Batch Calling'
+description: 'Execute large-scale AI voice calling campaigns efficiently'
+---
+
+Batch calling allows you to initiate up to 1,000 calls in a single API request, with intelligent queuing, rate limiting, and progress tracking. Perfect for outbound campaigns, appointment reminders, and notifications.
+
+## Why Use Batch Calling?
+
+<CardGroup cols={2}>
+  <Card title="High Throughput" icon="rocket">
+    Queue up to 1,000 calls per request
+  </Card>
+  <Card title="Smart Queuing" icon="layer-group">
+    Automatic rate limiting and retry logic
+  </Card>
+  <Card title="Progress Tracking" icon="chart-line">
+    Real-time status for every call in the batch
+  </Card>
+  <Card title="Cost Efficient" icon="piggy-bank">
+    Optimized processing reduces overhead
+  </Card>
+</CardGroup>
+
+## Prerequisites
+
+Before running batch campaigns:
+
+- A TalkOS tenant with API credentials
+- Sufficient account balance for expected call volume
+- Webhook endpoint for receiving call results
+- E.164 formatted phone numbers
+
+<Steps>
+  <Step title="Prepare Your Call List">
+    Format your call data with E.164 phone numbers and per-call customization:
+
+    ```javascript prepare-calls.js
+    const callList = [
+      {
+        to: '+14155551234',
+        greeting: 'Hi John! This is a reminder about your appointment tomorrow.',
+        metadata: { customerId: 'cust_001', appointmentId: 'apt_123' }
+      },
+      {
+        to: '+14155555678',
+        greeting: 'Hi Sarah! Just calling to confirm your delivery for today.',
+        metadata: { customerId: 'cust_002', orderId: 'ord_456' }
+      },
+      // ... up to 1,000 calls
+    ];
+    ```
+
+    <Note>
+    Each call in the batch can have its own `greeting`, `prompt`, `metadata`, and other configuration options. Shared settings can be defined at the batch level.
+    </Note>
+  </Step>
+
+  <Step title="Start the Batch">
+    Submit your call list to the batch API:
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X POST https://api.talkos.io/api/calls/batch/start \
+      -H "x-api-key: YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "calls": [
+          {
+            "to": "+14155551234",
+            "greeting": "Hi John! Reminder about your appointment tomorrow at 2 PM.",
+            "metadata": { "customerId": "cust_001" }
+          },
+          {
+            "to": "+14155555678",
+            "greeting": "Hi Sarah! Your delivery is scheduled for today.",
+            "metadata": { "customerId": "cust_002" }
+          }
+        ],
+        "webhookUrl": "https://your-api.com/webhook/call-results",
+        "prompt": "You are a friendly appointment reminder assistant. Confirm the appointment, answer questions, and offer to reschedule if needed.",
+        "maxDuration": 300,
+        "timeout": 60000
+      }'
+    ```
+
+    ```javascript Node.js
+    const response = await fetch('https://api.talkos.io/api/calls/batch/start', {
+      method: 'POST',
+      headers: {
+        'x-api-key': 'YOUR_API_KEY',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        calls: [
+          {
+            to: '+14155551234',
+            greeting: 'Hi John! Reminder about your appointment tomorrow at 2 PM.',
+            metadata: { customerId: 'cust_001' }
+          },
+          {
+            to: '+14155555678',
+            greeting: 'Hi Sarah! Your delivery is scheduled for today.',
+            metadata: { customerId: 'cust_002' }
+          }
+        ],
+        webhookUrl: 'https://your-api.com/webhook/call-results',
+        prompt: 'You are a friendly appointment reminder assistant.',
+        maxDuration: 300
+      })
+    });
+
+    const batch = await response.json();
+    console.log('Batch ID:', batch.batchId);
+    ```
+
+    ```python Python
+    import requests
+
+    response = requests.post(
+        'https://api.talkos.io/api/calls/batch/start',
+        headers={'x-api-key': 'YOUR_API_KEY'},
+        json={
+            'calls': [
+                {
+                    'to': '+14155551234',
+                    'greeting': 'Hi John! Reminder about your appointment.',
+                    'metadata': {'customerId': 'cust_001'}
+                },
+                {
+                    'to': '+14155555678',
+                    'greeting': 'Hi Sarah! Your delivery is scheduled.',
+                    'metadata': {'customerId': 'cust_002'}
+                }
+            ],
+            'webhookUrl': 'https://your-api.com/webhook/call-results',
+            'prompt': 'You are a friendly appointment reminder assistant.',
+            'maxDuration': 300
+        }
+    )
+
+    batch = response.json()
+    print('Batch ID:', batch['batchId'])
+    ```
+
+    </CodeGroup>
+
+    ### Response
+
+    ```json
+    {
+      "success": true,
+      "batchId": "batch_1708234567_abc123xyz",
+      "totalCalls": 2,
+      "queued": 2,
+      "failed": 0,
+      "message": "Batch queued. Use batchId to track progress.",
+      "trackingUrl": "/api/batch/batch_1708234567_abc123xyz/status"
+    }
+    ```
+  </Step>
+
+  <Step title="Monitor Batch Progress">
+    Track the status of your batch in real-time:
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X GET https://api.talkos.io/api/batch/batch_1708234567_abc123xyz/status \
+      -H "x-api-key: YOUR_API_KEY"
+    ```
+
+    ```javascript Node.js
+    const checkStatus = async (batchId) => {
+      const response = await fetch(`https://api.talkos.io/api/batch/${batchId}/status`, {
+        headers: { 'x-api-key': 'YOUR_API_KEY' }
+      });
+      return response.json();
+    };
+
+    // Poll until complete
+    const pollBatch = async (batchId) => {
+      let status;
+      do {
+        status = await checkStatus(batchId);
+        console.log(`Progress: ${status.completed}/${status.total}`);
+        await new Promise(r => setTimeout(r, 5000)); // Wait 5 seconds
+      } while (status.status !== 'completed');
+      return status;
+    };
+    ```
+
+    </CodeGroup>
+
+    ### Status Response
+
+    ```json
+    {
+      "success": true,
+      "batchId": "batch_1708234567_abc123xyz",
+      "status": "in_progress",
+      "total": 100,
+      "queued": 45,
+      "in_progress": 10,
+      "completed": 40,
+      "failed": 5,
+      "progress": 0.45,
+      "estimatedCompletion": "2026-02-18T15:30:00.000Z",
+      "calls": [
+        {
+          "to": "+14155551234",
+          "status": "completed",
+          "callUUID": "call_abc123",
+          "duration": 125,
+          "outcome": "answered"
+        },
+        {
+          "to": "+14155555678",
+          "status": "in_progress",
+          "callUUID": "call_def456"
+        }
+      ]
+    }
+    ```
+  </Step>
+
+  <Step title="Handle Results via Webhook">
+    Each completed call triggers a webhook with full details:
+
+    ```javascript webhook-handler.js
+    import express from 'express';
+    const app = express();
+
+    app.post('/webhook/call-results', async (req, res) => {
+      const {
+        callUUID,
+        batchId,
+        to,
+        status,
+        duration,
+        outcome,
+        transcript,
+        analytics,
+        metadata
+      } = req.body;
+
+      console.log(`Call ${callUUID} completed:`, {
+        to,
+        duration: `${duration}s`,
+        outcome // 'answered', 'voicemail', 'no_answer', 'busy', 'failed'
+      });
+
+      // Update your CRM
+      await updateCallRecord(metadata.customerId, {
+        callId: callUUID,
+        status,
+        transcript,
+        analytics
+      });
+
+      res.status(200).json({ received: true });
+    });
+
+    app.listen(3000);
+    ```
+  </Step>
+</Steps>
+
+## Batch Configuration Options
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `calls` | array | Required | Array of call objects (max 1,000) |
+| `webhookUrl` | string | null | URL for receiving call results |
+| `prompt` | string | null | Default system prompt for all calls |
+| `greeting` | string | null | Default greeting for all calls |
+| `maxDuration` | number | 600 | Max duration per call (seconds) |
+| `timeout` | number | 60000 | Batch processing timeout (ms) |
+| `priority` | number | 10 | Queue priority (1=highest, 10=default) |
+| `concurrency` | number | 10 | Max concurrent calls |
+
+## Rate Limiting
+
+<Warning>
+TalkOS enforces rate limits to ensure system stability and fair usage. Exceeding limits will result in queued calls being delayed.
+</Warning>
+
+### Default Limits
+
+| Tier | Calls per Minute | Concurrent Calls | Batch Size |
+|------|------------------|------------------|------------|
+| Starter | 60 | 5 | 100 |
+| Growth | 300 | 25 | 500 |
+| Enterprise | 1,000 | 100 | 1,000 |
+
+### Handling Rate Limits
+
+```javascript
+const startBatchWithRetry = async (calls, maxRetries = 3) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const response = await fetch('https://api.talkos.io/api/calls/batch/start', {
+      method: 'POST',
+      headers: {
+        'x-api-key': 'YOUR_API_KEY',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ calls })
+    });
+
+    if (response.status === 429) {
+      const retryAfter = response.headers.get('Retry-After') || 60;
+      console.log(`Rate limited. Retrying in ${retryAfter}s...`);
+      await new Promise(r => setTimeout(r, retryAfter * 1000));
+      continue;
+    }
+
+    return response.json();
+  }
+  throw new Error('Max retries exceeded');
+};
+```
+
+## Best Practices for Batch Campaigns
+
+<AccordionGroup>
+  <Accordion title="Optimize Call Timing">
+    - Schedule calls during business hours for higher answer rates
+    - Avoid calling during common meal times (12-1 PM, 6-8 PM)
+    - Consider time zones when calling across regions
+    - Use the `scheduledAt` parameter for future scheduling
+  </Accordion>
+  
+  <Accordion title="Personalize at Scale">
+    - Include customer name in greeting for higher engagement
+    - Reference specific context (order numbers, appointment times)
+    - Use metadata to pass CRM data for AI context
+    - Create segment-specific prompts for different audiences
+  </Accordion>
+  
+  <Accordion title="Monitor and Iterate">
+    - Track answer rates and call durations
+    - A/B test different greeting messages
+    - Review analytics for conversation quality
+    - Adjust prompts based on common failure patterns
+  </Accordion>
+  
+  <Accordion title="Handle Failures Gracefully">
+    - Implement retry logic for failed calls
+    - Separate no-answer from busy signals
+    - Queue voicemail callbacks for follow-up
+    - Log failed numbers for manual review
+  </Accordion>
+</AccordionGroup>
+
+## Example: Appointment Reminder Campaign
+
+```javascript appointment-campaign.js
+import fs from 'fs';
+
+// Load appointments from CSV or database
+const appointments = await loadAppointments();
+
+// Transform to batch format
+const calls = appointments.map(apt => ({
+  to: apt.phoneNumber,
+  greeting: `Hi ${apt.patientName}! This is a reminder from ${apt.clinicName} 
+             about your appointment on ${apt.date} at ${apt.time}.`,
+  prompt: `You are a friendly medical office assistant. 
+           Confirm the appointment, offer to reschedule if needed.
+           The appointment is: ${apt.type} with Dr. ${apt.doctorName}
+           on ${apt.date} at ${apt.time}.
+           If rescheduling, offer the next available slots.`,
+  metadata: {
+    appointmentId: apt.id,
+    patientId: apt.patientId,
+    originalDate: apt.date
+  }
+}));
+
+// Split into batches of 500
+const batches = [];
+for (let i = 0; i < calls.length; i += 500) {
+  batches.push(calls.slice(i, i + 500));
+}
+
+// Process each batch
+for (const batch of batches) {
+  const response = await fetch('https://api.talkos.io/api/calls/batch/start', {
+    method: 'POST',
+    headers: {
+      'x-api-key': process.env.TALKOS_API_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      calls: batch,
+      webhookUrl: 'https://clinic-api.com/webhook/reminders',
+      maxDuration: 180 // 3 minutes max per call
+    })
+  });
+  
+  const result = await response.json();
+  console.log(`Batch ${result.batchId} started: ${batch.length} calls`);
+  
+  // Wait 2 seconds between batches
+  await new Promise(r => setTimeout(r, 2000));
+}
+```

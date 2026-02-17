@@ -1,0 +1,525 @@
+---
+title: 'Webhooks'
+description: 'Receive real-time notifications for call events and results'
+---
+
+Webhooks allow your application to receive real-time notifications when events occur in TalkOS, such as call completion, transcription availability, or call status changes. This guide covers all webhook events, payload structures, and best practices for secure implementation.
+
+## Webhook Overview
+
+<CardGroup cols={2}>
+  <Card title="Real-Time Events" icon="bolt">
+    Instant notifications as events occur
+  </Card>
+  <Card title="Secure Delivery" icon="lock">
+    HMAC signatures for request verification
+  </Card>
+  <Card title="Automatic Retries" icon="rotate">
+    Failed deliveries are retried with backoff
+  </Card>
+  <Card title="Event Filtering" icon="filter">
+    Subscribe only to events you need
+  </Card>
+</CardGroup>
+
+## Webhook Events
+
+TalkOS sends the following webhook events:
+
+| Event | Description | When Fired |
+|-------|-------------|------------|
+| `call.started` | Call initiated | When call begins ringing |
+| `call.answered` | Call connected | When recipient answers |
+| `call.completed` | Call ended | When call terminates (includes full data) |
+| `call.failed` | Call failed | When call cannot be completed |
+| `call.voicemail` | Voicemail detected | When voicemail is detected |
+| `transcript.ready` | Transcript available | After call, when transcript is processed |
+| `analytics.ready` | Analytics available | After call, when analytics are computed |
+| `recording.ready` | Recording available | When recording is uploaded and ready |
+| `inbound.received` | Inbound call received | When an inbound call arrives |
+| `tool.invoked` | Function tool called | When AI invokes a tool during call |
+
+## Configuring Webhooks
+
+<Steps>
+  <Step title="Per-Call Webhooks">
+    Specify a webhook URL when starting a call:
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X POST https://api.talkos.io/api/calls/start \
+      -H "x-api-key: YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": "+14155551234",
+        "webhookUrl": "https://your-api.com/webhook/calls",
+        "prompt": "You are a helpful assistant."
+      }'
+    ```
+
+    ```javascript Node.js
+    const response = await fetch('https://api.talkos.io/api/calls/start', {
+      method: 'POST',
+      headers: {
+        'x-api-key': 'YOUR_API_KEY',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: '+14155551234',
+        webhookUrl: 'https://your-api.com/webhook/calls',
+        prompt: 'You are a helpful assistant.'
+      })
+    });
+    ```
+
+    </CodeGroup>
+  </Step>
+
+  <Step title="Tenant-Level Webhooks">
+    Configure default webhooks for all calls:
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X PUT https://api.talkos.io/api/config \
+      -H "x-api-key: YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "webhooks": {
+          "callCompleted": "https://your-api.com/webhook/completed",
+          "transcriptReady": "https://your-api.com/webhook/transcript",
+          "analyticsReady": "https://your-api.com/webhook/analytics",
+          "allEvents": "https://your-api.com/webhook/all"
+        }
+      }'
+    ```
+
+    ```javascript Node.js
+    await fetch('https://api.talkos.io/api/config', {
+      method: 'PUT',
+      headers: {
+        'x-api-key': 'YOUR_API_KEY',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        webhooks: {
+          callCompleted: 'https://your-api.com/webhook/completed',
+          transcriptReady: 'https://your-api.com/webhook/transcript',
+          analyticsReady: 'https://your-api.com/webhook/analytics'
+        }
+      })
+    });
+    ```
+
+    </CodeGroup>
+  </Step>
+</Steps>
+
+## Payload Structures
+
+### `call.completed` Event
+
+The most comprehensive event, sent when a call ends:
+
+```json
+{
+  "event": "call.completed",
+  "timestamp": "2026-02-18T14:30:00.000Z",
+  "callUUID": "call_abc123xyz",
+  "tenantId": "tenant_xyz",
+  "data": {
+    "to": "+14155551234",
+    "from": "+14155550000",
+    "direction": "outbound",
+    "status": "completed",
+    "duration": 245,
+    "startTime": "2026-02-18T14:25:00.000Z",
+    "endTime": "2026-02-18T14:30:05.000Z",
+    "answeredAt": "2026-02-18T14:25:15.000Z",
+    "outcome": "answered",
+    "hangupCause": "normal_clearing",
+    "metadata": {
+      "customerId": "cust_001",
+      "campaignId": "camp_feb_2026"
+    },
+    "transcript": {
+      "turns": [
+        { "role": "assistant", "content": "Hello! How can I help you today?", "timestamp": 0.5 },
+        { "role": "user", "content": "I have a question about my order.", "timestamp": 3.2 },
+        { "role": "assistant", "content": "Of course! What's your order number?", "timestamp": 5.8 }
+      ],
+      "fullText": "Assistant: Hello! How can I help you today?\nUser: I have a question about my order..."
+    },
+    "analytics": {
+      "sentiment": "positive",
+      "sentimentScore": 0.75,
+      "topics": ["order_inquiry", "shipping"],
+      "outcome": "resolved",
+      "summary": "Customer inquired about order status. Provided tracking info. Customer satisfied.",
+      "keyInsights": [
+        "Customer was checking on delayed shipment",
+        "Issue resolved by providing updated delivery date"
+      ],
+      "scoring": {
+        "customerSatisfaction": 8.5,
+        "agentPerformance": 9.0
+      }
+    },
+    "recording": {
+      "enabled": true,
+      "url": "https://recordings.talkos.io/tenant_xyz/call_abc123.wav",
+      "duration": 245
+    },
+    "toolInvocations": [
+      {
+        "name": "check_order_status",
+        "parameters": { "orderId": "ORD-12345" },
+        "result": { "status": "shipped", "eta": "2026-02-20" },
+        "timestamp": "2026-02-18T14:26:30.000Z"
+      }
+    ]
+  }
+}
+```
+
+### `call.started` Event
+
+```json
+{
+  "event": "call.started",
+  "timestamp": "2026-02-18T14:25:00.000Z",
+  "callUUID": "call_abc123xyz",
+  "tenantId": "tenant_xyz",
+  "data": {
+    "to": "+14155551234",
+    "from": "+14155550000",
+    "direction": "outbound",
+    "metadata": { "customerId": "cust_001" }
+  }
+}
+```
+
+### `call.failed` Event
+
+```json
+{
+  "event": "call.failed",
+  "timestamp": "2026-02-18T14:25:30.000Z",
+  "callUUID": "call_abc123xyz",
+  "tenantId": "tenant_xyz",
+  "data": {
+    "to": "+14155551234",
+    "from": "+14155550000",
+    "direction": "outbound",
+    "failureReason": "no_answer",
+    "failureCode": "NO_ANSWER",
+    "metadata": { "customerId": "cust_001" }
+  }
+}
+```
+
+### `inbound.received` Event
+
+```json
+{
+  "event": "inbound.received",
+  "timestamp": "2026-02-18T14:25:00.000Z",
+  "callUUID": "call_inb_xyz789",
+  "tenantId": "tenant_xyz",
+  "data": {
+    "from": "+14155551234",
+    "to": "+14155550000",
+    "direction": "inbound",
+    "botNumber": "+14155550000"
+  }
+}
+```
+
+### `tool.invoked` Event
+
+```json
+{
+  "event": "tool.invoked",
+  "timestamp": "2026-02-18T14:26:30.000Z",
+  "callUUID": "call_abc123xyz",
+  "tenantId": "tenant_xyz",
+  "data": {
+    "tool": {
+      "name": "check_order_status",
+      "parameters": { "orderId": "ORD-12345" }
+    },
+    "awaitingResponse": true,
+    "responseUrl": "https://api.talkos.io/api/calls/call_abc123xyz/tool-response"
+  }
+}
+```
+
+## Webhook Security
+
+<Warning>
+Always verify webhook signatures to ensure requests originate from TalkOS and haven't been tampered with.
+</Warning>
+
+### Signature Verification
+
+TalkOS signs all webhook requests using HMAC-SHA256. The signature is included in the `X-TalkOS-Signature` header.
+
+```javascript verify-webhook.js
+import crypto from 'crypto';
+
+const verifyWebhookSignature = (payload, signature, secret) => {
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(JSON.stringify(payload))
+    .digest('hex');
+  
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(`sha256=${expectedSignature}`)
+  );
+};
+
+// Express middleware
+app.post('/webhook/calls', (req, res) => {
+  const signature = req.headers['x-talkos-signature'];
+  const webhookSecret = process.env.TALKOS_WEBHOOK_SECRET;
+  
+  if (!verifyWebhookSignature(req.body, signature, webhookSecret)) {
+    console.error('Invalid webhook signature');
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+  
+  // Process webhook...
+  const { event, data } = req.body;
+  console.log(`Received ${event}:`, data);
+  
+  res.status(200).json({ received: true });
+});
+```
+
+### Get Your Webhook Secret
+
+Retrieve your webhook secret from the tenant config:
+
+```bash
+curl -X GET https://api.talkos.io/api/config \
+  -H "x-api-key: YOUR_API_KEY"
+```
+
+The response includes your `webhookSecret`:
+
+```json
+{
+  "success": true,
+  "config": {
+    "webhookSecret": "whsec_xxxxxxxxxxxxx",
+    "webhooks": { ... }
+  }
+}
+```
+
+## Retry Logic
+
+TalkOS automatically retries failed webhook deliveries with exponential backoff:
+
+| Attempt | Delay | Total Time |
+|---------|-------|------------|
+| 1 | Immediate | 0s |
+| 2 | 30 seconds | 30s |
+| 3 | 2 minutes | 2m 30s |
+| 4 | 10 minutes | 12m 30s |
+| 5 | 30 minutes | 42m 30s |
+| 6 | 1 hour | 1h 42m 30s |
+
+<Note>
+Webhooks are considered failed if your server:
+- Returns a non-2xx status code
+- Takes longer than 30 seconds to respond
+- Connection cannot be established
+</Note>
+
+### Idempotency
+
+Handle duplicate webhook deliveries by tracking the `callUUID` and event type:
+
+```javascript
+const processedEvents = new Set();
+
+app.post('/webhook/calls', async (req, res) => {
+  const { event, callUUID, timestamp } = req.body;
+  const eventKey = `${callUUID}:${event}:${timestamp}`;
+  
+  if (processedEvents.has(eventKey)) {
+    console.log('Duplicate event, skipping');
+    return res.status(200).json({ received: true, duplicate: true });
+  }
+  
+  processedEvents.add(eventKey);
+  
+  // Process the event...
+  await handleWebhookEvent(req.body);
+  
+  res.status(200).json({ received: true });
+});
+```
+
+## Implementing Your Webhook Handler
+
+### Complete Example
+
+```javascript webhook-server.js
+import express from 'express';
+import crypto from 'crypto';
+
+const app = express();
+app.use(express.json());
+
+// Webhook secret from TalkOS
+const WEBHOOK_SECRET = process.env.TALKOS_WEBHOOK_SECRET;
+
+// Verify signature middleware
+const verifySignature = (req, res, next) => {
+  const signature = req.headers['x-talkos-signature'];
+  
+  if (!signature) {
+    return res.status(401).json({ error: 'Missing signature' });
+  }
+  
+  const expectedSig = `sha256=${crypto
+    .createHmac('sha256', WEBHOOK_SECRET)
+    .update(JSON.stringify(req.body))
+    .digest('hex')}`;
+  
+  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig))) {
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+  
+  next();
+};
+
+// Event handlers
+const eventHandlers = {
+  'call.started': async (data) => {
+    console.log(`📞 Call started to ${data.to}`);
+    await db.calls.create({ callUUID: data.callUUID, status: 'started' });
+  },
+  
+  'call.answered': async (data) => {
+    console.log(`✅ Call answered: ${data.callUUID}`);
+    await db.calls.update(data.callUUID, { status: 'answered' });
+  },
+  
+  'call.completed': async (data) => {
+    console.log(`🏁 Call completed: ${data.callUUID}, duration: ${data.duration}s`);
+    await db.calls.update(data.callUUID, {
+      status: 'completed',
+      duration: data.duration,
+      transcript: data.transcript,
+      analytics: data.analytics
+    });
+  },
+  
+  'call.failed': async (data) => {
+    console.log(`❌ Call failed: ${data.callUUID}, reason: ${data.failureReason}`);
+    await db.calls.update(data.callUUID, {
+      status: 'failed',
+      failureReason: data.failureReason
+    });
+  },
+  
+  'tool.invoked': async (data) => {
+    console.log(`🔧 Tool invoked: ${data.tool.name}`);
+    // Handle tool invocation and respond
+    const result = await executeToolAction(data.tool);
+    await respondToTool(data.responseUrl, result);
+  }
+};
+
+// Main webhook endpoint
+app.post('/webhook/calls', verifySignature, async (req, res) => {
+  const { event, callUUID, data, timestamp } = req.body;
+  
+  console.log(`Received ${event} for ${callUUID} at ${timestamp}`);
+  
+  const handler = eventHandlers[event];
+  if (handler) {
+    try {
+      await handler({ callUUID, ...data });
+    } catch (error) {
+      console.error(`Error handling ${event}:`, error);
+      // Still return 200 to prevent retries for app errors
+    }
+  }
+  
+  res.status(200).json({ received: true });
+});
+
+app.listen(3000, () => {
+  console.log('Webhook server running on port 3000');
+});
+```
+
+## Testing Webhooks
+
+### Local Development
+
+Use a tool like ngrok to expose your local server:
+
+```bash
+# Start ngrok
+ngrok http 3000
+
+# Use the ngrok URL in your API calls
+curl -X POST https://api.talkos.io/api/calls/start \
+  -H "x-api-key: YOUR_API_KEY" \
+  -d '{
+    "to": "+14155551234",
+    "webhookUrl": "https://abc123.ngrok.io/webhook/calls"
+  }'
+```
+
+### Test Webhook Endpoint
+
+TalkOS provides a test endpoint to verify your webhook is working:
+
+```bash
+curl -X POST https://api.talkos.io/api/webhooks/test \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "webhookUrl": "https://your-api.com/webhook/calls",
+    "event": "call.completed"
+  }'
+```
+
+This sends a test payload to your webhook endpoint so you can verify connectivity and handling.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Webhooks not being received">
+    - Verify your webhook URL is publicly accessible
+    - Check that your server accepts POST requests with JSON
+    - Ensure SSL certificate is valid (HTTPS required in production)
+    - Check firewall rules aren't blocking TalkOS IPs
+  </Accordion>
+  
+  <Accordion title="Invalid signature errors">
+    - Ensure you're using the correct webhook secret
+    - Verify the payload isn't being modified by middleware
+    - Check that you're comparing signatures correctly
+  </Accordion>
+  
+  <Accordion title="Receiving duplicate events">
+    - Implement idempotency using callUUID + event + timestamp
+    - Return 200 status quickly to prevent timeout retries
+    - Check your server isn't responding with errors intermittently
+  </Accordion>
+  
+  <Accordion title="Missing data in payloads">
+    - Ensure the feature is enabled (e.g., recording, analytics)
+    - Check that the call completed successfully
+    - Some data (like analytics) arrives in separate events
+  </Accordion>
+</AccordionGroup>

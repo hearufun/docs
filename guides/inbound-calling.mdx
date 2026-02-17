@@ -1,0 +1,356 @@
+---
+title: 'Inbound Calling'
+description: 'Configure your AI agents to receive and handle incoming phone calls'
+---
+
+Inbound calling allows your AI agents to answer phone calls from customers, providing 24/7 automated support. This guide covers setting up webhooks, registering bot numbers, and customizing call handling.
+
+## How Inbound Calling Works
+
+<CardGroup cols={2}>
+  <Card title="Webhook-Driven" icon="webhook">
+    Your server controls call behavior via webhooks
+  </Card>
+  <Card title="Dynamic Config" icon="sliders">
+    Customize prompts and greetings per caller
+  </Card>
+  <Card title="Fallback Support" icon="shield">
+    Default behavior when your webhook is unavailable
+  </Card>
+  <Card title="Real-time Events" icon="bolt">
+    Get notified of call status changes instantly
+  </Card>
+</CardGroup>
+
+## Prerequisites
+
+Before configuring inbound calling, ensure you have:
+
+- A TalkOS tenant with API credentials
+- At least one phone number from Plivo or Exotel
+- A publicly accessible HTTPS endpoint for webhooks
+
+<Steps>
+  <Step title="Configure Your Inbound Webhook">
+    Set up your webhook URL to receive inbound call configuration requests:
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X POST https://api.talkos.io/api/inbound/config \
+      -H "x-api-key: YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "webhookUrl": "https://your-api.com/webhook/inbound-config",
+        "webhookTimeoutMs": 5000,
+        "fallbackConfig": {
+          "prompt": "You are a helpful customer support agent for Acme Corp.",
+          "greeting": "Hello! Thanks for calling Acme Corp. How can I help you today?",
+          "maxDuration": 600,
+          "language": "auto",
+          "voiceId": "en-US-Neural2-A"
+        }
+      }'
+    ```
+
+    ```javascript Node.js
+    const response = await fetch('https://api.talkos.io/api/inbound/config', {
+      method: 'POST',
+      headers: {
+        'x-api-key': 'YOUR_API_KEY',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        webhookUrl: 'https://your-api.com/webhook/inbound-config',
+        webhookTimeoutMs: 5000,
+        fallbackConfig: {
+          prompt: 'You are a helpful customer support agent for Acme Corp.',
+          greeting: 'Hello! Thanks for calling Acme Corp. How can I help you today?',
+          maxDuration: 600,
+          language: 'auto',
+          voiceId: 'en-US-Neural2-A'
+        }
+      })
+    });
+    ```
+
+    ```python Python
+    import requests
+
+    response = requests.post(
+        'https://api.talkos.io/api/inbound/config',
+        headers={'x-api-key': 'YOUR_API_KEY'},
+        json={
+            'webhookUrl': 'https://your-api.com/webhook/inbound-config',
+            'webhookTimeoutMs': 5000,
+            'fallbackConfig': {
+                'prompt': 'You are a helpful customer support agent for Acme Corp.',
+                'greeting': 'Hello! Thanks for calling Acme Corp. How can I help you today?',
+                'maxDuration': 600,
+                'language': 'auto',
+                'voiceId': 'en-US-Neural2-A'
+            }
+        }
+    )
+    ```
+
+    </CodeGroup>
+
+    <Note>
+    The `fallbackConfig` is used when your webhook is unreachable or times out. Always configure sensible fallback values.
+    </Note>
+  </Step>
+
+  <Step title="Register Bot Numbers for Inbound">
+    Configure your phone numbers to accept inbound calls:
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X PUT https://api.talkos.io/api/numbers/inventory/+14155551234 \
+      -H "x-api-key: YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "direction": "both",
+        "friendlyName": "Main Support Line"
+      }'
+    ```
+
+    ```javascript Node.js
+    const response = await fetch('https://api.talkos.io/api/numbers/inventory/+14155551234', {
+      method: 'PUT',
+      headers: {
+        'x-api-key': 'YOUR_API_KEY',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        direction: 'both',
+        friendlyName: 'Main Support Line'
+      })
+    });
+    ```
+
+    </CodeGroup>
+
+    Direction options:
+    - `inbound` - Only receive calls
+    - `outbound` - Only make calls
+    - `both` - Receive and make calls
+  </Step>
+
+  <Step title="Implement Your Webhook Handler">
+    Your webhook receives inbound call details and returns the AI configuration:
+
+    ```javascript webhook-handler.js
+    import express from 'express';
+    const app = express();
+
+    app.post('/webhook/inbound-config', async (req, res) => {
+      const {
+        from,           // Caller's phone number
+        to,             // Your bot number
+        callUUID,       // Unique call identifier
+        tenantId,       // Your tenant ID
+        timestamp       // Call start time
+      } = req.body;
+
+      // Look up caller in your CRM
+      const customer = await lookupCustomer(from);
+
+      // Return dynamic configuration
+      res.json({
+        prompt: `You are a support agent helping ${customer?.name || 'a customer'}. 
+                 Their account status is ${customer?.status || 'unknown'}.
+                 Be helpful and professional.`,
+        greeting: customer 
+          ? `Hi ${customer.name}! Thanks for calling. How can I help you today?`
+          : 'Hello! Thanks for calling. How can I assist you?',
+        maxDuration: 900,
+        language: customer?.preferredLanguage || 'auto',
+        voiceId: 'en-US-Neural2-A',
+        metadata: {
+          customerId: customer?.id,
+          callSource: 'inbound'
+        },
+        // Optional: Enable features
+        recording: { enabled: true },
+        knowledgeBaseId: 'kb-support-001',
+        tools: [
+          {
+            name: 'check_order_status',
+            description: 'Check the status of a customer order',
+            parameters: {
+              type: 'object',
+              properties: {
+                orderId: { type: 'string', description: 'The order ID' }
+              }
+            }
+          }
+        ]
+      });
+    });
+
+    app.listen(3000);
+    ```
+
+    <Warning>
+    Your webhook must respond within `webhookTimeoutMs` (default: 5000ms). If it times out, the `fallbackConfig` will be used.
+    </Warning>
+  </Step>
+
+  <Step title="Handle Incoming Calls">
+    When a call comes in, TalkOS will:
+
+    1. Receive the call on your bot number
+    2. POST to your webhook with caller details
+    3. Use your response (or fallback) to configure the AI agent
+    4. Connect the caller to the AI agent
+    5. Send real-time events to your configured event webhook
+
+    ```mermaid
+    sequenceDiagram
+        participant Caller
+        participant TalkOS
+        participant Your Webhook
+        participant AI Agent
+        
+        Caller->>TalkOS: Calls your bot number
+        TalkOS->>Your Webhook: POST /inbound-config
+        Your Webhook->>TalkOS: Return AI config
+        TalkOS->>AI Agent: Initialize with config
+        AI Agent->>Caller: Speaks greeting
+        Caller->>AI Agent: Conversation begins
+    ```
+  </Step>
+</Steps>
+
+## Custom Greeting Strategies
+
+<CardGroup cols={2}>
+  <Card title="Personalized Greeting" icon="user">
+    ```javascript
+    // Look up caller info
+    const customer = await db.findByPhone(from);
+    return {
+      greeting: `Hi ${customer.name}! 
+        Great to hear from you again.`
+    };
+    ```
+  </Card>
+  <Card title="Time-Based Greeting" icon="clock">
+    ```javascript
+    const hour = new Date().getHours();
+    const timeGreeting = hour < 12 
+      ? 'Good morning' 
+      : hour < 17 
+        ? 'Good afternoon' 
+        : 'Good evening';
+    return { greeting: `${timeGreeting}!` };
+    ```
+  </Card>
+  <Card title="Queue-Aware Greeting" icon="users">
+    ```javascript
+    const queueSize = await getQueueSize();
+    if (queueSize > 10) {
+      return {
+        greeting: 'Thanks for calling! 
+          We\'re experiencing high volume...'
+      };
+    }
+    ```
+  </Card>
+  <Card title="Language Detection" icon="globe">
+    ```javascript
+    // Let AI detect language
+    return {
+      language: 'auto',
+      greeting: 'Hello! / ¡Hola! / 
+        नमस्ते! How can I help?'
+    };
+    ```
+  </Card>
+</CardGroup>
+
+## Webhook Response Schema
+
+Your webhook should return a JSON object with these fields:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `prompt` | string | Yes | System prompt for the AI agent |
+| `greeting` | string | No | Initial greeting message |
+| `maxDuration` | number | No | Max call duration in seconds (default: 600) |
+| `language` | string | No | Language code or "auto" for detection |
+| `voiceId` | string | No | ElevenLabs voice ID |
+| `metadata` | object | No | Custom data attached to the call |
+| `recording` | object | No | Recording settings `{ enabled: true }` |
+| `knowledgeBaseId` | string | No | ID of knowledge base for RAG |
+| `tools` | array | No | Function calling tool definitions |
+| `guardrails` | object | No | Safety filter configuration |
+
+## Get Inbound Stats
+
+Monitor your inbound call performance:
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET https://api.talkos.io/api/inbound/stats \
+  -H "x-api-key: YOUR_API_KEY"
+```
+
+```javascript Node.js
+const response = await fetch('https://api.talkos.io/api/inbound/stats', {
+  headers: { 'x-api-key': 'YOUR_API_KEY' }
+});
+const stats = await response.json();
+console.log(stats);
+```
+
+</CodeGroup>
+
+### Response
+
+```json
+{
+  "success": true,
+  "stats": {
+    "totalInboundCalls": 1523,
+    "answeredCalls": 1456,
+    "missedCalls": 67,
+    "averageDuration": 245,
+    "webhookSuccessRate": 0.98,
+    "fallbackUsageRate": 0.02,
+    "botNumbers": [
+      {
+        "number": "+14155551234",
+        "calls": 823,
+        "avgDuration": 267
+      }
+    ]
+  }
+}
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Webhook not receiving requests">
+    - Ensure your webhook URL is publicly accessible (not localhost)
+    - Check that your server accepts POST requests with JSON body
+    - Verify SSL certificate is valid (HTTPS required)
+    - Check TalkOS webhook validator status: `GET /api/inbound/webhook-status`
+  </Accordion>
+  
+  <Accordion title="Calls falling back to default config">
+    - Check your webhook response time (must be under `webhookTimeoutMs`)
+    - Verify your webhook returns valid JSON with required fields
+    - Check circuit breaker status if multiple failures: `GET /api/inbound/circuit-status`
+  </Accordion>
+  
+  <Accordion title="Caller hears nothing">
+    - Ensure `greeting` is not empty in your response
+    - Check that `voiceId` is a valid ElevenLabs voice
+    - Verify your audio stream provider credentials are configured
+  </Accordion>
+</AccordionGroup>
