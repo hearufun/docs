@@ -1,0 +1,184 @@
+---
+title: "Add Questions"
+description: "Add custom questions to your survey"
+api: "POST https://api.talkos.io/api/features/survey/questions"
+---
+
+# Add Questions
+
+Add custom questions to your tenant's survey in addition to the template questions.
+
+## Endpoint
+
+```
+POST /api/features/survey/questions
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Request Body
+
+<ParamField body="id" type="string">
+  Unique identifier for the question. Auto-generated if not provided.
+</ParamField>
+
+<ParamField body="text" type="string" required>
+  The question text to present to the customer
+</ParamField>
+
+<ParamField body="type" type="string" default="scale">
+  Question type:
+  - `scale` - Numeric rating scale
+  - `yes_no` - Yes or no response
+  - `open_text` - Free-form text response
+  - `multiple_choice` - Select from predefined options
+</ParamField>
+
+<ParamField body="required" type="boolean" default="false">
+  Whether the question must be answered to complete the survey
+</ParamField>
+
+<ParamField body="min" type="number">
+  Minimum value for scale questions (e.g., `1`)
+</ParamField>
+
+<ParamField body="max" type="number">
+  Maximum value for scale questions (e.g., `5` or `10`)
+</ParamField>
+
+<ParamField body="options" type="array">
+  Array of options for multiple choice questions. Each option object contains:
+  - `value` (string): The stored value
+  - `label` (string): Display text for the option
+</ParamField>
+
+<ParamField body="maxLength" type="number" default="500">
+  Maximum character length for open text responses
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the question was added successfully
+</ResponseField>
+
+<ResponseField name="question" type="object">
+  The created question object
+</ResponseField>
+
+<ResponseField name="question.id" type="string">
+  Unique question identifier
+</ResponseField>
+
+<ResponseField name="question.text" type="string">
+  The question text
+</ResponseField>
+
+<ResponseField name="question.type" type="string">
+  Question type
+</ResponseField>
+
+<ResponseField name="question.required" type="boolean">
+  Whether the question is required
+</ResponseField>
+
+<ResponseField name="question.createdAt" type="number">
+  Unix timestamp when the question was created
+</ResponseField>
+
+## Example Request - Scale Question
+
+```bash
+curl -X POST https://api.talkos.io/api/features/survey/questions \
+  -H "x-api-key: tk_live_xxxxxxxxxxxxxxxxxxxx" \
+  -H "x-tenant-id: tenant_abc123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "How would you rate the clarity of information provided?",
+    "type": "scale",
+    "min": 1,
+    "max": 5,
+    "required": true
+  }'
+```
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "question": {
+    "id": "q_custom_1739836800123",
+    "text": "How would you rate the clarity of information provided?",
+    "type": "scale",
+    "required": true,
+    "min": 1,
+    "max": 5,
+    "maxLength": 500,
+    "createdAt": 1739836800123
+  }
+}
+```
+
+## Example Request - Multiple Choice
+
+```bash
+curl -X POST https://api.talkos.io/api/features/survey/questions \
+  -H "x-api-key: tk_live_xxxxxxxxxxxxxxxxxxxx" \
+  -H "x-tenant-id: tenant_abc123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "What was the primary reason for your call today?",
+    "type": "multiple_choice",
+    "options": [
+      {"value": "billing", "label": "Billing inquiry"},
+      {"value": "technical", "label": "Technical support"},
+      {"value": "sales", "label": "Sales question"},
+      {"value": "other", "label": "Other"}
+    ],
+    "required": true
+  }'
+```
+
+## Example Request - Open Text
+
+```bash
+curl -X POST https://api.talkos.io/api/features/survey/questions \
+  -H "x-api-key: tk_live_xxxxxxxxxxxxxxxxxxxx" \
+  -H "x-tenant-id: tenant_abc123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Is there anything we could have done differently?",
+    "type": "open_text",
+    "maxLength": 1000,
+    "required": false
+  }'
+```
+
+## Question Types
+
+| Type | Description | IVR Support |
+|------|-------------|-------------|
+| `scale` | Numeric rating (e.g., 1-5, 0-10) | ✅ DTMF input |
+| `yes_no` | Binary yes/no response | ✅ Press 1/2 |
+| `open_text` | Free-form text response | ❌ SMS/webhook only |
+| `multiple_choice` | Select from options | ⚠️ Limited (max 9 options via DTMF) |
+
+## Notes
+
+- Custom questions are appended after the template questions
+- For IVR delivery, only scale and yes/no questions are fully supported
+- Open text questions work best with SMS or webhook delivery methods
+- Questions persist until the survey is reconfigured

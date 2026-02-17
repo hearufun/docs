@@ -1,0 +1,208 @@
+---
+title: "Get Knowledge Base Stats"
+api: "GET https://api.talkos.io/api/knowledge-base/:id/stats"
+description: "Retrieve detailed statistics and document list for a knowledge base"
+---
+
+## Overview
+
+Get comprehensive statistics for a specific knowledge base, including document details, processing status, and usage metrics. Useful for monitoring knowledge base health and content coverage.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the knowledge base
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request completed successfully
+</ResponseField>
+
+<ResponseField name="knowledgeBase" type="object">
+  <Expandable title="properties">
+    <ResponseField name="id" type="string">
+      Unique identifier for the knowledge base
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Name of the knowledge base
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      Description of the knowledge base
+    </ResponseField>
+    <ResponseField name="embeddingModel" type="string">
+      The embedding model used
+    </ResponseField>
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp of creation
+    </ResponseField>
+    <ResponseField name="lastUpdatedAt" type="string">
+      ISO 8601 timestamp of last update
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="stats" type="object">
+  <Expandable title="properties">
+    <ResponseField name="totalDocuments" type="number">
+      Total number of documents
+    </ResponseField>
+    <ResponseField name="indexedDocuments" type="number">
+      Documents successfully indexed
+    </ResponseField>
+    <ResponseField name="processingDocuments" type="number">
+      Documents currently being processed
+    </ResponseField>
+    <ResponseField name="failedDocuments" type="number">
+      Documents that failed to process
+    </ResponseField>
+    <ResponseField name="totalChunks" type="number">
+      Total number of text chunks
+    </ResponseField>
+    <ResponseField name="totalTokens" type="number">
+      Total tokens indexed
+    </ResponseField>
+    <ResponseField name="averageChunksPerDocument" type="number">
+      Average chunks per document
+    </ResponseField>
+    <ResponseField name="totalSizeBytes" type="number">
+      Total size of all documents in bytes
+    </ResponseField>
+    <ResponseField name="searchesLast24h" type="number">
+      Number of searches in the last 24 hours
+    </ResponseField>
+    <ResponseField name="searchesLast7d" type="number">
+      Number of searches in the last 7 days
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="documents" type="array">
+  List of all documents in the knowledge base
+  <Expandable title="document object">
+    <ResponseField name="id" type="string">
+      Unique document identifier
+    </ResponseField>
+    <ResponseField name="filename" type="string">
+      Original filename
+    </ResponseField>
+    <ResponseField name="fileType" type="string">
+      MIME type
+    </ResponseField>
+    <ResponseField name="fileSize" type="number">
+      Size in bytes
+    </ResponseField>
+    <ResponseField name="chunkCount" type="number">
+      Number of chunks
+    </ResponseField>
+    <ResponseField name="tokenCount" type="number">
+      Token count
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Processing status: `indexed`, `processing`, `failed`
+    </ResponseField>
+    <ResponseField name="errorMessage" type="string">
+      Error message if status is `failed`
+    </ResponseField>
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/knowledge-base/kb_8f3d2a1b-4c5e-6f7a-8b9c-0d1e2f3a4b5c/stats" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "knowledgeBase": {
+    "id": "kb_8f3d2a1b-4c5e-6f7a-8b9c-0d1e2f3a4b5c",
+    "name": "Product Documentation",
+    "description": "Technical documentation and user guides for our SaaS platform",
+    "embeddingModel": "text-embedding-3-small",
+    "createdAt": "2026-01-15T09:00:00.000Z",
+    "lastUpdatedAt": "2026-02-17T14:20:00.000Z"
+  },
+  "stats": {
+    "totalDocuments": 15,
+    "indexedDocuments": 14,
+    "processingDocuments": 1,
+    "failedDocuments": 0,
+    "totalChunks": 842,
+    "totalTokens": 125430,
+    "averageChunksPerDocument": 56.1,
+    "totalSizeBytes": 15728640,
+    "searchesLast24h": 234,
+    "searchesLast7d": 1567
+  },
+  "documents": [
+    {
+      "id": "doc_1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+      "filename": "user-guide-v3.pdf",
+      "fileType": "application/pdf",
+      "fileSize": 2457600,
+      "chunkCount": 127,
+      "tokenCount": 18450,
+      "status": "indexed",
+      "errorMessage": null,
+      "createdAt": "2026-02-17T14:20:00.000Z"
+    },
+    {
+      "id": "doc_2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e",
+      "filename": "api-reference.md",
+      "fileType": "text/markdown",
+      "fileSize": 524288,
+      "chunkCount": 89,
+      "tokenCount": 12340,
+      "status": "indexed",
+      "errorMessage": null,
+      "createdAt": "2026-02-15T10:30:00.000Z"
+    },
+    {
+      "id": "doc_3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f",
+      "filename": "release-notes-2026.docx",
+      "fileType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "fileSize": 156000,
+      "chunkCount": 0,
+      "tokenCount": 0,
+      "status": "processing",
+      "errorMessage": null,
+      "createdAt": "2026-02-18T10:45:00.000Z"
+    }
+  ]
+}
+```
+
+```json 404
+{
+  "success": false,
+  "error": "Knowledge base not found"
+}
+```
+</ResponseExample>
+
+## Status Codes
+
+| Status | Description |
+|--------|-------------|
+| `indexed` | Document successfully processed and searchable |
+| `processing` | Document is being chunked and embedded |
+| `failed` | Processing failed, check `errorMessage` for details |

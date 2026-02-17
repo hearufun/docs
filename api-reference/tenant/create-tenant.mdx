@@ -1,0 +1,427 @@
+---
+title: 'Create Tenant'
+api: 'POST https://api.talkos.io/api/tenants/create'
+description: 'Create a new tenant account with telephony provider configuration'
+---
+
+# Create Tenant
+
+Creates a new tenant account on the TalkOS platform. Each tenant is an isolated account with its own API credentials, phone numbers, call history, and configuration.
+
+## Endpoint
+
+```
+POST https://api.talkos.io/api/tenants/create
+```
+
+## Headers
+
+<ParamField header="Content-Type" type="string" required default="application/json">
+  Must be `application/json`
+</ParamField>
+
+<ParamField header="x-api-key" type="string" required>
+  Master API key for tenant creation. This is a privileged operation that requires admin credentials.
+</ParamField>
+
+## Request Body
+
+<ParamField body="name" type="string" required>
+  The display name for the tenant organization. This will be shown in the dashboard and used in reports.
+  
+  - Minimum length: 2 characters
+  - Maximum length: 100 characters
+  
+  **Example:** `"Acme Corporation"`
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  Primary contact email for the tenant account. This email will receive important notifications, billing information, and account alerts.
+  
+  - Must be a valid email format
+  - Will be verified via email confirmation
+  
+  **Example:** `"admin@acme.com"`
+</ParamField>
+
+<ParamField body="plan" type="string" required>
+  The subscription plan for this tenant. Determines rate limits, features, and pricing.
+  
+  **Allowed values:**
+  - `starter` - For small teams and testing (5 concurrent calls, basic features)
+  - `growth` - For growing businesses (50 concurrent calls, advanced features)
+  - `enterprise` - For large organizations (500+ concurrent calls, all features)
+  
+  **Example:** `"growth"`
+</ParamField>
+
+<ParamField body="config" type="object" required>
+  Telephony provider configuration. At least one provider must be configured.
+</ParamField>
+
+<Expandable title="config properties">
+  <ParamField body="config.defaultProvider" type="string" required>
+    The default telephony provider to use for outbound calls.
+    
+    **Allowed values:**
+    - `plivo` - Plivo Communications
+    - `exotel` - Exotel (India-focused)
+    
+    **Example:** `"plivo"`
+  </ParamField>
+
+  <ParamField body="config.plivo" type="object">
+    Plivo provider configuration. Required if `defaultProvider` is `plivo`.
+  </ParamField>
+
+  <Expandable title="config.plivo properties">
+    <ParamField body="config.plivo.authId" type="string" required>
+      Your Plivo Auth ID. Found in your Plivo Console dashboard.
+      
+      - Format: Alphanumeric string
+      - Length: 20 characters
+      
+      **Example:** `"MAXXXXXXXXXXXXXXXXXX"`
+    </ParamField>
+
+    <ParamField body="config.plivo.authToken" type="string" required>
+      Your Plivo Auth Token. Found in your Plivo Console dashboard.
+      
+      - Keep this secret - never expose in client-side code
+      - Length: 40 characters
+      
+      **Example:** `"YzE4NGMyZWE4ZDk2MmI4NDhkYzU5YjQ1ZDk4Njk4"`
+    </ParamField>
+  </Expandable>
+
+  <ParamField body="config.exotel" type="object">
+    Exotel provider configuration. Required if `defaultProvider` is `exotel`.
+  </ParamField>
+
+  <Expandable title="config.exotel properties">
+    <ParamField body="config.exotel.apiKey" type="string" required>
+      Your Exotel API Key. Found in your Exotel dashboard under API settings.
+      
+      **Example:** `"exo_api_key_abc123"`
+    </ParamField>
+
+    <ParamField body="config.exotel.apiToken" type="string" required>
+      Your Exotel API Token. Found in your Exotel dashboard under API settings.
+      
+      **Example:** `"exo_token_xyz789"`
+    </ParamField>
+
+    <ParamField body="config.exotel.accountSid" type="string" required>
+      Your Exotel Account SID. This is your unique account identifier.
+      
+      **Example:** `"acme_corp"`
+    </ParamField>
+
+    <ParamField body="config.exotel.subdomain" type="string" required>
+      Your Exotel subdomain. Determines the API endpoint region.
+      
+      **Allowed values:**
+      - `api.exotel.com` - Singapore region
+      - `api.in.exotel.com` - India region
+      
+      **Example:** `"api.exotel.com"`
+    </ParamField>
+  </Expandable>
+</Expandable>
+
+<ParamField body="webhookUrl" type="string">
+  URL to receive webhook events for this tenant. Must be HTTPS.
+  
+  **Example:** `"https://api.acme.com/webhooks/talkos"`
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Custom key-value pairs to store with the tenant. Useful for tracking internal IDs or other business data.
+  
+  **Example:** `{"internalId": "cust_12345", "salesRep": "john@acme.com"}`
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request was successful.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The created tenant object.
+</ResponseField>
+
+<Expandable title="data properties">
+  <ResponseField name="data.id" type="string">
+    Unique identifier for the tenant. Use this as `x-tenant-id` header in subsequent API calls.
+    
+    **Example:** `"tenant_01HXYZ123456"`
+  </ResponseField>
+
+  <ResponseField name="data.name" type="string">
+    The tenant's display name.
+  </ResponseField>
+
+  <ResponseField name="data.email" type="string">
+    The tenant's primary contact email.
+  </ResponseField>
+
+  <ResponseField name="data.plan" type="string">
+    The subscription plan.
+  </ResponseField>
+
+  <ResponseField name="data.apiKey" type="string">
+    The API key for this tenant. **Store this securely - it's only shown once.**
+    
+    **Example:** `"tk_live_abc123xyz789def456uvw"`
+  </ResponseField>
+
+  <ResponseField name="data.config" type="object">
+    The provider configuration (sensitive values are masked).
+  </ResponseField>
+
+  <ResponseField name="data.status" type="string">
+    The account status. New accounts start as `active`.
+    
+    **Possible values:** `active`, `suspended`, `pending_verification`
+  </ResponseField>
+
+  <ResponseField name="data.limits" type="object">
+    Rate limits and quotas for this tenant based on their plan.
+  </ResponseField>
+
+  <Expandable title="data.limits properties">
+    <ResponseField name="data.limits.concurrentCalls" type="integer">
+      Maximum number of simultaneous active calls.
+    </ResponseField>
+
+    <ResponseField name="data.limits.callsPerMinute" type="integer">
+      Maximum call initiations per minute.
+    </ResponseField>
+
+    <ResponseField name="data.limits.apiRequestsPerMinute" type="integer">
+      Maximum API requests per minute.
+    </ResponseField>
+  </Expandable>
+
+  <ResponseField name="data.createdAt" type="string">
+    ISO 8601 timestamp of when the tenant was created.
+  </ResponseField>
+
+  <ResponseField name="data.updatedAt" type="string">
+    ISO 8601 timestamp of the last update.
+  </ResponseField>
+</Expandable>
+
+<ResponseField name="message" type="string">
+  A human-readable success message.
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.talkos.io/api/tenants/create \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: tk_master_admin_key_xyz" \
+  -d '{
+    "name": "Acme Corporation",
+    "email": "admin@acme.com",
+    "plan": "growth",
+    "config": {
+      "defaultProvider": "plivo",
+      "plivo": {
+        "authId": "MAXXXXXXXXXXXXXXXXXX",
+        "authToken": "YzE4NGMyZWE4ZDk2MmI4NDhkYzU5YjQ1ZDk4Njk4"
+      }
+    },
+    "webhookUrl": "https://api.acme.com/webhooks/talkos",
+    "metadata": {
+      "internalId": "cust_12345",
+      "salesRep": "john@internal.com"
+    }
+  }'
+```
+
+```javascript Node.js
+const response = await fetch('https://api.talkos.io/api/tenants/create', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'tk_master_admin_key_xyz'
+  },
+  body: JSON.stringify({
+    name: 'Acme Corporation',
+    email: 'admin@acme.com',
+    plan: 'growth',
+    config: {
+      defaultProvider: 'plivo',
+      plivo: {
+        authId: 'MAXXXXXXXXXXXXXXXXXX',
+        authToken: 'YzE4NGMyZWE4ZDk2MmI4NDhkYzU5YjQ1ZDk4Njk4'
+      }
+    },
+    webhookUrl: 'https://api.acme.com/webhooks/talkos',
+    metadata: {
+      internalId: 'cust_12345',
+      salesRep: 'john@internal.com'
+    }
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/tenants/create',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'tk_master_admin_key_xyz'
+    },
+    json={
+        'name': 'Acme Corporation',
+        'email': 'admin@acme.com',
+        'plan': 'growth',
+        'config': {
+            'defaultProvider': 'plivo',
+            'plivo': {
+                'authId': 'MAXXXXXXXXXXXXXXXXXX',
+                'authToken': 'YzE4NGMyZWE4ZDk2MmI4NDhkYzU5YjQ1ZDk4Njk4'
+            }
+        },
+        'webhookUrl': 'https://api.acme.com/webhooks/talkos',
+        'metadata': {
+            'internalId': 'cust_12345',
+            'salesRep': 'john@internal.com'
+        }
+    }
+)
+
+print(response.json())
+```
+
+</CodeGroup>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "tenant_01HXYZ123456",
+    "name": "Acme Corporation",
+    "email": "admin@acme.com",
+    "plan": "growth",
+    "apiKey": "tk_live_abc123xyz789def456uvw012rst345",
+    "config": {
+      "defaultProvider": "plivo",
+      "plivo": {
+        "authId": "MAXXXXXXXXXXXXXXXXXX",
+        "authToken": "••••••••••••••••••••"
+      }
+    },
+    "webhookUrl": "https://api.acme.com/webhooks/talkos",
+    "metadata": {
+      "internalId": "cust_12345",
+      "salesRep": "john@internal.com"
+    },
+    "status": "active",
+    "limits": {
+      "concurrentCalls": 50,
+      "callsPerMinute": 50,
+      "apiRequestsPerMinute": 300
+    },
+    "createdAt": "2026-02-18T14:30:00.000Z",
+    "updatedAt": "2026-02-18T14:30:00.000Z"
+  },
+  "message": "Tenant created successfully"
+}
+```
+
+## Error Responses
+
+<CodeGroup>
+
+```json 400 - Validation Error
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Validation failed",
+    "details": {
+      "errors": [
+        {
+          "field": "email",
+          "message": "Invalid email format"
+        },
+        {
+          "field": "plan",
+          "message": "Plan must be one of: starter, growth, enterprise"
+        }
+      ]
+    }
+  },
+  "requestId": "req_abc123xyz789"
+}
+```
+
+```json 400 - Missing Provider Config
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_PROVIDER_CONFIG",
+    "message": "Provider configuration is incomplete",
+    "details": {
+      "provider": "plivo",
+      "missing": ["authToken"]
+    }
+  },
+  "requestId": "req_def456uvw012"
+}
+```
+
+```json 401 - Unauthorized
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_API_KEY",
+    "message": "Invalid or missing API key",
+    "details": {}
+  },
+  "requestId": "req_ghi789rst345"
+}
+```
+
+```json 409 - Conflict
+{
+  "success": false,
+  "error": {
+    "code": "TENANT_EXISTS",
+    "message": "A tenant with this email already exists",
+    "details": {
+      "email": "admin@acme.com"
+    }
+  },
+  "requestId": "req_jkl012mno678"
+}
+```
+
+</CodeGroup>
+
+## Notes
+
+<Warning>
+  **Store the API key securely!** The API key is only returned once during tenant creation. If you lose it, you'll need to rotate the key using the [Rotate API Key](/api-reference/tenant/rotate-api-key) endpoint.
+</Warning>
+
+<Info>
+  After creating a tenant, you may want to:
+  - [Purchase phone numbers](/api-reference/numbers/purchase-number)
+  - [Configure agents](/api-reference/agents/create-agent)
+  - [Set up webhooks](/api-reference/webhooks/configure)
+</Info>

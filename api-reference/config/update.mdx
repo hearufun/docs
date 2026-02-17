@@ -1,0 +1,226 @@
+---
+title: "Update System Config"
+api: "PUT https://api.talkos.io/api/config"
+description: "Update server configuration fields"
+---
+
+Update server configuration fields. This is a partial update - only send the fields you want to change. Changes will propagate to all workers within 10 seconds.
+
+## Request Headers
+
+<ParamField header="x-updated-by" type="string">
+  Identifier for who made the change (for audit purposes).
+</ParamField>
+
+## Request Body
+
+<ParamField body="llmProvider" type="string">
+  LLM provider to use. Values: `groq`, `openai`.
+</ParamField>
+
+<ParamField body="groq" type="object">
+  Groq configuration.
+  <Expandable title="properties">
+    <ParamField body="apiKey" type="string">
+      Groq API key.
+    </ParamField>
+    <ParamField body="model" type="string">
+      Groq model name.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="openai" type="object">
+  OpenAI configuration.
+  <Expandable title="properties">
+    <ParamField body="apiKey" type="string">
+      OpenAI API key.
+    </ParamField>
+    <ParamField body="model" type="string">
+      OpenAI model name.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="elevenlabs" type="object">
+  ElevenLabs TTS configuration.
+  <Expandable title="properties">
+    <ParamField body="apiKey" type="string">
+      ElevenLabs API key.
+    </ParamField>
+    <ParamField body="voiceId" type="string">
+      Default voice ID.
+    </ParamField>
+    <ParamField body="model" type="string">
+      TTS model name.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="deepgram" type="object">
+  Deepgram STT configuration.
+  <Expandable title="properties">
+    <ParamField body="apiKey" type="string">
+      Deepgram API key.
+    </ParamField>
+    <ParamField body="model" type="string">
+      STT model name.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="dialerProvider" type="string">
+  Dialer provider. Values: `twilio`, `exotel`.
+</ParamField>
+
+<ParamField body="twilio" type="object">
+  Twilio configuration.
+  <Expandable title="properties">
+    <ParamField body="accountSid" type="string">
+      Twilio Account SID.
+    </ParamField>
+    <ParamField body="authToken" type="string">
+      Twilio Auth Token.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="exotel" type="object">
+  Exotel configuration.
+  <Expandable title="properties">
+    <ParamField body="apiKey" type="string">
+      Exotel API key.
+    </ParamField>
+    <ParamField body="apiToken" type="string">
+      Exotel API token.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="timeouts" type="object">
+  Service timeout configuration.
+  <Expandable title="properties">
+    <ParamField body="llm" type="number">
+      LLM timeout in milliseconds.
+    </ParamField>
+    <ParamField body="stt" type="number">
+      STT timeout in milliseconds.
+    </ParamField>
+    <ParamField body="tts" type="number">
+      TTS timeout in milliseconds.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="defaults" type="object">
+  Default session settings.
+  <Expandable title="properties">
+    <ParamField body="maxDuration" type="number">
+      Default max session duration in seconds.
+    </ParamField>
+    <ParamField body="language" type="string">
+      Default language code.
+    </ParamField>
+    <ParamField body="speed" type="number">
+      Default TTS speed.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="features" type="object">
+  Feature toggles.
+  <Expandable title="properties">
+    <ParamField body="recording" type="boolean">
+      Enable recording.
+    </ParamField>
+    <ParamField body="analytics" type="boolean">
+      Enable analytics.
+    </ParamField>
+    <ParamField body="webhooks" type="boolean">
+      Enable webhooks.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<RequestExample>
+```bash cURL (Change LLM Provider)
+curl -X PUT https://api.talkos.io/api/config \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-updated-by: admin@example.com" \
+  -d '{
+    "llmProvider": "openai"
+  }'
+```
+
+```bash cURL (Update Voice)
+curl -X PUT https://api.talkos.io/api/config \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -d '{
+    "elevenlabs": {
+      "voiceId": "new-voice-id"
+    }
+  }'
+```
+
+```bash cURL (Update Multiple Fields)
+curl -X PUT https://api.talkos.io/api/config \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -d '{
+    "llmProvider": "groq",
+    "timeouts": {
+      "llm": 15000
+    },
+    "defaults": {
+      "maxDuration": 3600
+    }
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "message": "Config updated. Changes will reflect across all workers within 10 seconds.",
+  "version": 13,
+  "updatedFields": ["llmProvider", "timeouts", "defaults"],
+  "config": {
+    "llmProvider": "groq",
+    "timeouts": {
+      "llm": 15000,
+      "stt": 30000,
+      "tts": 15000
+    },
+    "defaults": {
+      "maxDuration": 3600,
+      "language": "en",
+      "speed": 1.0
+    },
+    "version": 13,
+    "updatedAt": "2026-02-17T14:45:00.000Z",
+    "updatedBy": "admin@example.com"
+  }
+}
+```
+
+```json 400
+{
+  "error": "No fields to update. Send a JSON body with the fields to change."
+}
+```
+
+```json 500
+{
+  "error": "Validation failed: timeouts.llm must be a positive number"
+}
+```
+</ResponseExample>
+
+## Notes
+
+- Immutable fields (`_id`, `__v`, `createdAt`) cannot be updated
+- The `version` field auto-increments with each update
+- Changes trigger immediate reload on the current worker and propagate to others via sync

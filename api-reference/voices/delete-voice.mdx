@@ -1,0 +1,103 @@
+---
+title: "Delete Voice"
+api: "DELETE https://api.talkos.io/api/voices/:voiceId"
+description: "Delete a custom cloned voice"
+---
+
+## Overview
+
+Permanently delete a custom cloned voice. This action cannot be undone. Preset voices cannot be deleted. Any AI agents using this voice will fall back to the default voice.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="voiceId" type="string" required>
+  The unique identifier of the voice to delete
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the voice was deleted successfully
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Confirmation message
+</ResponseField>
+
+<ResponseField name="deleted" type="object">
+  <Expandable title="properties">
+    <ResponseField name="voiceId" type="string">
+      ID of the deleted voice
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Name of the deleted voice
+    </ResponseField>
+    <ResponseField name="affectedAgents" type="number">
+      Number of agents that were using this voice
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X DELETE "https://api.talkos.io/api/voices/voice_4e5f6a7b-8c9d-0e1f-2a3b-4c5d6e7f8a9b" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "message": "Voice deleted successfully",
+  "deleted": {
+    "voiceId": "voice_4e5f6a7b-8c9d-0e1f-2a3b-4c5d6e7f8a9b",
+    "name": "Emma - Support Agent",
+    "affectedAgents": 2
+  }
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": "Cannot delete preset voices"
+}
+```
+
+```json 404
+{
+  "success": false,
+  "error": "Voice not found"
+}
+```
+</ResponseExample>
+
+<Warning>
+Deleting a voice that is currently assigned to AI agents will cause those agents to fall back to the default system voice. Consider updating agent configurations before deletion.
+</Warning>
+
+<Note>
+Voice deletion is permanent. The cloned voice model and all associated audio samples will be removed from the system.
+</Note>
+
+## Agent Impact
+
+When a voice is deleted, any agents using that voice will be automatically updated:
+
+| Scenario | Result |
+|----------|--------|
+| Agent has no fallback configured | Uses system default voice |
+| Agent has fallback voice configured | Uses fallback voice |
+| Voice in processing state | Deletion cancels processing |

@@ -1,0 +1,152 @@
+---
+title: "Add Tag to Call"
+description: "Add a tag to a specific call"
+api: "POST https://api.talkos.io/api/features/tags/:callUuid"
+---
+
+# Add Tag to Call
+
+Manually add a tag to a specific call. This can be used during or after the call.
+
+## Endpoint
+
+```
+POST /api/features/tags/:callUuid
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="callUuid" type="string" required>
+  Unique identifier of the call
+</ParamField>
+
+## Request Body
+
+<ParamField body="tag" type="string" required>
+  Name of the tag to add
+</ParamField>
+
+<ParamField body="addedBy" type="string">
+  Identifier of who added the tag (e.g., agent ID, "supervisor", "api")
+</ParamField>
+
+## Response
+
+<ResponseField name="callUuid" type="string">
+  The call UUID
+</ResponseField>
+
+<ResponseField name="tag" type="string">
+  The tag that was added
+</ResponseField>
+
+<ResponseField name="added" type="boolean">
+  Whether the tag was newly added (false if already existed)
+</ResponseField>
+
+<ResponseField name="addedBy" type="string">
+  Who added the tag
+</ResponseField>
+
+<ResponseField name="addedAt" type="string">
+  ISO 8601 timestamp when the tag was added
+</ResponseField>
+
+<ResponseField name="totalTags" type="number">
+  Total number of tags on this call
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/features/tags/call-abc123-def456 \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "tag": "vip-customer",
+    "addedBy": "agent-001"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/tags/call-abc123-def456', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  },
+  body: JSON.stringify({
+    tag: 'vip-customer',
+    addedBy: 'agent-001'
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/features/tags/call-abc123-def456',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    json={
+        'tag': 'vip-customer',
+        'addedBy': 'agent-001'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "callUuid": "call-abc123-def456",
+  "tag": "vip-customer",
+  "added": true,
+  "addedBy": "agent-001",
+  "addedAt": "2026-02-18T10:30:00.000Z",
+  "totalTags": 4
+}
+```
+
+```json 200 (Duplicate)
+{
+  "callUuid": "call-abc123-def456",
+  "tag": "vip-customer",
+  "added": false,
+  "addedBy": "agent-001",
+  "addedAt": "2026-02-18T10:25:00.000Z",
+  "totalTags": 4
+}
+```
+
+```json 400
+{
+  "error": "Maximum tags per call limit reached"
+}
+```
+
+```json 500
+{
+  "error": "Failed to add tag"
+}
+```
+</ResponseExample>

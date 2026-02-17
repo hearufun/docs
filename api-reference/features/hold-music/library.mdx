@@ -1,0 +1,126 @@
+---
+title: 'Get Music Library'
+api: 'GET https://api.talkos.io/api/features/hold-music/library'
+description: 'Get available hold music tracks'
+---
+
+Retrieve the list of available hold music tracks including built-in tracks and custom uploads.
+
+## Query Parameters
+
+<ParamField query="category" type="string">
+  Filter by music category: `classical`, `jazz`, `ambient`, `corporate`, `custom`.
+</ParamField>
+
+<ParamField query="includeCustom" type="boolean" default={true}>
+  Whether to include custom uploaded tracks.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request was successful.
+</ResponseField>
+
+<ResponseField name="tracks" type="array">
+  Array of available music tracks.
+  <Expandable title="track properties">
+    <ResponseField name="id" type="string">
+      Unique identifier for the track.
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Display name of the track.
+    </ResponseField>
+    <ResponseField name="category" type="string">
+      Music category.
+    </ResponseField>
+    <ResponseField name="duration" type="number">
+      Track duration in seconds.
+    </ResponseField>
+    <ResponseField name="isCustom" type="boolean">
+      Whether this is a custom uploaded track.
+    </ResponseField>
+    <ResponseField name="isDefault" type="boolean">
+      Whether this is currently set as the default track.
+    </ResponseField>
+    <ResponseField name="previewUrl" type="string">
+      URL to a 30-second preview of the track.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="totalCount" type="number">
+  Total number of tracks available.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/features/hold-music/library?category=classical" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/hold-music/library?category=classical', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/features/hold-music/library',
+    headers={
+        'Authorization': 'Bearer YOUR_API_KEY'
+    },
+    params={
+        'category': 'classical'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "tracks": [
+    {
+      "id": "track_classical_001",
+      "name": "Gentle Piano Suite",
+      "category": "classical",
+      "duration": 180,
+      "isCustom": false,
+      "isDefault": true,
+      "previewUrl": "https://cdn.talkos.io/hold-music/previews/classical_001.mp3"
+    },
+    {
+      "id": "track_classical_002",
+      "name": "Serene Strings",
+      "category": "classical",
+      "duration": 240,
+      "isCustom": false,
+      "isDefault": false,
+      "previewUrl": "https://cdn.talkos.io/hold-music/previews/classical_002.mp3"
+    },
+    {
+      "id": "track_custom_abc123",
+      "name": "Company Jingle",
+      "category": "custom",
+      "duration": 60,
+      "isCustom": true,
+      "isDefault": false,
+      "previewUrl": "https://cdn.talkos.io/hold-music/custom/tenant_xyz/abc123.mp3"
+    }
+  ],
+  "totalCount": 3
+}
+```
+</ResponseExample>

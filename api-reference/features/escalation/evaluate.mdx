@@ -1,0 +1,227 @@
+---
+title: "Evaluate Escalation Rules"
+description: "Manually evaluate escalation rules against call context"
+api: "POST https://api.talkos.io/api/features/escalation/evaluate"
+---
+
+# Evaluate Escalation Rules
+
+Manually evaluate all escalation rules against a provided call context. Useful for testing rules or triggering manual evaluation outside the automatic flow.
+
+## Endpoint
+
+```
+POST /api/features/escalation/evaluate
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Request Body
+
+<ParamField body="callUuid" type="string" required>
+  Unique identifier of the call to evaluate
+</ParamField>
+
+<ParamField body="callContext" type="object" required>
+  Context data for rule evaluation
+</ParamField>
+
+<ParamField body="callContext.sentiment" type="number">
+  Current sentiment score (-1 to 1)
+</ParamField>
+
+<ParamField body="callContext.consecutiveNegativeTurns" type="number">
+  Number of consecutive negative sentiment turns
+</ParamField>
+
+<ParamField body="callContext.emotion" type="string">
+  Detected emotion (e.g., `anger`, `frustration`, `neutral`, `happy`)
+</ParamField>
+
+<ParamField body="callContext.emotionConfidence" type="number">
+  Confidence score for emotion detection (0 to 1)
+</ParamField>
+
+<ParamField body="callContext.callDurationSeconds" type="number">
+  Duration of the call in seconds
+</ParamField>
+
+<ParamField body="callContext.keywords" type="array">
+  Array of detected keywords
+</ParamField>
+
+<ParamField body="callContext.piiDetected" type="boolean">
+  Whether PII was detected
+</ParamField>
+
+<ParamField body="callContext.profanityDetected" type="boolean">
+  Whether profanity was detected
+</ParamField>
+
+<ParamField body="callContext.mosScore" type="number">
+  Mean Opinion Score for audio quality (1 to 5)
+</ParamField>
+
+<ParamField body="callContext.silenceDurationSeconds" type="number">
+  Current silence duration in seconds
+</ParamField>
+
+## Response
+
+<ResponseField name="triggered" type="array">
+  Array of rules that were triggered
+</ResponseField>
+
+<ResponseField name="triggered[].ruleId" type="string">
+  ID of the triggered rule
+</ResponseField>
+
+<ResponseField name="triggered[].ruleName" type="string">
+  Name of the triggered rule
+</ResponseField>
+
+<ResponseField name="triggered[].priority" type="string">
+  Priority level of the triggered rule
+</ResponseField>
+
+<ResponseField name="triggered[].action" type="object">
+  Action to be taken
+</ResponseField>
+
+<ResponseField name="triggered[].triggeredAt" type="string">
+  ISO 8601 timestamp when the rule was triggered
+</ResponseField>
+
+<ResponseField name="count" type="number">
+  Number of rules triggered
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/features/escalation/evaluate \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "callUuid": "call-abc123-def456",
+    "callContext": {
+      "sentiment": -0.7,
+      "consecutiveNegativeTurns": 4,
+      "emotion": "anger",
+      "emotionConfidence": 0.85,
+      "callDurationSeconds": 320,
+      "keywords": ["refund", "manager"],
+      "profanityDetected": false
+    }
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/escalation/evaluate', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  },
+  body: JSON.stringify({
+    callUuid: 'call-abc123-def456',
+    callContext: {
+      sentiment: -0.7,
+      consecutiveNegativeTurns: 4,
+      emotion: 'anger',
+      emotionConfidence: 0.85,
+      callDurationSeconds: 320,
+      keywords: ['refund', 'manager'],
+      profanityDetected: false
+    }
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/features/escalation/evaluate',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    json={
+        'callUuid': 'call-abc123-def456',
+        'callContext': {
+            'sentiment': -0.7,
+            'consecutiveNegativeTurns': 4,
+            'emotion': 'anger',
+            'emotionConfidence': 0.85,
+            'callDurationSeconds': 320,
+            'keywords': ['refund', 'manager'],
+            'profanityDetected': False
+        }
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "triggered": [
+    {
+      "ruleId": "rule_negative_sentiment_3x",
+      "ruleName": "3+ Negative Turns",
+      "priority": "high",
+      "action": { "type": "transfer", "target": "senior_agent" },
+      "triggeredAt": "2026-02-18T10:30:00.000Z"
+    },
+    {
+      "ruleId": "rule_anger_detected",
+      "ruleName": "Anger Detection",
+      "priority": "critical",
+      "action": { "type": "transfer", "target": "supervisor" },
+      "triggeredAt": "2026-02-18T10:30:00.000Z"
+    }
+  ],
+  "count": 2
+}
+```
+
+```json 500
+{
+  "error": "Failed to evaluate escalation rules"
+}
+```
+</ResponseExample>
+
+## Available Context Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `sentiment` | number | Sentiment score from -1 (negative) to 1 (positive) |
+| `consecutiveNegativeTurns` | number | Count of consecutive negative sentiment turns |
+| `emotion` | string | Detected emotion (anger, frustration, sadness, neutral, happy) |
+| `emotionConfidence` | number | Confidence of emotion detection (0-1) |
+| `callDurationSeconds` | number | Total call duration in seconds |
+| `keywords` | array | Array of detected keywords |
+| `piiDetected` | boolean | Whether PII was detected |
+| `piiCategory` | string | Category of PII (ssn, credit_card, etc.) |
+| `profanityDetected` | boolean | Whether profanity was detected |
+| `mosScore` | number | Audio quality Mean Opinion Score (1-5) |
+| `silenceDurationSeconds` | number | Duration of current silence |
+| `callsIn24h` | number | Number of calls from same number in 24 hours |
+| `customerTier` | string | Customer tier level |
+| `intent` | string | Detected caller intent |

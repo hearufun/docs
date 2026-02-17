@@ -1,0 +1,234 @@
+---
+title: "Record DTMF Response"
+description: "Record a DTMF (keypad) response for an IVR survey question"
+api: "POST https://api.talkos.io/api/features/survey/:surveyId/dtmf"
+---
+
+# Record DTMF Response
+
+Record a DTMF (Dual-Tone Multi-Frequency) keypad response for an IVR survey question.
+
+## Endpoint
+
+```
+POST /api/features/survey/:surveyId/dtmf
+```
+
+## Path Parameters
+
+<ParamField path="surveyId" type="string" required>
+  The unique identifier of the survey
+</ParamField>
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Request Body
+
+<ParamField body="questionId" type="string" required>
+  The ID of the question being answered (from IVR prompts)
+</ParamField>
+
+<ParamField body="digit" type="string" required>
+  The DTMF digit pressed by the customer (0-9, *, #)
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the response was recorded successfully
+</ResponseField>
+
+<ResponseField name="value" type="string | number">
+  The interpreted value of the response
+</ResponseField>
+
+<ResponseField name="action" type="string">
+  Action taken (only present if survey was skipped)
+</ResponseField>
+
+<ResponseField name="reason" type="string">
+  Error reason if the response was not recorded
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST https://api.talkos.io/api/features/survey/survey_1739836800000_x7k2m9/dtmf \
+  -H "x-api-key: tk_live_xxxxxxxxxxxxxxxxxxxx" \
+  -H "x-tenant-id: tenant_abc123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "questionId": "q_csat_1",
+    "digit": "5"
+  }'
+```
+
+## Example Response - Success
+
+```json
+{
+  "success": true,
+  "value": 5
+}
+```
+
+## Example Response - Yes/No Question
+
+```bash
+curl -X POST https://api.talkos.io/api/features/survey/survey_1739836800000_x7k2m9/dtmf \
+  -H "x-api-key: tk_live_xxxxxxxxxxxxxxxxxxxx" \
+  -H "x-tenant-id: tenant_abc123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "questionId": "q_csat_2",
+    "digit": "1"
+  }'
+```
+
+```json
+{
+  "success": true,
+  "value": "yes"
+}
+```
+
+## Example Response - Skip Survey
+
+```bash
+curl -X POST https://api.talkos.io/api/features/survey/survey_1739836800000_x7k2m9/dtmf \
+  -H "x-api-key: tk_live_xxxxxxxxxxxxxxxxxxxx" \
+  -H "x-tenant-id: tenant_abc123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "questionId": "q_csat_1",
+    "digit": "*"
+  }'
+```
+
+```json
+{
+  "success": true,
+  "action": "skipped"
+}
+```
+
+## Error Responses
+
+### Survey Not Found
+
+```json
+{
+  "success": false,
+  "reason": "survey_not_found"
+}
+```
+
+### Question Not Found
+
+```json
+{
+  "success": false,
+  "reason": "question_not_found"
+}
+```
+
+### Invalid Value
+
+```json
+{
+  "success": false,
+  "reason": "invalid_value"
+}
+```
+
+## DTMF Mapping Reference
+
+### Scale Questions (1-5)
+
+| Digit | Value | Meaning |
+|-------|-------|---------|
+| 1 | 1 | Very Unsatisfied |
+| 2 | 2 | Unsatisfied |
+| 3 | 3 | Neutral |
+| 4 | 4 | Satisfied |
+| 5 | 5 | Very Satisfied |
+
+### Scale Questions (0-10 NPS)
+
+| Digit | Value |
+|-------|-------|
+| 0 | 0 |
+| 1-9 | 1-9 |
+| # | 10 |
+
+### Yes/No Questions
+
+| Digit | Value |
+|-------|-------|
+| 1 | yes |
+| 2 | no |
+
+### Skip Survey
+
+| Digit | Action |
+|-------|--------|
+| * | Skip entire survey |
+
+## Integration Flow
+
+```javascript
+// IVR callback handler
+app.post('/ivr/dtmf-callback', async (req, res) => {
+  const { surveyId, questionId, digits } = req.body;
+  
+  // Record the response
+  const result = await fetch(
+    `https://api.talkos.io/api/features/survey/${surveyId}/dtmf`,
+    {
+      method: 'POST',
+      headers: {
+        'x-api-key': API_KEY,
+        'x-tenant-id': TENANT_ID,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        questionId,
+        digit: digits
+      })
+    }
+  ).then(r => r.json());
+  
+  if (result.action === 'skipped') {
+    // Customer skipped survey
+    return res.json({ action: 'hangup', message: 'Survey skipped. Goodbye!' });
+  }
+  
+  if (!result.success) {
+    // Invalid input, replay the question
+    return res.json({ action: 'replay_question' });
+  }
+  
+  // Move to next question
+  return res.json({ action: 'next_question' });
+});
+```
+
+## Notes
+
+- The `*` key always skips the entire survey regardless of which question is being asked
+- Invalid digits for a question type return `invalid_value` error
+- Recording a response changes survey status to `in_progress`
+- Survey automatically completes when all required questions are answered
+- Each response includes a timestamp for analytics

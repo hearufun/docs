@@ -1,0 +1,194 @@
+---
+title: "Get Escalation Stats"
+description: "Retrieve escalation statistics and analytics"
+api: "GET https://api.talkos.io/api/features/escalation/stats"
+---
+
+# Get Escalation Stats
+
+Retrieve comprehensive escalation statistics and analytics for your tenant within a specified time window.
+
+## Endpoint
+
+```
+GET /api/features/escalation/stats
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="timeWindow" type="number">
+  Time window in milliseconds (default: 3600000 = 1 hour)
+</ParamField>
+
+## Response
+
+<ResponseField name="totalEscalations" type="number">
+  Total number of escalations in the time window
+</ResponseField>
+
+<ResponseField name="byPriority" type="object">
+  Escalations grouped by priority level
+</ResponseField>
+
+<ResponseField name="byPriority.low" type="number">
+  Count of low priority escalations
+</ResponseField>
+
+<ResponseField name="byPriority.medium" type="number">
+  Count of medium priority escalations
+</ResponseField>
+
+<ResponseField name="byPriority.high" type="number">
+  Count of high priority escalations
+</ResponseField>
+
+<ResponseField name="byPriority.critical" type="number">
+  Count of critical priority escalations
+</ResponseField>
+
+<ResponseField name="byAction" type="object">
+  Escalations grouped by action type
+</ResponseField>
+
+<ResponseField name="byAction.transfer" type="number">
+  Count of transfer actions
+</ResponseField>
+
+<ResponseField name="byAction.notify" type="number">
+  Count of notify actions
+</ResponseField>
+
+<ResponseField name="byAction.flag" type="number">
+  Count of flag actions
+</ResponseField>
+
+<ResponseField name="topRules" type="array">
+  Most frequently triggered rules
+</ResponseField>
+
+<ResponseField name="topRules[].ruleId" type="string">
+  Rule identifier
+</ResponseField>
+
+<ResponseField name="topRules[].ruleName" type="string">
+  Rule name
+</ResponseField>
+
+<ResponseField name="topRules[].count" type="number">
+  Number of times triggered
+</ResponseField>
+
+<ResponseField name="resolutionRate" type="number">
+  Percentage of escalations that have been resolved
+</ResponseField>
+
+<ResponseField name="averageResolutionTimeMs" type="number">
+  Average time to resolve escalations in milliseconds
+</ResponseField>
+
+<ResponseField name="timeWindow" type="number">
+  The time window used for these stats in milliseconds
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/features/escalation/stats?timeWindow=86400000" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/escalation/stats?timeWindow=86400000', {
+  method: 'GET',
+  headers: {
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/features/escalation/stats',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    params={
+        'timeWindow': 86400000  # 24 hours
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "totalEscalations": 47,
+  "byPriority": {
+    "low": 5,
+    "medium": 18,
+    "high": 16,
+    "critical": 8
+  },
+  "byAction": {
+    "transfer": 24,
+    "notify": 15,
+    "flag": 8
+  },
+  "topRules": [
+    {
+      "ruleId": "rule_negative_sentiment_3x",
+      "ruleName": "3+ Negative Turns",
+      "count": 15
+    },
+    {
+      "ruleId": "rule_long_call",
+      "ruleName": "Long Call Duration",
+      "count": 12
+    },
+    {
+      "ruleId": "rule_anger_detected",
+      "ruleName": "Anger Detection",
+      "count": 8
+    }
+  ],
+  "resolutionRate": 72.3,
+  "averageResolutionTimeMs": 180000,
+  "timeWindow": 86400000
+}
+```
+
+```json 500
+{
+  "error": "Failed to retrieve escalation stats"
+}
+```
+</ResponseExample>
+
+## Common Time Windows
+
+| Duration | Milliseconds |
+|----------|--------------|
+| 1 hour | 3600000 |
+| 6 hours | 21600000 |
+| 12 hours | 43200000 |
+| 24 hours | 86400000 |
+| 7 days | 604800000 |
+| 30 days | 2592000000 |

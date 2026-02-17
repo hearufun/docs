@@ -1,0 +1,69 @@
+---
+title: "Delete Admin User"
+api: "DELETE https://api.talkos.io/api/auth/admin/users/{userId}"
+description: "Delete an admin user from the system"
+---
+
+Permanently delete an admin user. This endpoint is restricted to users with the "admin" role.
+
+## Authentication
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token from login. Format: `Bearer {token}`
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="userId" type="string" required>
+  The unique identifier of the admin user to delete.
+</ParamField>
+
+## Authorization
+
+This endpoint requires the `admin` role. Regular users will receive a 403 Forbidden response.
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the deletion was successful.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Status message confirming deletion.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X DELETE https://api.talkos.io/api/auth/admin/users/507f1f77bcf86cd799439012 \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "message": "User deleted successfully"
+}
+```
+
+```json 403
+{
+  "error": "Not authorized"
+}
+```
+
+```json 404
+{
+  "error": "User not found"
+}
+```
+</ResponseExample>
+
+<Warning>
+This action is irreversible. The deleted user will permanently lose access to the system and all associated audit logs will be preserved for compliance.
+</Warning>
+
+<Note>
+You cannot delete your own account through this endpoint. Contact a super admin to deactivate your account if needed.
+</Note>

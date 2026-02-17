@@ -1,0 +1,70 @@
+---
+title: "Get Compliance Metrics"
+api: "GET https://api.talkos.io/api/compliance/metrics"
+description: "Retrieve compliance metrics and statistics for your tenant"
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X GET https://api.talkos.io/api/compliance/metrics \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "metrics": {
+    "consent": {
+      "totalRecords": 15420,
+      "granted": {
+        "call": 12500,
+        "sms": 8900,
+        "marketing": 5200
+      },
+      "revoked": {
+        "call": 450,
+        "sms": 620,
+        "marketing": 1100
+      },
+      "consentRate": 0.87
+    },
+    "dataRetention": {
+      "currentPolicy": 90,
+      "lastEnforced": "2026-02-15T00:00:00Z",
+      "recordsDeleted": 3450,
+      "storageReclaimed": "2.4GB"
+    },
+    "auditLog": {
+      "totalEntries": 45230,
+      "last30Days": 8920,
+      "topActions": [
+        { "action": "consent_recorded", "count": 3200 },
+        { "action": "call_initiated", "count": 2800 },
+        { "action": "data_exported", "count": 450 }
+      ]
+    },
+    "compliance": {
+      "dncListSize": 2340,
+      "dncChecksPerformed": 125000,
+      "dncViolationsBlocked": 890,
+      "pciCompliantCalls": 45000,
+      "hipaaCompliantCalls": 12000
+    },
+    "generatedAt": "2026-02-18T10:30:00Z"
+  }
+}
+```
+</ResponseExample>

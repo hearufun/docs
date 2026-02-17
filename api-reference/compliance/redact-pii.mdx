@@ -1,0 +1,202 @@
+---
+title: "Redact PII"
+description: "Redact personally identifiable information from text"
+api: "POST https://api.talkos.io/api/compliance/pii/redact"
+---
+
+# Redact PII
+
+Remove or mask personally identifiable information (PII) from text content. Returns the sanitized text with PII replaced by redaction markers.
+
+## Endpoint
+
+```
+POST /api/compliance/pii/redact
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Request Body
+
+<ParamField body="text" type="string" required>
+  The text content to redact PII from (max 50,000 characters)
+</ParamField>
+
+<ParamField body="entities" type="array">
+  Optional array of specific PII types to redact. If omitted, all detected PII is redacted.
+  Valid values: `PERSON_NAME`, `EMAIL`, `PHONE`, `SSN`, `CREDIT_CARD`, `ADDRESS`, `DATE_OF_BIRTH`, `DRIVER_LICENSE`, `PASSPORT`, `IP_ADDRESS`, `BANK_ACCOUNT`
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the redaction was performed successfully
+</ResponseField>
+
+<ResponseField name="originalText" type="string">
+  The original input text (for reference)
+</ResponseField>
+
+<ResponseField name="redactedText" type="string">
+  The text with PII replaced by redaction markers
+</ResponseField>
+
+<ResponseField name="redactedCount" type="number">
+  Total number of PII instances redacted
+</ResponseField>
+
+<ResponseField name="redactions" type="array">
+  Array of redaction details
+</ResponseField>
+
+<ResponseField name="redactions[].type" type="string">
+  Type of PII that was redacted
+</ResponseField>
+
+<ResponseField name="redactions[].original" type="string">
+  The original PII value that was redacted
+</ResponseField>
+
+<ResponseField name="redactions[].replacement" type="string">
+  The redaction marker used
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/compliance/pii/redact \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "text": "My name is John Smith and my email is john.smith@example.com. My SSN is 123-45-6789."
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/compliance/pii/redact', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  },
+  body: JSON.stringify({
+    text: 'My name is John Smith and my email is john.smith@example.com. My SSN is 123-45-6789.'
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/compliance/pii/redact',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    json={
+        'text': 'My name is John Smith and my email is john.smith@example.com. My SSN is 123-45-6789.'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json Full Redaction Response
+{
+  "success": true,
+  "originalText": "My name is John Smith and my email is john.smith@example.com. My SSN is 123-45-6789.",
+  "redactedText": "My name is [PERSON_NAME] and my email is [EMAIL]. My SSN is [SSN].",
+  "redactedCount": 3,
+  "redactions": [
+    {
+      "type": "PERSON_NAME",
+      "original": "John Smith",
+      "replacement": "[PERSON_NAME]"
+    },
+    {
+      "type": "EMAIL",
+      "original": "john.smith@example.com",
+      "replacement": "[EMAIL]"
+    },
+    {
+      "type": "SSN",
+      "original": "123-45-6789",
+      "replacement": "[SSN]"
+    }
+  ]
+}
+```
+
+```json Selective Redaction Request
+// Request with specific entities
+{
+  "text": "Contact John Smith at john@example.com or 415-555-1234",
+  "entities": ["EMAIL", "PHONE"]
+}
+
+// Response - only EMAIL and PHONE redacted
+{
+  "success": true,
+  "originalText": "Contact John Smith at john@example.com or 415-555-1234",
+  "redactedText": "Contact John Smith at [EMAIL] or [PHONE]",
+  "redactedCount": 2,
+  "redactions": [
+    {
+      "type": "EMAIL",
+      "original": "john@example.com",
+      "replacement": "[EMAIL]"
+    },
+    {
+      "type": "PHONE",
+      "original": "415-555-1234",
+      "replacement": "[PHONE]"
+    }
+  ]
+}
+```
+</ResponseExample>
+
+## Supported PII Types
+
+| Type | Redaction Marker | Example |
+|------|------------------|---------|
+| `PERSON_NAME` | `[PERSON_NAME]` | John Smith → [PERSON_NAME] |
+| `EMAIL` | `[EMAIL]` | john@example.com → [EMAIL] |
+| `PHONE` | `[PHONE]` | 415-555-1234 → [PHONE] |
+| `SSN` | `[SSN]` | 123-45-6789 → [SSN] |
+| `CREDIT_CARD` | `[CREDIT_CARD]` | 4111-1111-1111-1111 → [CREDIT_CARD] |
+| `ADDRESS` | `[ADDRESS]` | 123 Main St → [ADDRESS] |
+| `DATE_OF_BIRTH` | `[DOB]` | 01/15/1990 → [DOB] |
+| `DRIVER_LICENSE` | `[DRIVER_LICENSE]` | D1234567 → [DRIVER_LICENSE] |
+| `PASSPORT` | `[PASSPORT]` | AB1234567 → [PASSPORT] |
+| `IP_ADDRESS` | `[IP_ADDRESS]` | 192.168.1.1 → [IP_ADDRESS] |
+| `BANK_ACCOUNT` | `[BANK_ACCOUNT]` | 1234567890 → [BANK_ACCOUNT] |
+
+## Notes
+
+<Info>
+Use the `entities` parameter to selectively redact specific types of PII while preserving others. This is useful when you need to keep certain information for business purposes.
+</Info>
+
+<Warning>
+The `originalText` field contains the unredacted input. If you don't need it, avoid storing the full response to maintain data minimization compliance.
+</Warning>
+
+<Tip>
+For call transcripts, consider automatic PII redaction by enabling it in your tenant configuration. This applies redaction before transcript storage.
+</Tip>

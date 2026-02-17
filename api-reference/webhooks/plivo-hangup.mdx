@@ -1,0 +1,130 @@
+---
+title: "Plivo Hangup Webhook"
+api: "POST https://api.talkos.io/api/calls/plivo/hangup"
+description: "Webhook called when a Plivo call ends"
+---
+
+This webhook is called by Plivo when a call ends (either party hangs up, or the call fails). TalkOS uses this to trigger post-call processing including analytics, transcription storage, and webhook notifications.
+
+<Note>
+This endpoint is called by Plivo's servers, not by your application directly. Configure this URL in your Plivo application settings.
+</Note>
+
+## Request Parameters
+
+Plivo sends these parameters as form-encoded data or query parameters:
+
+<ParamField query="CallUUID" type="string">
+  Unique identifier for the call assigned by Plivo.
+</ParamField>
+
+<ParamField query="From" type="string">
+  The caller's phone number in E.164 format.
+</ParamField>
+
+<ParamField query="To" type="string">
+  The recipient's phone number in E.164 format.
+</ParamField>
+
+<ParamField query="HangupCause" type="string">
+  The reason the call ended. Common values:
+  - `NORMAL_CLEARING` - Normal hangup
+  - `USER_BUSY` - User was busy
+  - `NO_ANSWER` - No answer
+  - `CALL_REJECTED` - Call was rejected
+  - `INVALID_NUMBER_FORMAT` - Invalid phone number
+  - `ORIGINATOR_CANCEL` - Caller cancelled
+</ParamField>
+
+<ParamField query="Duration" type="string">
+  Total call duration in seconds.
+</ParamField>
+
+<ParamField query="BillDuration" type="string">
+  Billable duration in seconds (after answer).
+</ParamField>
+
+<ParamField query="EndTime" type="string">
+  Timestamp when the call ended.
+</ParamField>
+
+<ParamField query="Direction" type="string">
+  Call direction: "inbound" or "outbound".
+</ParamField>
+
+## Response
+
+TalkOS always returns a JSON acknowledgment:
+
+```json
+{
+  "status": "ok"
+}
+```
+
+## Post-Call Processing
+
+When this webhook is received, TalkOS triggers:
+
+1. **Call State Cleanup**: Remove call from active Redis state
+2. **Transcript Finalization**: Save complete conversation transcript
+3. **Analytics Processing**: Run AI analysis on the conversation
+4. **Webhook Notification**: POST results to the caller's `webhookUrl`
+5. **Recording Processing**: Finalize and store any recordings
+
+## Webhook Payload
+
+If a `webhookUrl` was provided when starting the call, TalkOS will POST the call results:
+
+```json
+{
+  "callUuid": "abc123-def456",
+  "phoneNumber": "+919876543210",
+  "status": "completed",
+  "duration": 245,
+  "hangupCause": "NORMAL_CLEARING",
+  "transcript": [...],
+  "analytics": {
+    "summary": "Customer inquiry about product pricing...",
+    "sentiment": "positive",
+    "topics": ["pricing", "features"]
+  },
+  "metadata": {
+    "leadId": "lead-123"
+  }
+}
+```
+
+<RequestExample>
+```bash cURL (Simulated)
+curl -X POST https://api.talkos.io/api/calls/plivo/hangup \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "CallUUID=abc123-def456" \
+  -d "From=+14155551234" \
+  -d "To=+919876543210" \
+  -d "HangupCause=NORMAL_CLEARING" \
+  -d "Duration=245" \
+  -d "BillDuration=240" \
+  -d "Direction=outbound"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "status": "ok"
+}
+```
+</ResponseExample>
+
+## Hangup Causes
+
+| Cause | Description |
+|-------|-------------|
+| `NORMAL_CLEARING` | Normal call termination |
+| `USER_BUSY` | Recipient was on another call |
+| `NO_ANSWER` | Call timed out without answer |
+| `CALL_REJECTED` | Call was actively rejected |
+| `ORIGINATOR_CANCEL` | Caller hung up before answer |
+| `RECOVERY_ON_TIMER_EXPIRE` | Network timeout |
+| `NORMAL_TEMPORARY_FAILURE` | Temporary network issue |

@@ -1,33 +1,204 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: 'API Introduction'
+description: 'Overview of the TalkOS Voice Calling Platform API'
 ---
 
+# TalkOS API
+
+The TalkOS API is a RESTful API that allows you to programmatically manage voice calls, AI agents, phone numbers, and all aspects of your voice calling platform.
+
+## Base URL
+
+All API requests should be made to:
+
+```
+https://api.talkos.io
+```
+
+For development and testing:
+
+```
+https://staging-api.talkos.io
+```
+
+## API Versioning
+
+The TalkOS API uses URL-based versioning. The current stable version is **v1**.
+
+```
+https://api.talkos.io/api/v1/calls
+```
+
 <Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
+  When no version is specified, requests default to the latest stable version (v1).
 </Note>
-
-## Welcome
-
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
-
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+All API requests require authentication using two headers:
+
+| Header | Description |
+|--------|-------------|
+| `x-api-key` | Your unique API key for authentication |
+| `x-tenant-id` | Your tenant identifier |
+
+```bash
+curl https://api.talkos.io/api/calls \
+  -H "x-api-key: your_api_key_here" \
+  -H "x-tenant-id: your_tenant_id_here"
+```
+
+<Warning>
+  Never expose your API key in client-side code or public repositories. Always keep it secure on your server.
+</Warning>
+
+## Request Format
+
+### Content Type
+
+All requests with a body must use JSON format:
+
+```
+Content-Type: application/json
+```
+
+### Request Structure
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+{
+  "field_name": "value",
+  "nested_object": {
+    "nested_field": "nested_value"
+  },
+  "array_field": ["item1", "item2"]
+}
 ```
+
+## Response Format
+
+All responses are returned in JSON format with consistent structure.
+
+### Successful Response
+
+```json
+{
+  "success": true,
+  "data": {
+    // Response data here
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+
+### Error Response
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid phone number format",
+    "details": {
+      "field": "phoneNumber",
+      "received": "invalid"
+    }
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+
+## HTTP Methods
+
+| Method | Description |
+|--------|-------------|
+| `GET` | Retrieve resources |
+| `POST` | Create new resources |
+| `PUT` | Update existing resources (full replacement) |
+| `PATCH` | Partial update of resources |
+| `DELETE` | Remove resources |
+
+## Pagination
+
+List endpoints support pagination using the following query parameters:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | integer | 1 | Page number (1-indexed) |
+| `limit` | integer | 20 | Items per page (max: 100) |
+| `sortBy` | string | `createdAt` | Field to sort by |
+| `sortOrder` | string | `desc` | Sort direction (`asc` or `desc`) |
+
+### Pagination Response
+
+```json
+{
+  "success": true,
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "totalItems": 150,
+    "totalPages": 8,
+    "hasNextPage": true,
+    "hasPrevPage": false
+  }
+}
+```
+
+## Idempotency
+
+For `POST` requests that create resources, you can include an `Idempotency-Key` header to ensure the request is processed only once:
+
+```bash
+curl -X POST https://api.talkos.io/api/calls \
+  -H "x-api-key: your_api_key" \
+  -H "x-tenant-id: your_tenant_id" \
+  -H "Idempotency-Key: unique_request_id_123" \
+  -H "Content-Type: application/json" \
+  -d '{"phoneNumber": "+919876543210"}'
+```
+
+<Info>
+  Idempotency keys are valid for 24 hours. After that, a new request with the same key will be processed as a new request.
+</Info>
+
+## Webhooks
+
+TalkOS can send real-time notifications to your server when events occur. Configure webhooks in your tenant settings to receive:
+
+- Call started/ended events
+- Transcription updates
+- Agent responses
+- Error notifications
+
+See the [Webhooks documentation](/api-reference/webhooks/overview) for details.
+
+## SDKs & Libraries
+
+Official SDKs are available for:
+
+<CardGroup cols={3}>
+  <Card title="Node.js" icon="node-js" href="/sdks/nodejs">
+    npm install @talkos/sdk
+  </Card>
+  <Card title="Python" icon="python" href="/sdks/python">
+    pip install talkos
+  </Card>
+  <Card title="Go" icon="golang" href="/sdks/go">
+    go get github.com/talkos/go-sdk
+  </Card>
+</CardGroup>
+
+## Support
+
+Need help? Contact us:
+
+- **Email**: support@talkos.io
+- **Discord**: [Join our community](https://discord.gg/talkos)
+- **Status Page**: [status.talkos.io](https://status.talkos.io)

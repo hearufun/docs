@@ -1,0 +1,244 @@
+---
+title: "GDPR Data Erasure"
+description: "Submit a GDPR data erasure request for a user"
+api: "POST https://api.talkos.io/api/compliance/gdpr/erasure"
+---
+
+# GDPR Data Erasure
+
+Submit a GDPR Article 17 "Right to be Forgotten" request to permanently delete all personal data associated with a user. This action is irreversible.
+
+## Endpoint
+
+```
+POST /api/compliance/gdpr/erasure
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Request Body
+
+<ParamField body="email" type="string">
+  Email address of the data subject. At least one identifier required.
+</ParamField>
+
+<ParamField body="phoneNumber" type="string">
+  Phone number of the data subject in E.164 format. At least one identifier required.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the erasure request was accepted
+</ResponseField>
+
+<ResponseField name="requestId" type="string">
+  Unique identifier for this GDPR erasure request
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current status: `processing`, `completed`, `partial`, `no_data_found`
+</ResponseField>
+
+<ResponseField name="dataSubject" type="object">
+  Identifiers used to locate the data subject
+</ResponseField>
+
+<ResponseField name="deletedData" type="object">
+  Summary of data categories that were deleted
+</ResponseField>
+
+<ResponseField name="deletedData.profile" type="boolean">
+  Whether profile data was deleted
+</ResponseField>
+
+<ResponseField name="deletedData.calls" type="number">
+  Number of call records deleted
+</ResponseField>
+
+<ResponseField name="deletedData.recordings" type="number">
+  Number of call recordings deleted
+</ResponseField>
+
+<ResponseField name="deletedData.transcripts" type="number">
+  Number of transcripts deleted
+</ResponseField>
+
+<ResponseField name="deletedData.voicePrint" type="boolean">
+  Whether voice biometrics data was deleted
+</ResponseField>
+
+<ResponseField name="deletedData.analytics" type="boolean">
+  Whether analytics data was deleted
+</ResponseField>
+
+<ResponseField name="retainedData" type="array">
+  List of data that could not be deleted (with legal basis)
+</ResponseField>
+
+<ResponseField name="completedAt" type="string">
+  ISO 8601 timestamp when the erasure was completed
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/compliance/gdpr/erasure \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "email": "john.smith@example.com",
+    "phoneNumber": "+14155551234"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/compliance/gdpr/erasure', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  },
+  body: JSON.stringify({
+    email: 'john.smith@example.com',
+    phoneNumber: '+14155551234'
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/compliance/gdpr/erasure',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    json={
+        'email': 'john.smith@example.com',
+        'phoneNumber': '+14155551234'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json Full Erasure Response
+{
+  "success": true,
+  "requestId": "gdpr_erasure_abc123",
+  "status": "completed",
+  "dataSubject": {
+    "email": "john.smith@example.com",
+    "phoneNumber": "+14155551234"
+  },
+  "deletedData": {
+    "profile": true,
+    "calls": 15,
+    "recordings": 12,
+    "transcripts": 15,
+    "voicePrint": true,
+    "analytics": true
+  },
+  "retainedData": [],
+  "completedAt": "2026-02-18T12:30:00.000Z"
+}
+```
+
+```json Partial Erasure Response
+{
+  "success": true,
+  "requestId": "gdpr_erasure_def456",
+  "status": "partial",
+  "dataSubject": {
+    "email": "john.smith@example.com",
+    "phoneNumber": "+14155551234"
+  },
+  "deletedData": {
+    "profile": true,
+    "calls": 15,
+    "recordings": 10,
+    "transcripts": 15,
+    "voicePrint": true,
+    "analytics": true
+  },
+  "retainedData": [
+    {
+      "type": "recordings",
+      "count": 2,
+      "reason": "Legal hold - ongoing investigation",
+      "retentionUntil": "2026-12-31T23:59:59.000Z"
+    }
+  ],
+  "completedAt": "2026-02-18T12:30:00.000Z"
+}
+```
+
+```json No Data Found
+{
+  "success": true,
+  "requestId": "gdpr_erasure_ghi789",
+  "status": "no_data_found",
+  "dataSubject": {
+    "email": "unknown@example.com"
+  },
+  "deletedData": null,
+  "retainedData": [],
+  "completedAt": "2026-02-18T12:30:00.000Z"
+}
+```
+</ResponseExample>
+
+## Data Deleted
+
+| Category | Description |
+|----------|-------------|
+| Profile | Contact information and account details |
+| Calls | Call metadata and history |
+| Recordings | Audio recordings of calls |
+| Transcripts | Call transcripts and conversation logs |
+| Voice Print | Voice biometrics profiles and samples |
+| Analytics | Behavioral and sentiment analytics |
+
+## Exceptions to Erasure
+
+Under GDPR Article 17(3), data may be retained for:
+
+| Exception | Description |
+|-----------|-------------|
+| Legal Compliance | Data required for legal obligations |
+| Legal Claims | Data needed for legal proceedings |
+| Public Interest | Data serving public health or archival purposes |
+
+## Notes
+
+<Warning>
+**This action is irreversible.** All personal data will be permanently deleted and cannot be recovered. Ensure you have proper authorization before submitting erasure requests.
+</Warning>
+
+<Info>
+GDPR requires acting on erasure requests within 30 days. This API processes requests immediately when possible. For large datasets or complex cases, the status may be `processing` initially.
+</Info>
+
+<Info>
+The `retainedData` array explains any data that cannot be deleted due to legal obligations. This information should be communicated to the data subject.
+</Info>
+
+<Tip>
+Before erasure, consider using the [GDPR Data Access](/api-reference/compliance/gdpr-access) endpoint to generate a final data export for the user.
+</Tip>

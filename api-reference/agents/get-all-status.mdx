@@ -1,0 +1,467 @@
+---
+title: 'Get All Agent Status'
+api: 'GET https://api.talkos.io/api/agents/status'
+description: 'Retrieve the current status of all registered agents'
+---
+
+## Overview
+
+Retrieves the current availability status and real-time metrics for all registered agents in your tenant. Use this endpoint to monitor agent availability, workload distribution, and team capacity.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="status" type="string">
+  Filter by agent status: `available`, `busy`, `offline`, `break`
+</ParamField>
+
+<ParamField query="skill" type="string">
+  Filter agents by a specific skill
+</ParamField>
+
+<ParamField query="language" type="string">
+  Filter agents by supported language (ISO 639-1 code)
+</ParamField>
+
+<ParamField query="includeMetrics" type="boolean" default="false">
+  Include today's performance metrics for each agent
+</ParamField>
+
+<ParamField query="includeCapacity" type="boolean" default="true">
+  Include capacity information (current/max calls)
+</ParamField>
+
+<ParamField query="sortBy" type="string" default="name">
+  Sort results by: `name`, `status`, `activeCalls`, `priority`, `lastActive`
+</ParamField>
+
+<ParamField query="sortOrder" type="string" default="asc">
+  Sort direction: `asc` or `desc`
+</ParamField>
+
+<ParamField query="page" type="integer" default="1">
+  Page number for pagination
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  Number of agents per page (max 100)
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request was successful
+</ResponseField>
+
+<ResponseField name="summary" type="object">
+  Overview of agent availability
+  <Expandable title="properties">
+    <ResponseField name="total" type="integer">
+      Total number of registered agents
+    </ResponseField>
+    <ResponseField name="available" type="integer">
+      Number of available agents
+    </ResponseField>
+    <ResponseField name="busy" type="integer">
+      Number of busy agents
+    </ResponseField>
+    <ResponseField name="break" type="integer">
+      Number of agents on break
+    </ResponseField>
+    <ResponseField name="offline" type="integer">
+      Number of offline agents
+    </ResponseField>
+    <ResponseField name="totalCapacity" type="integer">
+      Total call capacity across available agents
+    </ResponseField>
+    <ResponseField name="currentLoad" type="integer">
+      Current number of active calls
+    </ResponseField>
+    <ResponseField name="utilizationRate" type="number">
+      Percentage of capacity being used
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="agents" type="array">
+  List of agents with their current status
+  <Expandable title="properties">
+    <ResponseField name="agentId" type="string">
+      Agent's unique identifier
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Agent's display name
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Current status: available, busy, break, offline
+    </ResponseField>
+    <ResponseField name="statusSince" type="string">
+      When the current status started
+    </ResponseField>
+    <ResponseField name="activeCalls" type="integer">
+      Number of current active calls
+    </ResponseField>
+    <ResponseField name="maxConcurrentCalls" type="integer">
+      Maximum calls this agent can handle
+    </ResponseField>
+    <ResponseField name="skills" type="array">
+      Agent's assigned skills
+    </ResponseField>
+    <ResponseField name="languages" type="array">
+      Supported languages
+    </ResponseField>
+    <ResponseField name="priority" type="integer">
+      Routing priority (1-10)
+    </ResponseField>
+    <ResponseField name="lastActive" type="string">
+      Last activity timestamp
+    </ResponseField>
+    <ResponseField name="statusDetails" type="object">
+      Additional status information (break duration, etc.)
+    </ResponseField>
+    <ResponseField name="todayMetrics" type="object">
+      Today's performance metrics (if requested)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="pagination" type="object">
+  Pagination information
+  <Expandable title="properties">
+    <ResponseField name="page" type="integer">
+      Current page number
+    </ResponseField>
+    <ResponseField name="limit" type="integer">
+      Results per page
+    </ResponseField>
+    <ResponseField name="totalPages" type="integer">
+      Total number of pages
+    </ResponseField>
+    <ResponseField name="totalCount" type="integer">
+      Total number of agents
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL - All Agents
+curl -X GET "https://api.talkos.io/api/agents/status" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```bash cURL - Available Only
+curl -X GET "https://api.talkos.io/api/agents/status?status=available" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```bash cURL - By Skill
+curl -X GET "https://api.talkos.io/api/agents/status?skill=billing&status=available" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```bash cURL - With Metrics
+curl -X GET "https://api.talkos.io/api/agents/status?includeMetrics=true&sortBy=activeCalls&sortOrder=desc" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```bash cURL - Spanish Speakers
+curl -X GET "https://api.talkos.io/api/agents/status?language=es&status=available" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 - Success
+{
+  "success": true,
+  "summary": {
+    "total": 24,
+    "available": 12,
+    "busy": 8,
+    "break": 2,
+    "offline": 2,
+    "totalCapacity": 28,
+    "currentLoad": 14,
+    "utilizationRate": 50.0
+  },
+  "agents": [
+    {
+      "agentId": "agent_sarah_001",
+      "name": "Sarah Johnson",
+      "status": "available",
+      "statusSince": "2026-02-18T09:00:00.000Z",
+      "activeCalls": 1,
+      "maxConcurrentCalls": 2,
+      "skills": ["billing", "technical_support", "account_management"],
+      "languages": ["en"],
+      "priority": 7,
+      "lastActive": "2026-02-18T14:28:00.000Z"
+    },
+    {
+      "agentId": "agent_michael_002",
+      "name": "Michael Chen",
+      "status": "busy",
+      "statusSince": "2026-02-18T14:15:00.000Z",
+      "activeCalls": 3,
+      "maxConcurrentCalls": 3,
+      "skills": ["technical_support", "enterprise", "escalations"],
+      "languages": ["en", "zh"],
+      "priority": 8,
+      "lastActive": "2026-02-18T14:30:00.000Z"
+    },
+    {
+      "agentId": "agent_emily_003",
+      "name": "Emily Davis",
+      "status": "break",
+      "statusSince": "2026-02-18T14:00:00.000Z",
+      "activeCalls": 0,
+      "maxConcurrentCalls": 2,
+      "skills": ["sales", "retention"],
+      "languages": ["en", "fr"],
+      "priority": 6,
+      "lastActive": "2026-02-18T13:58:00.000Z",
+      "statusDetails": {
+        "reason": "Lunch break",
+        "expiresAt": "2026-02-18T14:30:00.000Z",
+        "returnStatus": "available"
+      }
+    },
+    {
+      "agentId": "agent_maria_004",
+      "name": "Maria Garcia",
+      "status": "available",
+      "statusSince": "2026-02-18T08:30:00.000Z",
+      "activeCalls": 0,
+      "maxConcurrentCalls": 2,
+      "skills": ["billing", "customer_service", "retention"],
+      "languages": ["en", "es", "pt"],
+      "priority": 7,
+      "lastActive": "2026-02-18T14:25:00.000Z"
+    },
+    {
+      "agentId": "agent_david_005",
+      "name": "David Kim",
+      "status": "offline",
+      "statusSince": "2026-02-18T00:00:00.000Z",
+      "activeCalls": 0,
+      "maxConcurrentCalls": 2,
+      "skills": ["technical_support", "developer"],
+      "languages": ["en", "ko"],
+      "priority": 6,
+      "lastActive": "2026-02-17T17:00:00.000Z",
+      "statusDetails": {
+        "reason": "Scheduled off"
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 50,
+    "totalPages": 1,
+    "totalCount": 5
+  }
+}
+```
+
+```json 200 - With Metrics
+{
+  "success": true,
+  "summary": {
+    "total": 24,
+    "available": 12,
+    "busy": 8,
+    "break": 2,
+    "offline": 2,
+    "totalCapacity": 28,
+    "currentLoad": 14,
+    "utilizationRate": 50.0
+  },
+  "agents": [
+    {
+      "agentId": "agent_sarah_001",
+      "name": "Sarah Johnson",
+      "status": "available",
+      "statusSince": "2026-02-18T09:00:00.000Z",
+      "activeCalls": 1,
+      "maxConcurrentCalls": 2,
+      "skills": ["billing", "technical_support"],
+      "languages": ["en"],
+      "priority": 7,
+      "lastActive": "2026-02-18T14:28:00.000Z",
+      "todayMetrics": {
+        "transfersAccepted": 12,
+        "transfersRejected": 0,
+        "avgAcceptTime": 7.2,
+        "avgHandleTime": 285.4,
+        "totalHandleTime": 3425,
+        "customerSatisfaction": 4.8,
+        "resolvedCalls": 11,
+        "escalatedCalls": 1
+      }
+    },
+    {
+      "agentId": "agent_michael_002",
+      "name": "Michael Chen",
+      "status": "busy",
+      "statusSince": "2026-02-18T14:15:00.000Z",
+      "activeCalls": 3,
+      "maxConcurrentCalls": 3,
+      "skills": ["technical_support", "enterprise"],
+      "languages": ["en", "zh"],
+      "priority": 8,
+      "lastActive": "2026-02-18T14:30:00.000Z",
+      "todayMetrics": {
+        "transfersAccepted": 18,
+        "transfersRejected": 2,
+        "avgAcceptTime": 9.1,
+        "avgHandleTime": 412.7,
+        "totalHandleTime": 7429,
+        "customerSatisfaction": 4.6,
+        "resolvedCalls": 15,
+        "escalatedCalls": 3
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 50,
+    "totalPages": 1,
+    "totalCount": 2
+  }
+}
+```
+
+```json 200 - Filtered by Skill
+{
+  "success": true,
+  "summary": {
+    "total": 8,
+    "available": 4,
+    "busy": 3,
+    "break": 1,
+    "offline": 0,
+    "totalCapacity": 12,
+    "currentLoad": 7,
+    "utilizationRate": 58.3
+  },
+  "filters": {
+    "skill": "billing",
+    "status": null,
+    "language": null
+  },
+  "agents": [
+    {
+      "agentId": "agent_sarah_001",
+      "name": "Sarah Johnson",
+      "status": "available",
+      "activeCalls": 1,
+      "maxConcurrentCalls": 2,
+      "skills": ["billing", "technical_support", "account_management"],
+      "languages": ["en"],
+      "priority": 7
+    },
+    {
+      "agentId": "agent_maria_004",
+      "name": "Maria Garcia",
+      "status": "available",
+      "activeCalls": 0,
+      "maxConcurrentCalls": 2,
+      "skills": ["billing", "customer_service", "retention"],
+      "languages": ["en", "es", "pt"],
+      "priority": 7
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 50,
+    "totalPages": 1,
+    "totalCount": 2
+  }
+}
+```
+
+```json 200 - Empty Result
+{
+  "success": true,
+  "summary": {
+    "total": 24,
+    "available": 0,
+    "busy": 0,
+    "break": 0,
+    "offline": 24,
+    "totalCapacity": 0,
+    "currentLoad": 0,
+    "utilizationRate": 0
+  },
+  "filters": {
+    "status": "available",
+    "skill": "rare_skill"
+  },
+  "agents": [],
+  "pagination": {
+    "page": 1,
+    "limit": 50,
+    "totalPages": 0,
+    "totalCount": 0
+  }
+}
+```
+
+```json 400 - Bad Request
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_STATUS_FILTER",
+    "message": "Status filter must be one of: available, busy, offline, break"
+  }
+}
+```
+</ResponseExample>
+
+## Status Overview
+
+| Status | Icon | Description |
+|--------|------|-------------|
+| `available` | 🟢 | Ready and can receive transfers |
+| `busy` | 🟡 | At capacity, handling max calls |
+| `break` | 🟠 | Temporarily unavailable |
+| `offline` | ⚫ | Not working/signed out |
+
+## Real-Time Dashboard Integration
+
+This endpoint is designed for real-time dashboard updates. Recommended polling interval: 5-10 seconds.
+
+For real-time updates without polling, use our WebSocket connection:
+
+```javascript
+const ws = new WebSocket('wss://api.talkos.io/realtime');
+ws.send(JSON.stringify({
+  type: 'subscribe',
+  channel: 'agent-status',
+  tenantId: 'your-tenant-id'
+}));
+```
+
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| `INVALID_STATUS_FILTER` | Status filter value not recognized |
+| `INVALID_SORT_FIELD` | Sort field not recognized |
+| `INVALID_SORT_ORDER` | Sort order must be asc or desc |
+| `INVALID_PAGINATION` | Page or limit values invalid |
+| `SKILL_NOT_FOUND` | Specified skill does not exist |

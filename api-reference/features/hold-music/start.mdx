@@ -1,0 +1,141 @@
+---
+title: 'Start Hold Music'
+api: 'POST https://api.talkos.io/api/features/hold-music/{callUuid}/start'
+description: 'Start playing hold music on a call'
+---
+
+Begin playing hold music on an active call. This is typically used when placing a caller on hold during a transfer or while waiting for an agent.
+
+## Path Parameters
+
+<ParamField path="callUuid" type="string" required>
+  The unique identifier of the call.
+</ParamField>
+
+## Request Body
+
+<ParamField body="trackId" type="string">
+  Specific track to play. If not provided, uses the default track.
+</ParamField>
+
+<ParamField body="volume" type="number">
+  Override the default volume (0-100).
+</ParamField>
+
+<ParamField body="loop" type="boolean" default={true}>
+  Whether to loop the track continuously.
+</ParamField>
+
+<ParamField body="announcePosition" type="boolean" default={true}>
+  Whether to announce queue position at configured intervals.
+</ParamField>
+
+<ParamField body="estimatedWaitTime" type="number">
+  Estimated wait time in seconds to announce to the caller.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether hold music was started successfully.
+</ResponseField>
+
+<ResponseField name="holdId" type="string">
+  Unique identifier for this hold session.
+</ResponseField>
+
+<ResponseField name="callUuid" type="string">
+  The call's unique identifier.
+</ResponseField>
+
+<ResponseField name="track" type="object">
+  Information about the track being played.
+</ResponseField>
+
+<ResponseField name="startedAt" type="string">
+  ISO 8601 timestamp when hold music started.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/features/hold-music/call_abc123/start \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "trackId": "track_jazz_003",
+    "volume": 70,
+    "loop": true,
+    "announcePosition": true,
+    "estimatedWaitTime": 120
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/hold-music/call_abc123/start', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    trackId: 'track_jazz_003',
+    volume: 70,
+    loop: true,
+    announcePosition: true,
+    estimatedWaitTime: 120
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/features/hold-music/call_abc123/start',
+    headers={
+        'Authorization': 'Bearer YOUR_API_KEY',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'trackId': 'track_jazz_003',
+        'volume': 70,
+        'loop': True,
+        'announcePosition': True,
+        'estimatedWaitTime': 120
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "holdId": "hold_xyz789",
+  "callUuid": "call_abc123",
+  "track": {
+    "id": "track_jazz_003",
+    "name": "Smooth Jazz Lounge"
+  },
+  "startedAt": "2026-02-18T10:30:00.000Z"
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": "Call is already on hold"
+}
+```
+
+```json 404
+{
+  "success": false,
+  "error": "Call not found or not active"
+}
+```
+</ResponseExample>

@@ -1,0 +1,409 @@
+---
+title: "Get Quality Analytics"
+api: "GET https://api.talkos.io/api/analytics/quality"
+description: "Retrieve call quality metrics including average latency, audio quality score, and interruption rate"
+---
+
+## Overview
+
+Get comprehensive call quality analytics to monitor and optimize the voice experience. This endpoint provides technical quality metrics including latency, audio quality, and conversation flow indicators.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="startDate" type="string" required>
+  Start date for the query range in ISO 8601 format
+</ParamField>
+
+<ParamField query="endDate" type="string" required>
+  End date for the query range in ISO 8601 format
+</ParamField>
+
+<ParamField query="groupBy" type="string" default="day">
+  Group results by time period. Options: `hour`, `day`, `week`
+</ParamField>
+
+<ParamField query="direction" type="string">
+  Filter by call direction. Options: `inbound`, `outbound`
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="summary" type="object">
+      Aggregate quality metrics
+      <Expandable title="properties">
+        <ResponseField name="totalCalls" type="integer">
+          Total number of calls analyzed
+        </ResponseField>
+        <ResponseField name="avgLatency" type="number">
+          Average round-trip latency in milliseconds
+        </ResponseField>
+        <ResponseField name="p50Latency" type="number">
+          50th percentile (median) latency
+        </ResponseField>
+        <ResponseField name="p95Latency" type="number">
+          95th percentile latency
+        </ResponseField>
+        <ResponseField name="p99Latency" type="number">
+          99th percentile latency
+        </ResponseField>
+        <ResponseField name="audioQualityScore" type="number">
+          Average audio quality score (0-5 MOS scale)
+        </ResponseField>
+        <ResponseField name="interruptionRate" type="number">
+          Percentage of turns with overlapping speech
+        </ResponseField>
+        <ResponseField name="silenceRate" type="number">
+          Percentage of awkward silences (>2 seconds)
+        </ResponseField>
+        <ResponseField name="transcriptionAccuracy" type="number">
+          Estimated STT accuracy percentage
+        </ResponseField>
+        <ResponseField name="jitterAvg" type="number">
+          Average jitter in milliseconds
+        </ResponseField>
+        <ResponseField name="packetLossRate" type="number">
+          Average packet loss percentage
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="latencyBreakdown" type="object">
+      Latency breakdown by component
+      <Expandable title="properties">
+        <ResponseField name="stt" type="number">
+          Speech-to-text processing latency (ms)
+        </ResponseField>
+        <ResponseField name="llm" type="number">
+          LLM inference latency (ms)
+        </ResponseField>
+        <ResponseField name="tts" type="number">
+          Text-to-speech generation latency (ms)
+        </ResponseField>
+        <ResponseField name="network" type="number">
+          Network transmission latency (ms)
+        </ResponseField>
+        <ResponseField name="total" type="number">
+          Total end-to-end latency (ms)
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="qualityDistribution" type="object">
+      Distribution of calls by quality score
+      <Expandable title="properties">
+        <ResponseField name="excellent" type="object">
+          MOS 4.0+
+          <Expandable title="properties">
+            <ResponseField name="count" type="integer">Number of calls</ResponseField>
+            <ResponseField name="percent" type="number">Percentage of total</ResponseField>
+          </Expandable>
+        </ResponseField>
+        <ResponseField name="good" type="object">
+          MOS 3.5-4.0
+        </ResponseField>
+        <ResponseField name="fair" type="object">
+          MOS 3.0-3.5
+        </ResponseField>
+        <ResponseField name="poor" type="object">
+          MOS below 3.0
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="trends" type="array">
+      Quality metrics over time
+      <Expandable title="trend entry">
+        <ResponseField name="period" type="string">
+          Time period
+        </ResponseField>
+        <ResponseField name="avgLatency" type="number">
+          Average latency for this period
+        </ResponseField>
+        <ResponseField name="audioQuality" type="number">
+          Average audio quality score
+        </ResponseField>
+        <ResponseField name="interruptionRate" type="number">
+          Interruption rate for this period
+        </ResponseField>
+        <ResponseField name="callCount" type="integer">
+          Number of calls
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="issues" type="array">
+      Detected quality issues
+      <Expandable title="issue">
+        <ResponseField name="type" type="string">
+          Issue type (e.g., `high_latency`, `audio_degradation`, `frequent_interruptions`)
+        </ResponseField>
+        <ResponseField name="severity" type="string">
+          Severity: `critical`, `warning`, `info`
+        </ResponseField>
+        <ResponseField name="affectedCalls" type="integer">
+          Number of affected calls
+        </ResponseField>
+        <ResponseField name="percent" type="number">
+          Percentage of total calls affected
+        </ResponseField>
+        <ResponseField name="description" type="string">
+          Human-readable description
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/analytics/quality?startDate=2026-02-01T00:00:00Z&endDate=2026-02-18T23:59:59Z&groupBy=day" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({
+  startDate: '2026-02-01T00:00:00Z',
+  endDate: '2026-02-18T23:59:59Z',
+  groupBy: 'day'
+});
+
+const response = await fetch(`https://api.talkos.io/api/analytics/quality?${params}`, {
+  method: 'GET',
+  headers: {
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/analytics/quality',
+    params={
+        'startDate': '2026-02-01T00:00:00Z',
+        'endDate': '2026-02-18T23:59:59Z',
+        'groupBy': 'day'
+    },
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "totalCalls": 12847,
+      "avgLatency": 285,
+      "p50Latency": 248,
+      "p95Latency": 520,
+      "p99Latency": 780,
+      "audioQualityScore": 4.2,
+      "interruptionRate": 8.4,
+      "silenceRate": 3.2,
+      "transcriptionAccuracy": 96.8,
+      "jitterAvg": 12.4,
+      "packetLossRate": 0.3
+    },
+    "latencyBreakdown": {
+      "stt": 85,
+      "llm": 142,
+      "tts": 48,
+      "network": 10,
+      "total": 285
+    },
+    "qualityDistribution": {
+      "excellent": {
+        "count": 9276,
+        "percent": 72.2
+      },
+      "good": {
+        "count": 2698,
+        "percent": 21.0
+      },
+      "fair": {
+        "count": 745,
+        "percent": 5.8
+      },
+      "poor": {
+        "count": 128,
+        "percent": 1.0
+      }
+    },
+    "trends": [
+      {
+        "period": "2026-02-17",
+        "avgLatency": 278,
+        "audioQuality": 4.3,
+        "interruptionRate": 7.8,
+        "callCount": 724
+      },
+      {
+        "period": "2026-02-18",
+        "avgLatency": 292,
+        "audioQuality": 4.1,
+        "interruptionRate": 9.2,
+        "callCount": 698
+      }
+    ],
+    "issues": [
+      {
+        "type": "high_latency_spikes",
+        "severity": "warning",
+        "affectedCalls": 412,
+        "percent": 3.2,
+        "description": "412 calls experienced latency spikes above 800ms"
+      },
+      {
+        "type": "audio_degradation",
+        "severity": "info",
+        "affectedCalls": 128,
+        "percent": 1.0,
+        "description": "128 calls had audio quality below acceptable threshold (MOS < 3.0)"
+      },
+      {
+        "type": "high_interruption_rate",
+        "severity": "info",
+        "affectedCalls": 256,
+        "percent": 2.0,
+        "description": "256 calls had interruption rates above 20%"
+      }
+    ]
+  }
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_PARAMETERS",
+    "message": "startDate must be before endDate"
+  }
+}
+```
+
+```json 401
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Invalid or missing API key"
+  }
+}
+```
+</ResponseExample>
+
+## Understanding Quality Metrics
+
+<CardGroup cols={2}>
+  <Card title="Latency" icon="gauge">
+    End-to-end response time from customer speech to AI response. Target: under 500ms for natural conversation flow.
+  </Card>
+  <Card title="Audio Quality (MOS)" icon="volume-high">
+    Mean Opinion Score (1-5 scale). Measures perceived audio quality. Target: above 4.0 for excellent quality.
+  </Card>
+  <Card title="Interruption Rate" icon="comment-slash">
+    Percentage of conversational turns with overlapping speech. High rates may indicate latency issues or aggressive barge-in settings.
+  </Card>
+  <Card title="Silence Rate" icon="volume-xmark">
+    Percentage of awkward pauses. High rates may indicate slow LLM responses or processing issues.
+  </Card>
+</CardGroup>
+
+## Latency Targets
+
+| Component | Target | Acceptable | Warning |
+|-----------|--------|------------|---------|
+| STT | < 100ms | < 150ms | > 200ms |
+| LLM | < 200ms | < 350ms | > 500ms |
+| TTS | < 75ms | < 100ms | > 150ms |
+| Total | < 400ms | < 600ms | > 800ms |
+
+## MOS Quality Scale
+
+| Score | Rating | Experience |
+|-------|--------|------------|
+| 4.3+ | Excellent | Indistinguishable from being in-person |
+| 4.0-4.3 | Good | Minor imperfections, good clarity |
+| 3.5-4.0 | Fair | Noticeable issues, still usable |
+| 3.0-3.5 | Poor | Significant quality issues |
+| < 3.0 | Bad | Difficult to understand, frustrating |
+
+## Optimization Tips
+
+<AccordionGroup>
+  <Accordion title="Reduce LLM Latency">
+    LLM typically accounts for 50% of total latency. Optimize by:
+    - Using streaming responses
+    - Reducing prompt complexity
+    - Enabling response caching
+    - Using faster model variants
+  </Accordion>
+  <Accordion title="Improve Audio Quality">
+    Address low MOS scores by:
+    - Ensuring stable network connections
+    - Using higher quality codecs
+    - Implementing proper echo cancellation
+    - Monitoring carrier quality
+  </Accordion>
+  <Accordion title="Reduce Interruptions">
+    Lower interruption rates by:
+    - Tuning barge-in sensitivity
+    - Increasing end-of-speech detection threshold
+    - Adding natural pauses in TTS output
+  </Accordion>
+  <Accordion title="Handle Silence Gracefully">
+    Reduce awkward silences by:
+    - Implementing filler phrases during processing
+    - Using progressive response delivery
+    - Setting appropriate timeout thresholds
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  Consistently high latency (>800ms) significantly degrades conversation quality and customer satisfaction. Set up alerts to catch latency issues before they impact users.
+</Warning>
+
+## Quality Benchmarks
+
+| Metric | Industry Avg | TalkOS Target | Top Performers |
+|--------|--------------|---------------|----------------|
+| Total Latency | 600ms | 400ms | 250ms |
+| Audio Quality | 3.8 MOS | 4.0 MOS | 4.3+ MOS |
+| Interruption Rate | 15% | 10% | 5% |
+| Silence Rate | 8% | 5% | 2% |
+| STT Accuracy | 92% | 96% | 98% |
+
+<Note>
+  Quality metrics are computed in real-time during calls and aggregated for analytics. Individual call quality data is available for 90 days.
+</Note>
+
+## Rate Limits
+
+- **Standard tier**: 30 requests per minute
+- **Enterprise tier**: 120 requests per minute

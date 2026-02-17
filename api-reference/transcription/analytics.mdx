@@ -1,0 +1,231 @@
+---
+title: "Transcript Analytics Summary"
+description: "Get aggregated analytics and insights from call transcripts"
+api: "GET https://api.talkos.io/api/transcripts/analytics/summary"
+---
+
+# Transcript Analytics Summary
+
+Retrieve aggregated analytics and insights from your call transcripts, including sentiment distribution, keyword frequency, language breakdown, and conversation metrics.
+
+## Endpoint
+
+```
+GET /api/transcripts/analytics/summary
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="dateFrom" type="string">
+  Start date for analytics period (ISO 8601 format). Example: `2026-01-01T00:00:00Z`
+</ParamField>
+
+<ParamField query="dateTo" type="string">
+  End date for analytics period (ISO 8601 format). Example: `2026-02-18T23:59:59Z`
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Analytics summary object containing:
+
+  <Expandable title="data properties">
+    <ResponseField name="totalTranscripts" type="integer">
+      Total number of transcripts in the period
+    </ResponseField>
+
+    <ResponseField name="totalDuration" type="number">
+      Total duration of all transcribed calls in seconds
+    </ResponseField>
+
+    <ResponseField name="averageDuration" type="number">
+      Average call duration in seconds
+    </ResponseField>
+
+    <ResponseField name="sentimentDistribution" type="object">
+      Breakdown of sentiment across calls:
+      - `positive` (number): Percentage of positive sentiment calls
+      - `neutral` (number): Percentage of neutral sentiment calls
+      - `negative` (number): Percentage of negative sentiment calls
+    </ResponseField>
+
+    <ResponseField name="languageBreakdown" type="object">
+      Distribution of languages detected in transcripts (ISO 639-1 codes as keys, counts as values)
+    </ResponseField>
+
+    <ResponseField name="topKeywords" type="array">
+      Most frequently mentioned keywords/phrases:
+      - `keyword` (string): The keyword or phrase
+      - `count` (number): Number of occurrences
+      - `sentiment` (string): Associated sentiment
+    </ResponseField>
+
+    <ResponseField name="speakerMetrics" type="object">
+      Speaking time distribution:
+      - `agentTalkTime` (number): Average percentage of time agent speaks
+      - `customerTalkTime` (number): Average percentage of time customer speaks
+      - `silenceTime` (number): Average percentage of silence
+    </ResponseField>
+
+    <ResponseField name="averageConfidence" type="number">
+      Average transcription confidence score (0-1)
+    </ResponseField>
+
+    <ResponseField name="period" type="object">
+      Analytics period:
+      - `from` (string): Start date
+      - `to` (string): End date
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/transcripts/analytics/summary?dateFrom=2026-01-01T00:00:00Z&dateTo=2026-02-18T23:59:59Z" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript Node.js
+const params = new URLSearchParams({
+  dateFrom: '2026-01-01T00:00:00Z',
+  dateTo: '2026-02-18T23:59:59Z'
+});
+
+const response = await fetch(
+  `https://api.talkos.io/api/transcripts/analytics/summary?${params}`,
+  {
+    method: 'GET',
+    headers: {
+      'x-api-key': 'your-api-key',
+      'x-tenant-id': 'your-tenant-id'
+    }
+  }
+);
+
+const data = await response.json();
+console.log('Sentiment Distribution:', data.data.sentimentDistribution);
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/transcripts/analytics/summary',
+    params={
+        'dateFrom': '2026-01-01T00:00:00Z',
+        'dateTo': '2026-02-18T23:59:59Z'
+    },
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    }
+)
+
+data = response.json()
+print(f"Total Transcripts: {data['data']['totalTranscripts']}")
+print(f"Average Duration: {data['data']['averageDuration']}s")
+```
+</CodeGroup>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "totalTranscripts": 1542,
+    "totalDuration": 892560,
+    "averageDuration": 578.8,
+    "sentimentDistribution": {
+      "positive": 45.2,
+      "neutral": 38.6,
+      "negative": 16.2
+    },
+    "languageBreakdown": {
+      "en": 1205,
+      "es": 189,
+      "hi": 98,
+      "fr": 50
+    },
+    "topKeywords": [
+      {
+        "keyword": "refund",
+        "count": 342,
+        "sentiment": "negative"
+      },
+      {
+        "keyword": "thank you",
+        "count": 1289,
+        "sentiment": "positive"
+      },
+      {
+        "keyword": "shipping",
+        "count": 256,
+        "sentiment": "neutral"
+      },
+      {
+        "keyword": "account",
+        "count": 445,
+        "sentiment": "neutral"
+      },
+      {
+        "keyword": "upgrade",
+        "count": 167,
+        "sentiment": "positive"
+      }
+    ],
+    "speakerMetrics": {
+      "agentTalkTime": 42.5,
+      "customerTalkTime": 48.3,
+      "silenceTime": 9.2
+    },
+    "averageConfidence": 0.94,
+    "period": {
+      "from": "2026-01-01T00:00:00Z",
+      "to": "2026-02-18T23:59:59Z"
+    }
+  }
+}
+```
+
+## Error Responses
+
+| Status | Error | Description |
+|--------|-------|-------------|
+| 400 | Invalid date format | dateFrom or dateTo is not valid ISO 8601 |
+| 401 | Unauthorized | Invalid or missing API key |
+| 500 | Internal server error | Server-side error occurred |
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Quality Monitoring" icon="chart-line">
+    Track sentiment trends over time to identify quality issues before they escalate.
+  </Card>
+  <Card title="Training Insights" icon="graduation-cap">
+    Use keyword analysis to identify common customer concerns for agent training.
+  </Card>
+  <Card title="Language Planning" icon="globe">
+    Understand language distribution to optimize multilingual support coverage.
+  </Card>
+  <Card title="Performance Metrics" icon="stopwatch">
+    Monitor talk-time ratios to ensure agents are listening effectively.
+  </Card>
+</CardGroup>

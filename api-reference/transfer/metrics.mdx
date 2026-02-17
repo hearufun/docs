@@ -1,0 +1,483 @@
+---
+title: 'Get Transfer Metrics'
+api: 'GET https://api.talkos.io/api/transfer/metrics'
+description: 'Retrieve call transfer performance metrics and analytics'
+---
+
+## Overview
+
+Retrieves comprehensive metrics and analytics for call transfers, including success rates, average times, agent performance, and trend data. Use these metrics to optimize your transfer workflows and improve customer experience.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="startDate" type="string">
+  Start date for metrics period (ISO 8601 format). Defaults to 7 days ago.
+</ParamField>
+
+<ParamField query="endDate" type="string">
+  End date for metrics period (ISO 8601 format). Defaults to now.
+</ParamField>
+
+<ParamField query="granularity" type="string" default="daily">
+  Time granularity for trend data: `hourly`, `daily`, `weekly`, `monthly`
+</ParamField>
+
+<ParamField query="agentId" type="string">
+  Filter metrics for a specific agent
+</ParamField>
+
+<ParamField query="transferType" type="string">
+  Filter by transfer type: `cold`, `warm`, `blind`
+</ParamField>
+
+<ParamField query="includeAgentBreakdown" type="boolean" default="false">
+  Include per-agent performance breakdown
+</ParamField>
+
+<ParamField query="includeReasonBreakdown" type="boolean" default="false">
+  Include breakdown by transfer reasons
+</ParamField>
+
+<ParamField query="includeTrends" type="boolean" default="true">
+  Include historical trend data
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if metrics were retrieved successfully
+</ResponseField>
+
+<ResponseField name="period" type="object">
+  The time period for these metrics
+  <Expandable title="properties">
+    <ResponseField name="startDate" type="string">
+      Start of the metrics period
+    </ResponseField>
+    <ResponseField name="endDate" type="string">
+      End of the metrics period
+    </ResponseField>
+    <ResponseField name="granularity" type="string">
+      Time granularity used
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="summary" type="object">
+  Overall transfer metrics summary
+  <Expandable title="properties">
+    <ResponseField name="totalTransfers" type="integer">
+      Total number of transfers initiated
+    </ResponseField>
+    <ResponseField name="successfulTransfers" type="integer">
+      Number of completed transfers
+    </ResponseField>
+    <ResponseField name="failedTransfers" type="integer">
+      Number of failed transfers
+    </ResponseField>
+    <ResponseField name="cancelledTransfers" type="integer">
+      Number of cancelled transfers
+    </ResponseField>
+    <ResponseField name="successRate" type="number">
+      Percentage of successful transfers
+    </ResponseField>
+    <ResponseField name="averageAcceptTime" type="number">
+      Average seconds to accept a transfer
+    </ResponseField>
+    <ResponseField name="averageHoldTime" type="number">
+      Average seconds caller waited on hold
+    </ResponseField>
+    <ResponseField name="averageHandleTime" type="number">
+      Average seconds agent spent on transferred calls
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="byType" type="object">
+  Metrics broken down by transfer type
+  <Expandable title="properties">
+    <ResponseField name="cold" type="object">
+      Cold transfer metrics
+    </ResponseField>
+    <ResponseField name="warm" type="object">
+      Warm transfer metrics
+    </ResponseField>
+    <ResponseField name="blind" type="object">
+      Blind transfer metrics
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="resolutions" type="object">
+  Breakdown by resolution outcome
+  <Expandable title="properties">
+    <ResponseField name="resolved" type="integer">
+      Fully resolved transfers
+    </ResponseField>
+    <ResponseField name="escalated" type="integer">
+      Further escalated transfers
+    </ResponseField>
+    <ResponseField name="callbackScheduled" type="integer">
+      Callbacks scheduled
+    </ResponseField>
+    <ResponseField name="abandoned" type="integer">
+      Customer abandoned
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="agentPerformance" type="array">
+  Per-agent performance metrics (if requested)
+  <Expandable title="properties">
+    <ResponseField name="agentId" type="string">
+      Agent identifier
+    </ResponseField>
+    <ResponseField name="agentName" type="string">
+      Agent display name
+    </ResponseField>
+    <ResponseField name="transfersAccepted" type="integer">
+      Number of transfers accepted
+    </ResponseField>
+    <ResponseField name="transfersRejected" type="integer">
+      Number of transfers rejected
+    </ResponseField>
+    <ResponseField name="acceptRate" type="number">
+      Transfer acceptance rate
+    </ResponseField>
+    <ResponseField name="avgAcceptTime" type="number">
+      Average accept time in seconds
+    </ResponseField>
+    <ResponseField name="avgHandleTime" type="number">
+      Average handle time in seconds
+    </ResponseField>
+    <ResponseField name="customerSatisfaction" type="number">
+      Average CSAT score
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="reasonBreakdown" type="array">
+  Breakdown by transfer reasons (if requested)
+  <Expandable title="properties">
+    <ResponseField name="reason" type="string">
+      Transfer reason
+    </ResponseField>
+    <ResponseField name="count" type="integer">
+      Number of transfers
+    </ResponseField>
+    <ResponseField name="percentage" type="number">
+      Percentage of total
+    </ResponseField>
+    <ResponseField name="avgHandleTime" type="number">
+      Average handle time for this reason
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="trends" type="array">
+  Historical trend data (if requested)
+  <Expandable title="properties">
+    <ResponseField name="date" type="string">
+      Date/time for this data point
+    </ResponseField>
+    <ResponseField name="totalTransfers" type="integer">
+      Transfers in this period
+    </ResponseField>
+    <ResponseField name="successRate" type="number">
+      Success rate in this period
+    </ResponseField>
+    <ResponseField name="avgHoldTime" type="number">
+      Average hold time
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL - Basic Metrics
+curl -X GET "https://api.talkos.io/api/transfer/metrics" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```bash cURL - With Date Range
+curl -X GET "https://api.talkos.io/api/transfer/metrics?startDate=2026-02-01T00:00:00Z&endDate=2026-02-18T23:59:59Z&granularity=daily" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```bash cURL - Agent-Specific
+curl -X GET "https://api.talkos.io/api/transfer/metrics?agentId=agent_789xyz&startDate=2026-02-11T00:00:00Z" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```bash cURL - Full Breakdown
+curl -X GET "https://api.talkos.io/api/transfer/metrics?includeAgentBreakdown=true&includeReasonBreakdown=true&includeTrends=true" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```bash cURL - By Transfer Type
+curl -X GET "https://api.talkos.io/api/transfer/metrics?transferType=warm&granularity=hourly" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 - Success
+{
+  "success": true,
+  "period": {
+    "startDate": "2026-02-11T00:00:00.000Z",
+    "endDate": "2026-02-18T23:59:59.000Z",
+    "granularity": "daily"
+  },
+  "summary": {
+    "totalTransfers": 1247,
+    "successfulTransfers": 1089,
+    "failedTransfers": 78,
+    "cancelledTransfers": 80,
+    "successRate": 87.3,
+    "averageAcceptTime": 12.4,
+    "averageHoldTime": 18.7,
+    "averageHandleTime": 324.5
+  },
+  "byType": {
+    "cold": {
+      "total": 423,
+      "successRate": 85.1,
+      "avgAcceptTime": 14.2,
+      "avgHoldTime": 22.3
+    },
+    "warm": {
+      "total": 612,
+      "successRate": 91.2,
+      "avgAcceptTime": 11.8,
+      "avgHoldTime": 16.4
+    },
+    "blind": {
+      "total": 212,
+      "successRate": 82.5,
+      "avgAcceptTime": 8.9,
+      "avgHoldTime": 12.1
+    }
+  },
+  "resolutions": {
+    "resolved": 892,
+    "escalated": 89,
+    "callbackScheduled": 67,
+    "abandoned": 41
+  },
+  "agentPerformance": [
+    {
+      "agentId": "agent_001",
+      "agentName": "Sarah Johnson",
+      "transfersAccepted": 156,
+      "transfersRejected": 8,
+      "acceptRate": 95.1,
+      "avgAcceptTime": 8.2,
+      "avgHandleTime": 287.4,
+      "customerSatisfaction": 4.7
+    },
+    {
+      "agentId": "agent_002",
+      "agentName": "Michael Chen",
+      "transfersAccepted": 142,
+      "transfersRejected": 12,
+      "acceptRate": 92.2,
+      "avgAcceptTime": 10.5,
+      "avgHandleTime": 312.8,
+      "customerSatisfaction": 4.5
+    },
+    {
+      "agentId": "agent_003",
+      "agentName": "Emily Davis",
+      "transfersAccepted": 134,
+      "transfersRejected": 6,
+      "acceptRate": 95.7,
+      "avgAcceptTime": 7.8,
+      "avgHandleTime": 298.2,
+      "customerSatisfaction": 4.8
+    }
+  ],
+  "reasonBreakdown": [
+    {
+      "reason": "Customer requested agent",
+      "count": 412,
+      "percentage": 33.0,
+      "avgHandleTime": 298.4
+    },
+    {
+      "reason": "Complex billing issue",
+      "count": 287,
+      "percentage": 23.0,
+      "avgHandleTime": 412.7
+    },
+    {
+      "reason": "Technical support needed",
+      "count": 234,
+      "percentage": 18.8,
+      "avgHandleTime": 356.2
+    },
+    {
+      "reason": "Account changes",
+      "count": 189,
+      "percentage": 15.2,
+      "avgHandleTime": 245.8
+    },
+    {
+      "reason": "Complaint escalation",
+      "count": 125,
+      "percentage": 10.0,
+      "avgHandleTime": 478.3
+    }
+  ],
+  "trends": [
+    {
+      "date": "2026-02-11",
+      "totalTransfers": 168,
+      "successRate": 86.9,
+      "avgHoldTime": 19.2
+    },
+    {
+      "date": "2026-02-12",
+      "totalTransfers": 185,
+      "successRate": 88.1,
+      "avgHoldTime": 17.8
+    },
+    {
+      "date": "2026-02-13",
+      "totalTransfers": 172,
+      "successRate": 87.2,
+      "avgHoldTime": 18.9
+    },
+    {
+      "date": "2026-02-14",
+      "totalTransfers": 156,
+      "successRate": 89.1,
+      "avgHoldTime": 16.5
+    },
+    {
+      "date": "2026-02-15",
+      "totalTransfers": 142,
+      "successRate": 85.2,
+      "avgHoldTime": 21.3
+    },
+    {
+      "date": "2026-02-16",
+      "totalTransfers": 138,
+      "successRate": 86.2,
+      "avgHoldTime": 19.7
+    },
+    {
+      "date": "2026-02-17",
+      "totalTransfers": 178,
+      "successRate": 87.6,
+      "avgHoldTime": 18.4
+    },
+    {
+      "date": "2026-02-18",
+      "totalTransfers": 108,
+      "successRate": 88.9,
+      "avgHoldTime": 17.1
+    }
+  ]
+}
+```
+
+```json 200 - Agent-Specific
+{
+  "success": true,
+  "period": {
+    "startDate": "2026-02-11T00:00:00.000Z",
+    "endDate": "2026-02-18T23:59:59.000Z",
+    "granularity": "daily"
+  },
+  "agent": {
+    "agentId": "agent_789xyz",
+    "agentName": "Sarah Johnson"
+  },
+  "summary": {
+    "totalTransfers": 156,
+    "successfulTransfers": 148,
+    "failedTransfers": 4,
+    "cancelledTransfers": 4,
+    "successRate": 94.9,
+    "averageAcceptTime": 8.2,
+    "averageHoldTime": 14.3,
+    "averageHandleTime": 287.4
+  },
+  "byType": {
+    "cold": {
+      "total": 52,
+      "successRate": 92.3
+    },
+    "warm": {
+      "total": 78,
+      "successRate": 96.2
+    },
+    "blind": {
+      "total": 26,
+      "successRate": 96.2
+    }
+  },
+  "resolutions": {
+    "resolved": 128,
+    "escalated": 12,
+    "callbackScheduled": 8,
+    "abandoned": 0
+  }
+}
+```
+
+```json 400 - Bad Request
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_DATE_RANGE",
+    "message": "startDate must be before endDate"
+  }
+}
+```
+
+```json 400 - Invalid Granularity
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_GRANULARITY",
+    "message": "Granularity must be one of: hourly, daily, weekly, monthly"
+  }
+}
+```
+</ResponseExample>
+
+## Key Performance Indicators
+
+| Metric | Description | Healthy Range |
+|--------|-------------|---------------|
+| Success Rate | % of transfers completed | > 85% |
+| Average Accept Time | Seconds to accept | < 15 seconds |
+| Average Hold Time | Caller wait time | < 30 seconds |
+| Average Handle Time | Agent call duration | Varies by type |
+| Accept Rate (per agent) | Agent's acceptance % | > 90% |
+
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| `INVALID_DATE_RANGE` | Start date must be before end date |
+| `DATE_RANGE_TOO_LARGE` | Maximum range is 90 days |
+| `INVALID_GRANULARITY` | Granularity not recognized |
+| `AGENT_NOT_FOUND` | Specified agent ID does not exist |
+| `INVALID_TRANSFER_TYPE` | Transfer type not recognized |

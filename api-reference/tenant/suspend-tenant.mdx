@@ -1,0 +1,304 @@
+---
+title: "Suspend Tenant"
+description: "Suspend a tenant account, disabling all API access and call capabilities"
+api: "POST https://api.talkos.io/api/tenants/:tenantId/suspend"
+---
+
+# Suspend Tenant
+
+Suspend a tenant account, immediately disabling API access, stopping all active calls, and preventing new operations. This is typically used for billing issues, policy violations, or administrative purposes.
+
+## Endpoint
+
+```
+POST /api/tenants/:tenantId/suspend
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Admin API key with tenant management permissions
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="tenantId" type="string" required>
+  Unique identifier of the tenant to suspend
+</ParamField>
+
+## Request Body
+
+<ParamField body="reason" type="string" required>
+  Reason for suspension. This is logged for audit purposes and may be shown to the tenant.
+  
+  Common reasons:
+  - `billing_failure` - Payment failed or past due
+  - `policy_violation` - Terms of service violation
+  - `security_concern` - Suspicious activity detected
+  - `customer_request` - Tenant requested suspension
+  - `administrative` - Internal administrative action
+  - `abuse` - API abuse or misuse detected
+</ParamField>
+
+<ParamField body="terminateActiveCalls" type="boolean" default="true">
+  Whether to immediately terminate all active calls. If `false`, active calls will be allowed to complete naturally before suspension takes full effect.
+</ParamField>
+
+<ParamField body="cancelPendingBatches" type="boolean" default="true">
+  Whether to cancel all pending batch operations. If `false`, queued calls will remain queued but won't be processed.
+</ParamField>
+
+<ParamField body="notifyTenant" type="boolean" default="true">
+  Whether to send a suspension notification email to the tenant's registered email addresses.
+</ParamField>
+
+<ParamField body="suspensionNote" type="string">
+  Internal note about the suspension. Not visible to the tenant. Used for administrative tracking.
+</ParamField>
+
+<ParamField body="expiresAt" type="string">
+  ISO 8601 timestamp for automatic reactivation. If not provided, suspension is indefinite until manually lifted.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the suspension was successful
+</ResponseField>
+
+<ResponseField name="tenant" type="object">
+  Updated tenant information:
+
+  <Expandable title="tenant properties">
+    <ResponseField name="tenantId" type="string">
+      Tenant identifier
+    </ResponseField>
+
+    <ResponseField name="name" type="string">
+      Tenant name
+    </ResponseField>
+
+    <ResponseField name="status" type="string">
+      New status: `suspended`
+    </ResponseField>
+
+    <ResponseField name="suspendedAt" type="string">
+      ISO 8601 timestamp of suspension
+    </ResponseField>
+
+    <ResponseField name="suspendedReason" type="string">
+      Reason for suspension
+    </ResponseField>
+
+    <ResponseField name="suspensionExpiresAt" type="string">
+      ISO 8601 timestamp when suspension will auto-expire (null if indefinite)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="actions" type="object">
+  Actions taken during suspension:
+
+  <Expandable title="actions properties">
+    <ResponseField name="callsTerminated" type="number">
+      Number of active calls terminated
+    </ResponseField>
+
+    <ResponseField name="batchesCanceled" type="number">
+      Number of batches canceled
+    </ResponseField>
+
+    <ResponseField name="callsInQueue" type="number">
+      Number of calls removed from queue
+    </ResponseField>
+
+    <ResponseField name="notificationSent" type="boolean">
+      Whether notification email was sent
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="auditId" type="string">
+  Audit log entry ID for this action
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://api.talkos.io/api/tenants/tenant_abc123/suspend" \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: admin-api-key" \
+  -d '{
+    "reason": "billing_failure",
+    "terminateActiveCalls": true,
+    "cancelPendingBatches": true,
+    "notifyTenant": true,
+    "suspensionNote": "Payment failed 3 consecutive times. Customer notified via email.",
+    "expiresAt": "2026-02-25T00:00:00.000Z"
+  }'
+```
+
+```javascript Node.js
+const response = await fetch(
+  'https://api.talkos.io/api/tenants/tenant_abc123/suspend',
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': 'admin-api-key'
+    },
+    body: JSON.stringify({
+      reason: 'billing_failure',
+      terminateActiveCalls: true,
+      cancelPendingBatches: true,
+      notifyTenant: true,
+      suspensionNote: 'Payment failed 3 consecutive times.',
+      expiresAt: '2026-02-25T00:00:00.000Z'
+    })
+  }
+);
+
+const data = await response.json();
+console.log(`Tenant suspended: ${data.tenant.status}`);
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/tenants/tenant_abc123/suspend',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'admin-api-key'
+    },
+    json={
+        'reason': 'billing_failure',
+        'terminateActiveCalls': True,
+        'cancelPendingBatches': True,
+        'notifyTenant': True,
+        'suspensionNote': 'Payment failed 3 consecutive times.',
+        'expiresAt': '2026-02-25T00:00:00.000Z'
+    }
+)
+
+data = response.json()
+print(f"Tenant suspended: {data['tenant']['status']}")
+```
+</CodeGroup>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "tenant": {
+    "tenantId": "tenant_abc123",
+    "name": "Acme Corp",
+    "status": "suspended",
+    "suspendedAt": "2026-02-18T10:30:00.000Z",
+    "suspendedReason": "billing_failure",
+    "suspensionExpiresAt": "2026-02-25T00:00:00.000Z"
+  },
+  "actions": {
+    "callsTerminated": 5,
+    "batchesCanceled": 2,
+    "callsInQueue": 45,
+    "notificationSent": true
+  },
+  "auditId": "audit_xyz789"
+}
+```
+
+## Error Responses
+
+<ResponseField name="400 Bad Request">
+```json
+{
+  "success": false,
+  "error": "Reason is required",
+  "code": "VALIDATION_ERROR",
+  "details": {
+    "field": "reason",
+    "message": "Suspension reason must be provided"
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="401 Unauthorized">
+```json
+{
+  "success": false,
+  "error": "Invalid API key",
+  "code": "UNAUTHORIZED"
+}
+```
+</ResponseField>
+
+<ResponseField name="403 Forbidden">
+```json
+{
+  "success": false,
+  "error": "Insufficient permissions",
+  "code": "FORBIDDEN",
+  "details": {
+    "required": "admin:tenant:suspend",
+    "message": "API key does not have tenant suspension permissions"
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="404 Not Found">
+```json
+{
+  "success": false,
+  "error": "Tenant not found",
+  "code": "TENANT_NOT_FOUND",
+  "details": {
+    "tenantId": "tenant_invalid"
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="409 Conflict">
+```json
+{
+  "success": false,
+  "error": "Tenant is already suspended",
+  "code": "ALREADY_SUSPENDED",
+  "details": {
+    "suspendedAt": "2026-02-15T08:00:00.000Z",
+    "suspendedReason": "billing_failure"
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="500 Internal Server Error">
+```json
+{
+  "success": false,
+  "error": "Internal server error",
+  "code": "INTERNAL_ERROR"
+}
+```
+</ResponseField>
+
+## Notes
+
+- Suspension takes effect immediately
+- All API calls from the suspended tenant will return 403 Forbidden
+- Active calls can optionally be terminated immediately
+- Suspended tenants cannot initiate new calls or access any API endpoints
+- Recordings and data are preserved during suspension
+- Use the Activate Tenant endpoint to lift suspension
+- Suspension events are logged in the audit trail
+- Webhook deliveries to the tenant are paused during suspension
+- Auto-expiring suspensions are useful for temporary holds (e.g., payment processing)

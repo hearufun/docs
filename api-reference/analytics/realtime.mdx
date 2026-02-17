@@ -1,0 +1,150 @@
+---
+title: "Get Real-time Analytics"
+api: "GET https://api.talkos.io/api/analytics/realtime"
+description: "Retrieve live metrics including active calls, queued calls, completed calls today, and average call duration"
+---
+
+## Overview
+
+Get real-time analytics for your tenant's call center operations. This endpoint returns live metrics that are updated in real-time, providing instant visibility into current system state.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="activeCalls" type="integer">
+      Number of calls currently in progress
+    </ResponseField>
+    <ResponseField name="queuedCalls" type="integer">
+      Number of calls waiting in queue
+    </ResponseField>
+    <ResponseField name="completedToday" type="integer">
+      Total number of calls completed today (UTC)
+    </ResponseField>
+    <ResponseField name="avgCallDuration" type="number">
+      Average call duration in seconds for today's calls
+    </ResponseField>
+    <ResponseField name="peakConcurrentToday" type="integer">
+      Peak number of concurrent calls reached today
+    </ResponseField>
+    <ResponseField name="avgWaitTime" type="number">
+      Average queue wait time in seconds
+    </ResponseField>
+    <ResponseField name="callsPerHour" type="number">
+      Rolling average of calls per hour
+    </ResponseField>
+    <ResponseField name="timestamp" type="string">
+      ISO 8601 timestamp of when metrics were captured
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/analytics/realtime" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/analytics/realtime', {
+  method: 'GET',
+  headers: {
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/analytics/realtime',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "data": {
+    "activeCalls": 42,
+    "queuedCalls": 8,
+    "completedToday": 1247,
+    "avgCallDuration": 185.4,
+    "peakConcurrentToday": 67,
+    "avgWaitTime": 12.3,
+    "callsPerHour": 156.2,
+    "timestamp": "2026-02-18T14:32:18.456Z"
+  }
+}
+```
+
+```json 401
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Invalid or missing API key"
+  }
+}
+```
+
+```json 403
+{
+  "success": false,
+  "error": {
+    "code": "FORBIDDEN",
+    "message": "Access denied for this tenant"
+  }
+}
+```
+</ResponseExample>
+
+## Use Cases
+
+<AccordionGroup>
+  <Accordion title="Real-time Dashboard">
+    Power live dashboards with auto-refreshing metrics. Poll this endpoint every 5-10 seconds for up-to-date call center visibility.
+  </Accordion>
+  <Accordion title="Capacity Monitoring">
+    Monitor `activeCalls` and `queuedCalls` to detect when your call center is approaching capacity limits and trigger scaling actions.
+  </Accordion>
+  <Accordion title="Alerting Systems">
+    Set up alerts based on thresholds like queue depth or wait times to notify supervisors when intervention is needed.
+  </Accordion>
+</AccordionGroup>
+
+## Rate Limits
+
+This endpoint supports high-frequency polling for real-time dashboards:
+- **Standard tier**: 60 requests per minute
+- **Enterprise tier**: 300 requests per minute
+
+<Note>
+  For high-frequency real-time updates, consider using the [WebSocket API](/api-reference/realtime/websocket) instead of polling.
+</Note>

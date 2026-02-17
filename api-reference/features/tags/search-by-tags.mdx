@@ -1,0 +1,189 @@
+---
+title: "Search Calls by Tags"
+description: "Search for calls matching specific tags"
+api: "POST https://api.talkos.io/api/features/tags/search/calls"
+---
+
+# Search Calls by Tags
+
+Search for calls that have specific tags applied. Supports matching any or all specified tags.
+
+## Endpoint
+
+```
+POST /api/features/tags/search/calls
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Request Body
+
+<ParamField body="tags" type="array" required>
+  Array of tag names to search for
+</ParamField>
+
+<ParamField body="matchAll" type="boolean">
+  If `true`, calls must have ALL specified tags. If `false` (default), calls matching ANY tag are returned.
+</ParamField>
+
+## Response
+
+<ResponseField name="results" type="array">
+  Array of matching calls
+</ResponseField>
+
+<ResponseField name="results[].callUuid" type="string">
+  Unique identifier of the call
+</ResponseField>
+
+<ResponseField name="results[].tags" type="array">
+  All tags on this call
+</ResponseField>
+
+<ResponseField name="results[].matchedTags" type="array">
+  Tags that matched the search criteria
+</ResponseField>
+
+<ResponseField name="results[].createdAt" type="string">
+  ISO 8601 timestamp when the call was created
+</ResponseField>
+
+<ResponseField name="results[].duration" type="number">
+  Call duration in seconds
+</ResponseField>
+
+<ResponseField name="results[].status" type="string">
+  Call status
+</ResponseField>
+
+<ResponseField name="count" type="number">
+  Total number of matching calls
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/features/tags/search/calls \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "tags": ["complaint", "escalated"],
+    "matchAll": true
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/tags/search/calls', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  },
+  body: JSON.stringify({
+    tags: ['complaint', 'escalated'],
+    matchAll: true
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/features/tags/search/calls',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    json={
+        'tags': ['complaint', 'escalated'],
+        'matchAll': True
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "results": [
+    {
+      "callUuid": "call-abc123-def456",
+      "tags": ["complaint", "escalated", "billing", "vip-customer"],
+      "matchedTags": ["complaint", "escalated"],
+      "createdAt": "2026-02-18T10:20:00.000Z",
+      "duration": 485,
+      "status": "completed"
+    },
+    {
+      "callUuid": "call-xyz789-ghi012",
+      "tags": ["complaint", "escalated", "technical-issue"],
+      "matchedTags": ["complaint", "escalated"],
+      "createdAt": "2026-02-18T09:45:00.000Z",
+      "duration": 320,
+      "status": "completed"
+    },
+    {
+      "callUuid": "call-def456-jkl789",
+      "tags": ["complaint", "escalated"],
+      "matchedTags": ["complaint", "escalated"],
+      "createdAt": "2026-02-18T09:15:00.000Z",
+      "duration": 602,
+      "status": "completed"
+    }
+  ],
+  "count": 3
+}
+```
+
+```json 200 (Match Any)
+{
+  "results": [
+    {
+      "callUuid": "call-abc123-def456",
+      "tags": ["complaint", "billing"],
+      "matchedTags": ["complaint"],
+      "createdAt": "2026-02-18T10:20:00.000Z",
+      "duration": 485,
+      "status": "completed"
+    },
+    {
+      "callUuid": "call-xyz789-ghi012",
+      "tags": ["escalated", "technical-issue"],
+      "matchedTags": ["escalated"],
+      "createdAt": "2026-02-18T09:45:00.000Z",
+      "duration": 320,
+      "status": "completed"
+    }
+  ],
+  "count": 2
+}
+```
+
+```json 500
+{
+  "error": "Failed to search calls by tags"
+}
+```
+</ResponseExample>
+
+## Search Modes
+
+| Mode | `matchAll` | Description |
+|------|------------|-------------|
+| Match Any | `false` | Returns calls with at least one of the specified tags |
+| Match All | `true` | Returns only calls with ALL specified tags |

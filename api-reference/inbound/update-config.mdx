@@ -1,0 +1,206 @@
+---
+title: "Update Inbound Configuration"
+api: "PUT https://api.talkos.io/api/inbound/config"
+description: "Update your tenant's inbound call configuration and webhook settings."
+---
+
+Update the inbound call configuration for your tenant. All fields are optional - only provided fields will be updated.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="webhookUrl" type="string">
+  The URL TalkOS will call when an inbound call is received. Must be HTTPS and publicly accessible.
+</ParamField>
+
+<ParamField body="webhookTimeoutMs" type="integer">
+  Maximum time in milliseconds to wait for webhook response before using fallback config. Range: 1000-30000.
+</ParamField>
+
+<ParamField body="enabled" type="boolean">
+  Enable or disable inbound call handling. When disabled, calls will be rejected.
+</ParamField>
+
+<ParamField body="fallbackConfig" type="object">
+  Configuration used when webhook fails or times out.
+
+  <Expandable title="fallbackConfig properties">
+    <ParamField body="fallbackConfig.prompt" type="string">
+      System prompt for the AI agent when fallback is activated.
+    </ParamField>
+
+    <ParamField body="fallbackConfig.greeting" type="string">
+      Initial greeting message spoken to the caller.
+    </ParamField>
+
+    <ParamField body="fallbackConfig.maxDuration" type="integer">
+      Maximum call duration in seconds (1-3600).
+    </ParamField>
+
+    <ParamField body="fallbackConfig.language" type="string">
+      Language code for speech recognition and synthesis.
+    </ParamField>
+
+    <ParamField body="fallbackConfig.voiceId" type="string">
+      Voice identifier for text-to-speech.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="retryConfig" type="object">
+  Webhook retry configuration.
+
+  <Expandable title="retryConfig properties">
+    <ParamField body="retryConfig.maxRetries" type="integer">
+      Number of retry attempts (0-5).
+    </ParamField>
+
+    <ParamField body="retryConfig.retryDelayMs" type="integer">
+      Delay between retries in milliseconds.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Request
+
+<CodeGroup>
+```bash cURL
+curl -X PUT https://api.talkos.io/api/inbound/config \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "webhookUrl": "https://your-domain.com/webhooks/talkos-inbound-v2",
+    "webhookTimeoutMs": 8000,
+    "fallbackConfig": {
+      "greeting": "Hello! Our team is currently unavailable. Please leave a message.",
+      "maxDuration": 180
+    }
+  }'
+```
+
+```javascript Node.js
+const response = await fetch('https://api.talkos.io/api/inbound/config', {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  },
+  body: JSON.stringify({
+    webhookUrl: 'https://your-domain.com/webhooks/talkos-inbound-v2',
+    webhookTimeoutMs: 8000,
+    fallbackConfig: {
+      greeting: 'Hello! Our team is currently unavailable. Please leave a message.',
+      maxDuration: 180
+    }
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.put(
+    'https://api.talkos.io/api/inbound/config',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    json={
+        'webhookUrl': 'https://your-domain.com/webhooks/talkos-inbound-v2',
+        'webhookTimeoutMs': 8000,
+        'fallbackConfig': {
+            'greeting': 'Hello! Our team is currently unavailable. Please leave a message.',
+            'maxDuration': 180
+        }
+    }
+)
+
+data = response.json()
+```
+</CodeGroup>
+
+## Response
+
+<CodeGroup>
+```json 200 OK
+{
+  "success": true,
+  "message": "Inbound configuration updated successfully",
+  "data": {
+    "tenantId": "your-tenant-id",
+    "webhookUrl": "https://your-domain.com/webhooks/talkos-inbound-v2",
+    "webhookTimeoutMs": 8000,
+    "fallbackConfig": {
+      "prompt": "You are a helpful customer service agent. Apologize that our systems are temporarily unavailable and offer to take a message.",
+      "greeting": "Hello! Our team is currently unavailable. Please leave a message.",
+      "maxDuration": 180,
+      "language": "en-US",
+      "voiceId": "alloy"
+    },
+    "retryConfig": {
+      "maxRetries": 2,
+      "retryDelayMs": 500
+    },
+    "enabled": true,
+    "createdAt": "2026-01-15T08:00:00.000Z",
+    "updatedAt": "2026-02-18T14:25:00.000Z"
+  }
+}
+```
+
+```json 400 Bad Request
+{
+  "success": false,
+  "error": "Validation failed",
+  "message": "webhookTimeoutMs must be between 1000 and 30000"
+}
+```
+
+```json 404 Not Found
+{
+  "success": false,
+  "error": "Configuration not found",
+  "message": "No inbound configuration exists for this tenant. Use POST /api/inbound/config to create one."
+}
+```
+</CodeGroup>
+
+## Enable/Disable Example
+
+Quickly enable or disable inbound handling:
+
+<CodeGroup>
+```bash Disable
+curl -X PUT https://api.talkos.io/api/inbound/config \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{"enabled": false}'
+```
+
+```bash Enable
+curl -X PUT https://api.talkos.io/api/inbound/config \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{"enabled": true}'
+```
+</CodeGroup>
+
+<Note>
+  When `enabled` is set to `false`, all incoming calls will be rejected with a busy signal until re-enabled.
+</Note>

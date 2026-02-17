@@ -1,0 +1,234 @@
+---
+title: "Configure Inbound Webhook"
+api: "POST https://api.talkos.io/api/inbound/config"
+description: "Configure your tenant's inbound webhook to handle incoming calls with custom AI behavior."
+---
+
+Configure the webhook URL and fallback settings for handling inbound calls. When a call comes in, TalkOS will POST call details to your webhook to retrieve dynamic instructions.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="webhookUrl" type="string" required>
+  The URL TalkOS will call when an inbound call is received. Must be HTTPS and publicly accessible.
+</ParamField>
+
+<ParamField body="webhookTimeoutMs" type="integer" default={5000}>
+  Maximum time in milliseconds to wait for webhook response before using fallback config. Range: 1000-30000.
+</ParamField>
+
+<ParamField body="fallbackConfig" type="object">
+  Configuration used when webhook fails or times out.
+
+  <Expandable title="fallbackConfig properties">
+    <ParamField body="fallbackConfig.prompt" type="string">
+      System prompt for the AI agent when fallback is activated.
+    </ParamField>
+
+    <ParamField body="fallbackConfig.greeting" type="string">
+      Initial greeting message spoken to the caller.
+    </ParamField>
+
+    <ParamField body="fallbackConfig.maxDuration" type="integer" default={300}>
+      Maximum call duration in seconds (1-3600).
+    </ParamField>
+
+    <ParamField body="fallbackConfig.language" type="string" default="en-US">
+      Language code for speech recognition and synthesis.
+    </ParamField>
+
+    <ParamField body="fallbackConfig.voiceId" type="string">
+      Voice identifier for text-to-speech. See /api/voices for available options.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="retryConfig" type="object">
+  Webhook retry configuration.
+
+  <Expandable title="retryConfig properties">
+    <ParamField body="retryConfig.maxRetries" type="integer" default={2}>
+      Number of retry attempts (0-5).
+    </ParamField>
+
+    <ParamField body="retryConfig.retryDelayMs" type="integer" default={500}>
+      Delay between retries in milliseconds.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Request
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.talkos.io/api/inbound/config \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "webhookUrl": "https://your-domain.com/webhooks/talkos-inbound",
+    "webhookTimeoutMs": 5000,
+    "fallbackConfig": {
+      "prompt": "You are a helpful customer service agent. Apologize that our systems are temporarily unavailable and offer to take a message.",
+      "greeting": "Hello, thank you for calling. How may I assist you today?",
+      "maxDuration": 300,
+      "language": "en-US",
+      "voiceId": "alloy"
+    },
+    "retryConfig": {
+      "maxRetries": 2,
+      "retryDelayMs": 500
+    }
+  }'
+```
+
+```javascript Node.js
+const response = await fetch('https://api.talkos.io/api/inbound/config', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  },
+  body: JSON.stringify({
+    webhookUrl: 'https://your-domain.com/webhooks/talkos-inbound',
+    webhookTimeoutMs: 5000,
+    fallbackConfig: {
+      prompt: 'You are a helpful customer service agent...',
+      greeting: 'Hello, thank you for calling. How may I assist you today?',
+      maxDuration: 300,
+      language: 'en-US',
+      voiceId: 'alloy'
+    },
+    retryConfig: {
+      maxRetries: 2,
+      retryDelayMs: 500
+    }
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/inbound/config',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    json={
+        'webhookUrl': 'https://your-domain.com/webhooks/talkos-inbound',
+        'webhookTimeoutMs': 5000,
+        'fallbackConfig': {
+            'prompt': 'You are a helpful customer service agent...',
+            'greeting': 'Hello, thank you for calling. How may I assist you today?',
+            'maxDuration': 300,
+            'language': 'en-US',
+            'voiceId': 'alloy'
+        },
+        'retryConfig': {
+            'maxRetries': 2,
+            'retryDelayMs': 500
+        }
+    }
+)
+
+data = response.json()
+```
+</CodeGroup>
+
+## Response
+
+<CodeGroup>
+```json 201 Created
+{
+  "success": true,
+  "message": "Inbound configuration created successfully",
+  "data": {
+    "tenantId": "your-tenant-id",
+    "webhookUrl": "https://your-domain.com/webhooks/talkos-inbound",
+    "webhookTimeoutMs": 5000,
+    "fallbackConfig": {
+      "prompt": "You are a helpful customer service agent. Apologize that our systems are temporarily unavailable and offer to take a message.",
+      "greeting": "Hello, thank you for calling. How may I assist you today?",
+      "maxDuration": 300,
+      "language": "en-US",
+      "voiceId": "alloy"
+    },
+    "retryConfig": {
+      "maxRetries": 2,
+      "retryDelayMs": 500
+    },
+    "enabled": true,
+    "createdAt": "2026-02-18T10:30:00.000Z",
+    "updatedAt": "2026-02-18T10:30:00.000Z"
+  }
+}
+```
+
+```json 400 Bad Request
+{
+  "success": false,
+  "error": "Invalid webhook URL",
+  "message": "webhookUrl must be a valid HTTPS URL"
+}
+```
+
+```json 409 Conflict
+{
+  "success": false,
+  "error": "Configuration already exists",
+  "message": "Use PUT /api/inbound/config to update existing configuration"
+}
+```
+</CodeGroup>
+
+## Webhook Request Format
+
+When an inbound call is received, TalkOS sends a POST request to your webhook:
+
+```json
+{
+  "event": "inbound_call",
+  "callId": "call_abc123xyz",
+  "from": "+14155551234",
+  "to": "+18005559999",
+  "timestamp": "2026-02-18T10:30:00.000Z",
+  "metadata": {
+    "callerIdName": "John Doe",
+    "carrier": "Verizon"
+  }
+}
+```
+
+## Webhook Response Format
+
+Your webhook should return call handling instructions:
+
+```json
+{
+  "action": "answer",
+  "prompt": "You are Sarah from Acme Corp customer support...",
+  "greeting": "Hello! Thank you for calling Acme Corp. How can I help you?",
+  "voiceId": "nova",
+  "language": "en-US",
+  "maxDuration": 600,
+  "recordCall": true,
+  "metadata": {
+    "customerId": "cust_12345"
+  }
+}
+```

@@ -1,0 +1,386 @@
+---
+title: 'Register Agent'
+api: 'POST https://api.talkos.io/api/agents/register'
+description: 'Register a new agent for receiving call transfers'
+---
+
+## Overview
+
+Registers a new agent in the TalkOS system, enabling them to receive transferred calls from AI assistants. Agents can be configured with specific skills, availability settings, and capacity limits.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="agentId" type="string" required>
+  Unique identifier for the agent. Must be alphanumeric with underscores, 3-50 characters.
+</ParamField>
+
+<ParamField body="name" type="string" required>
+  Display name for the agent (2-100 characters)
+</ParamField>
+
+<ParamField body="email" type="string">
+  Agent's email address for notifications
+</ParamField>
+
+<ParamField body="phoneNumber" type="string" required>
+  Agent's phone number in E.164 format for receiving transferred calls
+</ParamField>
+
+<ParamField body="skills" type="array" required>
+  List of skill tags the agent possesses for routing purposes
+</ParamField>
+
+<ParamField body="maxConcurrentCalls" type="integer" default="1">
+  Maximum number of calls the agent can handle simultaneously (1-10)
+</ParamField>
+
+<ParamField body="priority" type="integer" default="5">
+  Routing priority for this agent (1-10, higher = more priority)
+</ParamField>
+
+<ParamField body="languages" type="array">
+  Languages the agent can support (ISO 639-1 codes)
+</ParamField>
+
+<ParamField body="timezone" type="string">
+  Agent's timezone for scheduling (IANA timezone format)
+</ParamField>
+
+<ParamField body="workSchedule" type="object">
+  Agent's working hours
+  <Expandable title="properties">
+    <ParamField body="monday" type="object">
+      Monday schedule with `start` and `end` times (HH:MM format)
+    </ParamField>
+    <ParamField body="tuesday" type="object">
+      Tuesday schedule
+    </ParamField>
+    <ParamField body="wednesday" type="object">
+      Wednesday schedule
+    </ParamField>
+    <ParamField body="thursday" type="object">
+      Thursday schedule
+    </ParamField>
+    <ParamField body="friday" type="object">
+      Friday schedule
+    </ParamField>
+    <ParamField body="saturday" type="object">
+      Saturday schedule
+    </ParamField>
+    <ParamField body="sunday" type="object">
+      Sunday schedule
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Custom key-value pairs for additional agent data
+</ParamField>
+
+<ParamField body="initialStatus" type="string" default="offline">
+  Initial status: `available`, `offline`
+</ParamField>
+
+<ParamField body="notificationPreferences" type="object">
+  How the agent receives transfer notifications
+  <Expandable title="properties">
+    <ParamField body="sms" type="boolean" default="true">
+      Receive SMS notifications
+    </ParamField>
+    <ParamField body="email" type="boolean" default="false">
+      Receive email notifications
+    </ParamField>
+    <ParamField body="webhook" type="string">
+      Webhook URL for notifications
+    </ParamField>
+    <ParamField body="pushEnabled" type="boolean" default="false">
+      Enable push notifications
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the agent was registered successfully
+</ResponseField>
+
+<ResponseField name="agent" type="object">
+  The registered agent details
+  <Expandable title="properties">
+    <ResponseField name="agentId" type="string">
+      The agent's unique identifier
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      The agent's display name
+    </ResponseField>
+    <ResponseField name="email" type="string">
+      The agent's email address
+    </ResponseField>
+    <ResponseField name="phoneNumber" type="string">
+      The agent's phone number (masked)
+    </ResponseField>
+    <ResponseField name="skills" type="array">
+      The agent's assigned skills
+    </ResponseField>
+    <ResponseField name="maxConcurrentCalls" type="integer">
+      Maximum concurrent call capacity
+    </ResponseField>
+    <ResponseField name="priority" type="integer">
+      Routing priority level
+    </ResponseField>
+    <ResponseField name="languages" type="array">
+      Supported languages
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Current agent status
+    </ResponseField>
+    <ResponseField name="timezone" type="string">
+      Agent's timezone
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="credentials" type="object">
+  Agent authentication credentials (only shown once)
+  <Expandable title="properties">
+    <ResponseField name="agentToken" type="string">
+      Token for agent client authentication
+    </ResponseField>
+    <ResponseField name="expiresAt" type="string">
+      Token expiration date
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp when the agent was created
+</ResponseField>
+
+<RequestExample>
+```bash cURL - Basic Registration
+curl -X POST https://api.talkos.io/api/agents/register \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "agentId": "agent_sarah_001",
+    "name": "Sarah Johnson",
+    "email": "sarah.johnson@company.com",
+    "phoneNumber": "+14155551234",
+    "skills": ["billing", "technical_support", "account_management"],
+    "maxConcurrentCalls": 2
+  }'
+```
+
+```bash cURL - Full Configuration
+curl -X POST https://api.talkos.io/api/agents/register \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "agentId": "agent_michael_002",
+    "name": "Michael Chen",
+    "email": "michael.chen@company.com",
+    "phoneNumber": "+14155555678",
+    "skills": ["technical_support", "enterprise", "escalations"],
+    "maxConcurrentCalls": 3,
+    "priority": 8,
+    "languages": ["en", "zh", "es"],
+    "timezone": "America/Los_Angeles",
+    "workSchedule": {
+      "monday": { "start": "09:00", "end": "17:00" },
+      "tuesday": { "start": "09:00", "end": "17:00" },
+      "wednesday": { "start": "09:00", "end": "17:00" },
+      "thursday": { "start": "09:00", "end": "17:00" },
+      "friday": { "start": "09:00", "end": "15:00" }
+    },
+    "metadata": {
+      "department": "Enterprise Support",
+      "employeeId": "EMP-2847",
+      "certifications": ["AWS", "Azure"]
+    },
+    "initialStatus": "available",
+    "notificationPreferences": {
+      "sms": true,
+      "email": true,
+      "webhook": "https://company.com/webhooks/agent-notifications"
+    }
+  }'
+```
+
+```bash cURL - Multilingual Agent
+curl -X POST https://api.talkos.io/api/agents/register \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "agentId": "agent_maria_003",
+    "name": "Maria Garcia",
+    "email": "maria.garcia@company.com",
+    "phoneNumber": "+14155559012",
+    "skills": ["customer_service", "billing", "retention"],
+    "maxConcurrentCalls": 2,
+    "priority": 7,
+    "languages": ["en", "es", "pt"],
+    "initialStatus": "available"
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201 - Created
+{
+  "success": true,
+  "agent": {
+    "agentId": "agent_sarah_001",
+    "name": "Sarah Johnson",
+    "email": "sarah.johnson@company.com",
+    "phoneNumber": "+1415555****",
+    "skills": [
+      "billing",
+      "technical_support",
+      "account_management"
+    ],
+    "maxConcurrentCalls": 2,
+    "priority": 5,
+    "languages": ["en"],
+    "status": "offline",
+    "timezone": "UTC"
+  },
+  "credentials": {
+    "agentToken": "agt_tok_a1b2c3d4e5f6g7h8i9j0...",
+    "expiresAt": "2027-02-18T14:30:00.000Z"
+  },
+  "createdAt": "2026-02-18T14:30:00.000Z"
+}
+```
+
+```json 201 - Full Configuration
+{
+  "success": true,
+  "agent": {
+    "agentId": "agent_michael_002",
+    "name": "Michael Chen",
+    "email": "michael.chen@company.com",
+    "phoneNumber": "+1415555****",
+    "skills": [
+      "technical_support",
+      "enterprise",
+      "escalations"
+    ],
+    "maxConcurrentCalls": 3,
+    "priority": 8,
+    "languages": ["en", "zh", "es"],
+    "status": "available",
+    "timezone": "America/Los_Angeles",
+    "workSchedule": {
+      "monday": { "start": "09:00", "end": "17:00" },
+      "tuesday": { "start": "09:00", "end": "17:00" },
+      "wednesday": { "start": "09:00", "end": "17:00" },
+      "thursday": { "start": "09:00", "end": "17:00" },
+      "friday": { "start": "09:00", "end": "15:00" }
+    },
+    "metadata": {
+      "department": "Enterprise Support",
+      "employeeId": "EMP-2847",
+      "certifications": ["AWS", "Azure"]
+    }
+  },
+  "credentials": {
+    "agentToken": "agt_tok_x1y2z3a4b5c6d7e8f9g0...",
+    "expiresAt": "2027-02-18T14:30:00.000Z"
+  },
+  "createdAt": "2026-02-18T14:30:00.000Z"
+}
+```
+
+```json 400 - Bad Request
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_AGENT_ID",
+    "message": "Agent ID must be alphanumeric with underscores, 3-50 characters"
+  }
+}
+```
+
+```json 400 - Invalid Phone
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_PHONE_NUMBER",
+    "message": "Phone number must be in E.164 format"
+  }
+}
+```
+
+```json 409 - Duplicate
+{
+  "success": false,
+  "error": {
+    "code": "AGENT_ALREADY_EXISTS",
+    "message": "An agent with this ID already exists"
+  }
+}
+```
+
+```json 409 - Phone In Use
+{
+  "success": false,
+  "error": {
+    "code": "PHONE_NUMBER_IN_USE",
+    "message": "This phone number is already registered to another agent"
+  }
+}
+```
+</ResponseExample>
+
+## Skills
+
+Skills are used for intelligent call routing. Common skill categories include:
+
+| Category | Examples |
+|----------|----------|
+| Department | `billing`, `sales`, `support`, `retention` |
+| Technical | `technical_support`, `enterprise`, `developer` |
+| Product | `product_a`, `product_b`, `enterprise_plan` |
+| Language | Use the `languages` field instead |
+| Specialty | `escalations`, `vip`, `complaints` |
+
+## Best Practices
+
+1. **Unique Agent IDs**: Use a consistent naming convention like `agent_firstname_number`
+2. **Skill Tagging**: Be specific with skills for better routing accuracy
+3. **Capacity Planning**: Set `maxConcurrentCalls` based on agent capability and call complexity
+4. **Priority Levels**: Use higher priority (8-10) for senior agents or specialists
+5. **Timezone Accuracy**: Set correct timezone for accurate schedule enforcement
+
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| `INVALID_AGENT_ID` | Agent ID format is invalid |
+| `AGENT_ALREADY_EXISTS` | An agent with this ID exists |
+| `INVALID_PHONE_NUMBER` | Phone number is not valid E.164 format |
+| `PHONE_NUMBER_IN_USE` | Phone number registered to another agent |
+| `INVALID_EMAIL` | Email format is invalid |
+| `INVALID_SKILLS` | Skills must be a non-empty array of strings |
+| `INVALID_CONCURRENT_CALLS` | Must be between 1 and 10 |
+| `INVALID_PRIORITY` | Priority must be between 1 and 10 |
+| `INVALID_TIMEZONE` | Timezone format not recognized |
+| `INVALID_SCHEDULE` | Work schedule format is invalid |

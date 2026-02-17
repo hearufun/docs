@@ -1,0 +1,197 @@
+---
+title: "Release Phone Number"
+api: "DELETE https://api.talkos.io/api/numbers/{identifier}"
+description: "Release and cancel a phone number subscription"
+---
+
+Release a phone number back to the provider. This action cancels your subscription and the number will no longer be available for making or receiving calls. This action is irreversible.
+
+<Warning>
+  Releasing a number is permanent. The number will be returned to the provider's pool and may be reassigned to another customer. Ensure you have migrated any services using this number before releasing.
+</Warning>
+
+## Authentication
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="identifier" type="string" required>
+  The phone number ID or E.164 formatted number (e.g., `num_abc123xyz` or `+14155551234`)
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="force" type="boolean" default="false">
+  Force release even if the number has active calls or pending webhooks. Use with caution.
+</ParamField>
+
+<ParamField query="reason" type="string">
+  Optional reason for releasing the number (for audit purposes)
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="id" type="string">
+      The released number's ID
+    </ResponseField>
+    <ResponseField name="number" type="string">
+      The released phone number
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      New status (released)
+    </ResponseField>
+    <ResponseField name="releasedAt" type="string">
+      Release timestamp
+    </ResponseField>
+    <ResponseField name="refund" type="object">
+      Refund information if applicable
+      <Expandable title="refund object">
+        <ResponseField name="amount" type="number">
+          Prorated refund amount
+        </ResponseField>
+        <ResponseField name="currency" type="string">
+          Refund currency
+        </ResponseField>
+        <ResponseField name="daysRemaining" type="integer">
+          Days remaining in billing period
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="summary" type="object">
+      Usage summary before release
+      <Expandable title="summary object">
+        <ResponseField name="totalCalls" type="integer">
+          Total calls on this number
+        </ResponseField>
+        <ResponseField name="totalMinutes" type="number">
+          Total minutes used
+        </ResponseField>
+        <ResponseField name="ownedDays" type="integer">
+          Days the number was owned
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X DELETE "https://api.talkos.io/api/numbers/num_abc123xyz?reason=consolidating-numbers" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```bash cURL (force release)
+curl -X DELETE "https://api.talkos.io/api/numbers/num_abc123xyz?force=true" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript Node.js
+const response = await fetch(
+  'https://api.talkos.io/api/numbers/num_abc123xyz?reason=consolidating-numbers',
+  {
+    method: 'DELETE',
+    headers: {
+      'x-api-key': 'your-api-key',
+      'x-tenant-id': 'your-tenant-id'
+    }
+  }
+);
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.delete(
+    'https://api.talkos.io/api/numbers/num_abc123xyz',
+    params={
+        'reason': 'consolidating-numbers'
+    },
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "data": {
+    "id": "num_abc123xyz",
+    "number": "+14155551234",
+    "status": "released",
+    "releasedAt": "2026-02-18T10:55:00Z",
+    "refund": {
+      "amount": 0.50,
+      "currency": "USD",
+      "daysRemaining": 15
+    },
+    "summary": {
+      "totalCalls": 1547,
+      "totalMinutes": 4521.5,
+      "ownedDays": 34
+    }
+  }
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": {
+    "code": "ACTIVE_CALLS",
+    "message": "Cannot release number with active calls. Use force=true to override.",
+    "details": {
+      "activeCalls": 2
+    }
+  }
+}
+```
+
+```json 404
+{
+  "success": false,
+  "error": {
+    "code": "NUMBER_NOT_FOUND",
+    "message": "Phone number not found"
+  }
+}
+```
+
+```json 409
+{
+  "success": false,
+  "error": {
+    "code": "ALREADY_RELEASED",
+    "message": "This number has already been released"
+  }
+}
+```
+</ResponseExample>
+
+## Notes
+
+- **Prorated refunds**: If you release a number before the end of your billing cycle, you may receive a prorated refund for unused days.
+- **Data retention**: Call logs, recordings, and transcripts associated with this number are retained according to your tenant's data retention policy.
+- **Grace period**: Some providers offer a grace period where you can reclaim a released number. Contact support for assistance.

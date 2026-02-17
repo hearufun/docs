@@ -1,0 +1,212 @@
+---
+title: "List Bot Numbers"
+api: "GET https://api.talkos.io/api/inbound/bot-numbers"
+description: "Retrieve all phone numbers configured for inbound AI handling."
+---
+
+Get a list of all phone numbers assigned to your tenant that are configured for inbound AI call handling. These are the numbers that callers can dial to reach your AI agents.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="status" type="string">
+  Filter by number status. Options: `active`, `inactive`, `pending`.
+</ParamField>
+
+<ParamField query="country" type="string">
+  Filter by country code (ISO 3166-1 alpha-2). Example: `US`, `GB`, `CA`.
+</ParamField>
+
+<ParamField query="page" type="integer" default={1}>
+  Page number for pagination.
+</ParamField>
+
+<ParamField query="limit" type="integer" default={20}>
+  Number of results per page (max: 100).
+</ParamField>
+
+## Request
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/inbound/bot-numbers?status=active&limit=10" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript Node.js
+const response = await fetch('https://api.talkos.io/api/inbound/bot-numbers?status=active&limit=10', {
+  method: 'GET',
+  headers: {
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/inbound/bot-numbers',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    params={
+        'status': 'active',
+        'limit': 10
+    }
+)
+
+data = response.json()
+```
+</CodeGroup>
+
+## Response
+
+<CodeGroup>
+```json 200 OK
+{
+  "success": true,
+  "data": {
+    "numbers": [
+      {
+        "id": "num_abc123",
+        "phoneNumber": "+18005551234",
+        "friendlyName": "Main Support Line",
+        "country": "US",
+        "region": "California",
+        "capabilities": {
+          "voice": true,
+          "sms": true,
+          "mms": false
+        },
+        "status": "active",
+        "webhookOverride": null,
+        "voiceIdOverride": "nova",
+        "stats": {
+          "totalCalls": 4521,
+          "callsToday": 87,
+          "averageCallDuration": 245
+        },
+        "assignedAt": "2026-01-10T12:00:00.000Z",
+        "lastCallAt": "2026-02-18T14:55:32.000Z"
+      },
+      {
+        "id": "num_def456",
+        "phoneNumber": "+18005555678",
+        "friendlyName": "Sales Hotline",
+        "country": "US",
+        "region": "New York",
+        "capabilities": {
+          "voice": true,
+          "sms": true,
+          "mms": true
+        },
+        "status": "active",
+        "webhookOverride": "https://sales.your-domain.com/webhook",
+        "voiceIdOverride": null,
+        "stats": {
+          "totalCalls": 2103,
+          "callsToday": 42,
+          "averageCallDuration": 312
+        },
+        "assignedAt": "2026-01-22T09:30:00.000Z",
+        "lastCallAt": "2026-02-18T14:48:17.000Z"
+      },
+      {
+        "id": "num_ghi789",
+        "phoneNumber": "+442071234567",
+        "friendlyName": "UK Support",
+        "country": "GB",
+        "region": "London",
+        "capabilities": {
+          "voice": true,
+          "sms": false,
+          "mms": false
+        },
+        "status": "active",
+        "webhookOverride": null,
+        "voiceIdOverride": "shimmer",
+        "stats": {
+          "totalCalls": 876,
+          "callsToday": 15,
+          "averageCallDuration": 198
+        },
+        "assignedAt": "2026-02-01T14:00:00.000Z",
+        "lastCallAt": "2026-02-18T13:22:45.000Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total": 3,
+      "totalPages": 1,
+      "hasMore": false
+    }
+  }
+}
+```
+
+```json 404 Not Found
+{
+  "success": false,
+  "error": "No numbers found",
+  "message": "No phone numbers are configured for inbound handling. Purchase numbers at /api/numbers/purchase"
+}
+```
+</CodeGroup>
+
+## Response Fields
+
+<ResponseField name="data.numbers" type="array">
+  List of phone numbers configured for inbound handling.
+</ResponseField>
+
+<ResponseField name="data.numbers[].id" type="string">
+  Unique identifier for the phone number.
+</ResponseField>
+
+<ResponseField name="data.numbers[].phoneNumber" type="string">
+  Phone number in E.164 format.
+</ResponseField>
+
+<ResponseField name="data.numbers[].friendlyName" type="string">
+  Human-readable name for the number.
+</ResponseField>
+
+<ResponseField name="data.numbers[].capabilities" type="object">
+  Supported features for this number (voice, sms, mms).
+</ResponseField>
+
+<ResponseField name="data.numbers[].status" type="string">
+  Current status: `active`, `inactive`, or `pending`.
+</ResponseField>
+
+<ResponseField name="data.numbers[].webhookOverride" type="string">
+  Number-specific webhook URL. If set, overrides tenant-level webhook.
+</ResponseField>
+
+<ResponseField name="data.numbers[].voiceIdOverride" type="string">
+  Number-specific voice. If set, overrides tenant-level voice setting.
+</ResponseField>
+
+<ResponseField name="data.numbers[].stats" type="object">
+  Call statistics for this specific number.
+</ResponseField>
+
+<Tip>
+  Use `webhookOverride` to route different phone numbers to different backend handlers - useful for multi-department setups.
+</Tip>

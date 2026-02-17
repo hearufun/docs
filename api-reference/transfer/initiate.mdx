@@ -1,0 +1,249 @@
+---
+title: 'Initiate Transfer'
+api: 'POST https://api.talkos.io/api/transfer/initiate'
+description: 'Transfer an active call to a human agent or external number'
+---
+
+## Overview
+
+Initiates a call transfer from an AI-handled call to a human agent or external phone number. Supports cold, warm, and blind transfer types for flexible handoff scenarios.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="callUuid" type="string" required>
+  The unique identifier of the active call to transfer
+</ParamField>
+
+<ParamField body="targetNumber" type="string">
+  The phone number to transfer the call to (E.164 format). Either `targetNumber` or `agentId` is required.
+</ParamField>
+
+<ParamField body="agentId" type="string">
+  The ID of the registered agent to transfer the call to. Either `targetNumber` or `agentId` is required.
+</ParamField>
+
+<ParamField body="transferType" type="string" required>
+  The type of transfer to perform
+  - `cold` - Transfer without introduction (caller is placed on hold, agent receives call)
+  - `warm` - Transfer with introduction (AI briefs agent before connecting caller)
+  - `blind` - Immediate transfer without hold (direct connection)
+</ParamField>
+
+<ParamField body="reason" type="string">
+  The reason for the transfer. Used for analytics and agent context.
+</ParamField>
+
+<ParamField body="context" type="object">
+  Additional context to pass to the receiving agent
+  <Expandable title="properties">
+    <ParamField body="summary" type="string">
+      AI-generated summary of the conversation so far
+    </ParamField>
+    <ParamField body="customerIntent" type="string">
+      Detected customer intent or issue category
+    </ParamField>
+    <ParamField body="sentiment" type="string">
+      Current customer sentiment (positive/neutral/negative)
+    </ParamField>
+    <ParamField body="metadata" type="object">
+      Custom key-value pairs for additional context
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="priority" type="string" default="normal">
+  Transfer priority level: `low`, `normal`, `high`, `urgent`
+</ParamField>
+
+<ParamField body="timeout" type="integer" default="30">
+  Maximum seconds to wait for agent to accept the transfer (5-120)
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the transfer was initiated successfully
+</ResponseField>
+
+<ResponseField name="transferId" type="string">
+  Unique identifier for this transfer request
+</ResponseField>
+
+<ResponseField name="callUuid" type="string">
+  The call UUID being transferred
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current transfer status: `initiated`, `ringing`, `connecting`
+</ResponseField>
+
+<ResponseField name="transferType" type="string">
+  The transfer type that was requested
+</ResponseField>
+
+<ResponseField name="target" type="object">
+  Information about the transfer target
+  <Expandable title="properties">
+    <ResponseField name="type" type="string">
+      Target type: `agent` or `number`
+    </ResponseField>
+    <ResponseField name="agentId" type="string">
+      Agent ID if transferring to an agent
+    </ResponseField>
+    <ResponseField name="agentName" type="string">
+      Agent name if transferring to an agent
+    </ResponseField>
+    <ResponseField name="number" type="string">
+      Phone number if transferring to external number
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="initiatedAt" type="string">
+  ISO 8601 timestamp when the transfer was initiated
+</ResponseField>
+
+<ResponseField name="expiresAt" type="string">
+  ISO 8601 timestamp when the transfer request will expire
+</ResponseField>
+
+<RequestExample>
+```bash cURL - Transfer to Agent
+curl -X POST https://api.talkos.io/api/transfer/initiate \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "callUuid": "call_abc123def456",
+    "agentId": "agent_789xyz",
+    "transferType": "warm",
+    "reason": "Customer requested billing specialist",
+    "context": {
+      "summary": "Customer inquiring about incorrect charge on February statement",
+      "customerIntent": "billing_dispute",
+      "sentiment": "negative"
+    },
+    "priority": "high",
+    "timeout": 45
+  }'
+```
+
+```bash cURL - Transfer to External Number
+curl -X POST https://api.talkos.io/api/transfer/initiate \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "callUuid": "call_abc123def456",
+    "targetNumber": "+14155551234",
+    "transferType": "cold",
+    "reason": "Escalation to supervisor"
+  }'
+```
+
+```bash cURL - Blind Transfer
+curl -X POST https://api.talkos.io/api/transfer/initiate \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "callUuid": "call_abc123def456",
+    "agentId": "agent_support_001",
+    "transferType": "blind"
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 - Success
+{
+  "success": true,
+  "transferId": "xfer_a1b2c3d4e5f6",
+  "callUuid": "call_abc123def456",
+  "status": "initiated",
+  "transferType": "warm",
+  "target": {
+    "type": "agent",
+    "agentId": "agent_789xyz",
+    "agentName": "Sarah Johnson"
+  },
+  "initiatedAt": "2026-02-18T14:30:00.000Z",
+  "expiresAt": "2026-02-18T14:30:45.000Z"
+}
+```
+
+```json 400 - Bad Request
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_TRANSFER_TYPE",
+    "message": "Transfer type must be one of: cold, warm, blind"
+  }
+}
+```
+
+```json 404 - Call Not Found
+{
+  "success": false,
+  "error": {
+    "code": "CALL_NOT_FOUND",
+    "message": "No active call found with the specified UUID"
+  }
+}
+```
+
+```json 409 - Transfer In Progress
+{
+  "success": false,
+  "error": {
+    "code": "TRANSFER_IN_PROGRESS",
+    "message": "A transfer is already in progress for this call"
+  }
+}
+```
+
+```json 503 - Agent Unavailable
+{
+  "success": false,
+  "error": {
+    "code": "AGENT_UNAVAILABLE",
+    "message": "The specified agent is not available to receive transfers"
+  }
+}
+```
+</ResponseExample>
+
+## Transfer Types Explained
+
+| Type | Description | Use Case |
+|------|-------------|----------|
+| `cold` | Caller placed on hold, agent receives call separately | Standard escalations, agent needs prep time |
+| `warm` | AI briefs agent on context before connecting caller | Complex issues requiring handoff context |
+| `blind` | Immediate direct transfer without hold | Simple routing, time-sensitive situations |
+
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| `INVALID_TRANSFER_TYPE` | Transfer type not recognized |
+| `CALL_NOT_FOUND` | Call UUID does not exist or is not active |
+| `CALL_NOT_ACTIVE` | Call has already ended |
+| `TRANSFER_IN_PROGRESS` | Another transfer is pending for this call |
+| `AGENT_NOT_FOUND` | Specified agent ID does not exist |
+| `AGENT_UNAVAILABLE` | Agent is offline, busy, or on break |
+| `INVALID_PHONE_NUMBER` | Target number is not valid E.164 format |
+| `TIMEOUT_OUT_OF_RANGE` | Timeout must be between 5 and 120 seconds |

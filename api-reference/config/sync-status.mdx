@@ -1,0 +1,54 @@
+---
+title: "Get Sync Status"
+api: "GET https://api.talkos.io/api/config/sync-status"
+description: "Check the configuration sync service status"
+---
+
+Check the status of the configuration synchronization service. This is useful for monitoring config propagation across multiple workers.
+
+<RequestExample>
+```bash cURL
+curl -X GET https://api.talkos.io/api/config/sync-status \
+  -H "x-api-key: your-api-key"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "lastSync": "2026-02-17T14:55:00.000Z",
+  "syncInterval": 10000,
+  "version": 13,
+  "isHealthy": true,
+  "nextSyncIn": 4500,
+  "syncCount": 1247,
+  "lastError": null
+}
+```
+
+```json 200 (Unhealthy)
+{
+  "success": true,
+  "lastSync": "2026-02-17T14:45:00.000Z",
+  "syncInterval": 10000,
+  "version": 12,
+  "isHealthy": false,
+  "nextSyncIn": 0,
+  "syncCount": 1240,
+  "lastError": "Database connection timeout at 2026-02-17T14:50:00.000Z"
+}
+```
+</ResponseExample>
+
+## Response Fields
+
+| Field | Description |
+|-------|-------------|
+| `lastSync` | Timestamp of the last successful sync |
+| `syncInterval` | Time between syncs in milliseconds |
+| `version` | Current config version loaded in this worker |
+| `isHealthy` | Whether sync is operating normally |
+| `nextSyncIn` | Milliseconds until next scheduled sync |
+| `syncCount` | Total number of syncs since server start |
+| `lastError` | Most recent sync error, if any |

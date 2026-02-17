@@ -1,0 +1,351 @@
+---
+title: 'Rate Limits'
+description: 'Understanding and working with TalkOS API rate limits'
+---
+
+# Rate Limits
+
+The TalkOS API implements rate limiting to ensure fair usage and maintain service stability for all users. Rate limits vary by endpoint type and your subscription plan.
+
+## How Rate Limiting Works
+
+Rate limits are calculated using a sliding window algorithm. Each API key is allocated a certain number of requests per time window (typically 60 seconds). When you exceed the limit, you'll receive a `429 Too Many Requests` response.
+
+## Rate Limit Headers
+
+Every API response includes headers to help you track your rate limit status:
+
+| Header | Description | Example |
+|--------|-------------|---------|
+| `X-RateLimit-Limit` | Maximum requests allowed per window | `100` |
+| `X-RateLimit-Remaining` | Requests remaining in current window | `87` |
+| `X-RateLimit-Reset` | Unix timestamp when window resets | `1739878200` |
+| `X-RateLimit-Window` | Window duration in seconds | `60` |
+
+```bash
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 87
+X-RateLimit-Reset: 1739878200
+X-RateLimit-Window: 60
+Content-Type: application/json
+```
+
+## Rate Limits by Plan
+
+<Tabs>
+  <Tab title="Starter">
+    | Endpoint Category | Requests/Minute | Requests/Day |
+    |-------------------|-----------------|--------------|
+    | Read endpoints (GET) | 60 | 10,000 |
+    | Write endpoints (POST/PUT/DELETE) | 30 | 5,000 |
+    | Call initiation | 10 | 500 |
+    | Bulk operations | 5 | 100 |
+    | Analytics | 20 | 2,000 |
+  </Tab>
+  
+  <Tab title="Growth">
+    | Endpoint Category | Requests/Minute | Requests/Day |
+    |-------------------|-----------------|--------------|
+    | Read endpoints (GET) | 200 | 50,000 |
+    | Write endpoints (POST/PUT/DELETE) | 100 | 25,000 |
+    | Call initiation | 50 | 5,000 |
+    | Bulk operations | 20 | 500 |
+    | Analytics | 60 | 10,000 |
+  </Tab>
+  
+  <Tab title="Enterprise">
+    | Endpoint Category | Requests/Minute | Requests/Day |
+    |-------------------|-----------------|--------------|
+    | Read endpoints (GET) | 1,000 | Unlimited |
+    | Write endpoints (POST/PUT/DELETE) | 500 | Unlimited |
+    | Call initiation | 200 | 50,000 |
+    | Bulk operations | 100 | 5,000 |
+    | Analytics | 300 | Unlimited |
+    
+    <Note>
+      Enterprise customers can request custom rate limits. Contact your account manager.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Endpoint-Specific Limits
+
+Some endpoints have specific rate limits regardless of plan:
+
+| Endpoint | Limit | Window |
+|----------|-------|--------|
+| `POST /api/calls` | Based on plan | 60s |
+| `POST /api/tenants/create` | 5 | 60s |
+| `POST /api/tenants/:id/rotate-key` | 3 | 300s |
+| `GET /api/analytics/*` | Based on plan | 60s |
+| `POST /api/bulk/*` | Based on plan | 60s |
+
+## Rate Limit Response
+
+When you exceed the rate limit, you'll receive:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Too many requests. Please slow down.",
+    "details": {
+      "limit": 100,
+      "window": "60s",
+      "retryAfter": 32,
+      "resetAt": "2026-02-18T10:31:00Z"
+    }
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:28Z"
+  }
+}
+```
+
+The `Retry-After` header indicates how many seconds to wait:
+
+```bash
+HTTP/1.1 429 Too Many Requests
+Retry-After: 32
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1739878260
+```
+
+## Best Practices
+
+### 1. Implement Exponential Backoff
+
+When hitting rate limits, use exponential backoff to retry:
+
+<CodeGroup>
+```javascript Node.js
+async function requestWithBackoff(requestFn, maxRetries = 5) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await requestFn();
+      return response;
+    } catch (error) {
+      if (error.status === 429) {
+        const retryAfter = error.headers?.['retry-after'] || Math.pow(2, attempt);
+        console.log(`Rate limited. Retrying in ${retryAfter}s...`);
+        await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+      } else {
+        throw error;
+      }
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
+```
+
+```python Python
+import time
+import requests
+
+def request_with_backoff(request_fn, max_retries=5):
+    for attempt in range(max_retries):
+        try:
+            response = request_fn()
+            response.raise_for_status()
+            return response
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 429:
+                retry_after = int(e.response.headers.get('Retry-After', 2 ** attempt))
+                print(f"Rate limited. Retrying in {retry_after}s...")
+                time.sleep(retry_after)
+            else:
+                raise
+    raise Exception("Max retries exceeded")
+```
+
+```go Go
+func requestWithBackoff(ctx context.Context, requestFn func() (*Response, error), maxRetries int) (*Response, error) {
+    for attempt := 0; attempt < maxRetries; attempt++ {
+        resp, err := requestFn()
+        if err != nil {
+            if isRateLimitError(err) {
+                retryAfter := getRetryAfter(err, attempt)
+                time.Sleep(time.Duration(retryAfter) * time.Second)
+                continue
+            }
+            return nil, err
+        }
+        return resp, nil
+    }
+    return nil, errors.New("max retries exceeded")
+}
+```
+</CodeGroup>
+
+### 2. Monitor Rate Limit Headers
+
+Track your usage proactively:
+
+```javascript
+async function makeRequest(url, options) {
+  const response = await fetch(url, options);
+  
+  const remaining = parseInt(response.headers.get('X-RateLimit-Remaining'));
+  const limit = parseInt(response.headers.get('X-RateLimit-Limit'));
+  
+  // Log warning when approaching limit
+  if (remaining < limit * 0.1) {
+    console.warn(`Rate limit warning: ${remaining}/${limit} requests remaining`);
+  }
+  
+  // Preemptively slow down
+  if (remaining < limit * 0.05) {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+  
+  return response;
+}
+```
+
+### 3. Use Bulk Endpoints
+
+Instead of making multiple individual requests, use bulk endpoints:
+
+<CodeGroup>
+```bash Individual Requests (Bad)
+# 10 API calls = higher rate limit consumption
+curl -X POST https://api.talkos.io/api/calls -d '{"phoneNumber": "+911111111111"}'
+curl -X POST https://api.talkos.io/api/calls -d '{"phoneNumber": "+912222222222"}'
+curl -X POST https://api.talkos.io/api/calls -d '{"phoneNumber": "+913333333333"}'
+# ... 7 more calls
+```
+
+```bash Bulk Request (Good)
+# 1 API call for 10 operations
+curl -X POST https://api.talkos.io/api/calls/bulk \
+  -H "Content-Type: application/json" \
+  -d '{
+    "calls": [
+      {"phoneNumber": "+911111111111"},
+      {"phoneNumber": "+912222222222"},
+      {"phoneNumber": "+913333333333"}
+    ]
+  }'
+```
+</CodeGroup>
+
+### 4. Cache Responses
+
+Cache read responses to reduce API calls:
+
+```javascript
+const cache = new Map();
+const CACHE_TTL = 60000; // 1 minute
+
+async function getCachedTenant(tenantId) {
+  const cacheKey = `tenant:${tenantId}`;
+  const cached = cache.get(cacheKey);
+  
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+  
+  const response = await fetch(`https://api.talkos.io/api/tenants/${tenantId}`, {
+    headers: {
+      'x-api-key': API_KEY,
+      'x-tenant-id': TENANT_ID
+    }
+  });
+  
+  const data = await response.json();
+  cache.set(cacheKey, { data, timestamp: Date.now() });
+  
+  return data;
+}
+```
+
+### 5. Queue and Batch Requests
+
+For high-volume operations, implement a request queue:
+
+```javascript
+class RateLimitedQueue {
+  constructor(requestsPerSecond = 10) {
+    this.queue = [];
+    this.processing = false;
+    this.interval = 1000 / requestsPerSecond;
+  }
+
+  async add(requestFn) {
+    return new Promise((resolve, reject) => {
+      this.queue.push({ requestFn, resolve, reject });
+      this.process();
+    });
+  }
+
+  async process() {
+    if (this.processing || this.queue.length === 0) return;
+    
+    this.processing = true;
+    const { requestFn, resolve, reject } = this.queue.shift();
+    
+    try {
+      const result = await requestFn();
+      resolve(result);
+    } catch (error) {
+      reject(error);
+    }
+    
+    setTimeout(() => {
+      this.processing = false;
+      this.process();
+    }, this.interval);
+  }
+}
+
+// Usage
+const queue = new RateLimitedQueue(10); // 10 requests per second
+await queue.add(() => talkos.calls.create({...}));
+```
+
+## Handling Burst Traffic
+
+For scenarios requiring burst traffic (e.g., launching a campaign):
+
+1. **Request Temporary Limit Increase**: Contact support at least 48 hours in advance
+2. **Use Webhooks**: Instead of polling, use webhooks for real-time updates
+3. **Implement Request Spreading**: Spread requests over time rather than bursting
+
+```javascript
+// Spread 1000 calls over 10 minutes instead of bursting
+async function spreadRequests(items, requestsPerMinute = 100) {
+  const delayMs = 60000 / requestsPerMinute;
+  
+  for (const item of items) {
+    await processItem(item);
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+  }
+}
+```
+
+## Requesting Higher Limits
+
+If you consistently need higher rate limits:
+
+<Steps>
+  <Step title="Review Current Usage">
+    Check your analytics dashboard to understand usage patterns
+  </Step>
+  <Step title="Optimize Your Integration">
+    Implement caching, batching, and webhooks before requesting increases
+  </Step>
+  <Step title="Contact Sales">
+    Email enterprise@talkos.io with your use case and required limits
+  </Step>
+  <Step title="Upgrade Your Plan">
+    Higher plans come with significantly higher rate limits
+  </Step>
+</Steps>
+
+<Info>
+  Enterprise customers can negotiate custom rate limits as part of their contract.
+</Info>

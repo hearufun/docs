@@ -1,0 +1,281 @@
+---
+title: 'Cancel Transfer'
+api: 'POST https://api.talkos.io/api/transfer/{callUuid}/cancel'
+description: 'Cancel an in-progress transfer request'
+---
+
+## Overview
+
+Cancels a pending or in-progress transfer request before it's accepted by an agent. When cancelled, the caller is returned to the AI assistant or placed in a queue based on your configuration. This endpoint is useful for handling timeout situations or when the caller's needs change during the transfer process.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="callUuid" type="string" required>
+  The unique identifier of the call with pending transfer
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="reason" type="string" required>
+  The reason for cancelling the transfer
+  - `timeout` - Transfer request timed out
+  - `caller_request` - Caller asked to cancel
+  - `caller_hangup` - Caller disconnected
+  - `system_error` - Technical issue occurred
+  - `no_agents_available` - No agents could be found
+  - `issue_resolved` - AI resolved the issue during hold
+  - `other` - Other reason (specify in notes)
+</ParamField>
+
+<ParamField body="notes" type="string">
+  Additional context about the cancellation
+</ParamField>
+
+<ParamField body="returnToAI" type="boolean" default="true">
+  Whether to return the caller to AI assistant
+</ParamField>
+
+<ParamField body="aiContext" type="object">
+  Context to provide to AI when resuming
+  <Expandable title="properties">
+    <ParamField body="transferAttempted" type="boolean">
+      Indicates a transfer was attempted
+    </ParamField>
+    <ParamField body="cancellationReason" type="string">
+      Why the transfer was cancelled
+    </ParamField>
+    <ParamField body="suggestedResponse" type="string">
+      Suggested response for AI to use
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the cancellation was processed successfully
+</ResponseField>
+
+<ResponseField name="transferId" type="string">
+  Unique identifier for this transfer
+</ResponseField>
+
+<ResponseField name="callUuid" type="string">
+  The call UUID that was being transferred
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Updated transfer status: `cancelled`
+</ResponseField>
+
+<ResponseField name="reason" type="string">
+  The cancellation reason recorded
+</ResponseField>
+
+<ResponseField name="previousStatus" type="string">
+  The transfer status before cancellation
+</ResponseField>
+
+<ResponseField name="nextAction" type="object">
+  What happens to the call now
+  <Expandable title="properties">
+    <ResponseField name="action" type="string">
+      Action taken: `returning_to_ai`, `ending_call`, `queued`
+    </ResponseField>
+    <ResponseField name="aiResumed" type="boolean">
+      Whether AI has resumed handling the call
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="metrics" type="object">
+  Transfer attempt metrics
+  <Expandable title="properties">
+    <ResponseField name="initiatedAt" type="string">
+      When the transfer was initiated
+    </ResponseField>
+    <ResponseField name="cancelledAt" type="string">
+      When the transfer was cancelled
+    </ResponseField>
+    <ResponseField name="waitDuration" type="integer">
+      Seconds the caller waited
+    </ResponseField>
+    <ResponseField name="agentsAttempted" type="integer">
+      Number of agents who received the transfer request
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="cancelledAt" type="string">
+  ISO 8601 timestamp when the cancellation was processed
+</ResponseField>
+
+<RequestExample>
+```bash cURL - Timeout
+curl -X POST https://api.talkos.io/api/transfer/call_abc123def456/cancel \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "reason": "timeout",
+    "notes": "No agents accepted within 45 second window",
+    "returnToAI": true,
+    "aiContext": {
+      "transferAttempted": true,
+      "cancellationReason": "timeout",
+      "suggestedResponse": "I apologize, but all our specialists are currently busy. Let me see if I can help you resolve this issue directly."
+    }
+  }'
+```
+
+```bash cURL - Caller Request
+curl -X POST https://api.talkos.io/api/transfer/call_abc123def456/cancel \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "reason": "caller_request",
+    "notes": "Caller decided to try resolving issue online instead",
+    "returnToAI": true
+  }'
+```
+
+```bash cURL - No Agents
+curl -X POST https://api.talkos.io/api/transfer/call_abc123def456/cancel \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "reason": "no_agents_available",
+    "returnToAI": true,
+    "aiContext": {
+      "transferAttempted": true,
+      "cancellationReason": "no_agents_available",
+      "suggestedResponse": "Our team is currently unavailable. Would you like me to schedule a callback or assist you further?"
+    }
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 - Success
+{
+  "success": true,
+  "transferId": "xfer_a1b2c3d4e5f6",
+  "callUuid": "call_abc123def456",
+  "status": "cancelled",
+  "reason": "timeout",
+  "previousStatus": "ringing",
+  "nextAction": {
+    "action": "returning_to_ai",
+    "aiResumed": true
+  },
+  "metrics": {
+    "initiatedAt": "2026-02-18T14:30:00.000Z",
+    "cancelledAt": "2026-02-18T14:30:45.000Z",
+    "waitDuration": 45,
+    "agentsAttempted": 3
+  },
+  "cancelledAt": "2026-02-18T14:30:45.000Z"
+}
+```
+
+```json 200 - Caller Hangup
+{
+  "success": true,
+  "transferId": "xfer_a1b2c3d4e5f6",
+  "callUuid": "call_abc123def456",
+  "status": "cancelled",
+  "reason": "caller_hangup",
+  "previousStatus": "initiated",
+  "nextAction": {
+    "action": "ending_call",
+    "aiResumed": false
+  },
+  "metrics": {
+    "initiatedAt": "2026-02-18T14:30:00.000Z",
+    "cancelledAt": "2026-02-18T14:30:22.000Z",
+    "waitDuration": 22,
+    "agentsAttempted": 1
+  },
+  "cancelledAt": "2026-02-18T14:30:22.000Z"
+}
+```
+
+```json 400 - Bad Request
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_REASON",
+    "message": "Cancellation reason must be one of: timeout, caller_request, caller_hangup, system_error, no_agents_available, issue_resolved, other"
+  }
+}
+```
+
+```json 404 - Not Found
+{
+  "success": false,
+  "error": {
+    "code": "TRANSFER_NOT_FOUND",
+    "message": "No pending transfer found for this call"
+  }
+}
+```
+
+```json 409 - Invalid State
+{
+  "success": false,
+  "error": {
+    "code": "TRANSFER_CANNOT_BE_CANCELLED",
+    "message": "Transfer has already been accepted and cannot be cancelled"
+  }
+}
+```
+</ResponseExample>
+
+## Cancellation Flow
+
+```
+Transfer Initiated → [Cancel Requested] → Cancelled
+        ↓
+    Ringing Agents → [Cancel Requested] → Cancelled → Return to AI
+        ↓
+    Agent Accepts → Cannot Cancel (use complete/reject instead)
+```
+
+## Cancellation Reasons
+
+| Reason | Description | Typical Outcome |
+|--------|-------------|-----------------|
+| `timeout` | Request exceeded time limit | Return to AI with apology |
+| `caller_request` | Caller asked to cancel | Return to AI |
+| `caller_hangup` | Caller disconnected | End call |
+| `system_error` | Technical failure | Return to AI or retry |
+| `no_agents_available` | No matching agents | Return to AI with options |
+| `issue_resolved` | AI solved during wait | Continue with AI |
+| `other` | Miscellaneous | Based on notes |
+
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| `TRANSFER_NOT_FOUND` | No pending transfer exists for this call |
+| `TRANSFER_CANNOT_BE_CANCELLED` | Transfer already accepted by agent |
+| `TRANSFER_ALREADY_CANCELLED` | Transfer was already cancelled |
+| `TRANSFER_ALREADY_COMPLETED` | Transfer already completed |
+| `INVALID_REASON` | Cancellation reason not recognized |
+| `CALL_ENDED` | The call has already ended |

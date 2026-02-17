@@ -1,0 +1,201 @@
+---
+title: "Search Available Numbers"
+api: "GET https://api.talkos.io/api/numbers/search"
+description: "Search for available phone numbers to purchase from supported dialer providers"
+---
+
+Search for available phone numbers based on country, type, area code, and dialer provider. Returns a list of numbers that can be purchased.
+
+## Authentication
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="country" type="string" required>
+  ISO 3166-1 alpha-2 country code (e.g., `US`, `IN`, `GB`)
+</ParamField>
+
+<ParamField query="type" type="string" default="local">
+  Type of phone number to search for
+  - `local` - Local geographic numbers
+  - `toll-free` - Toll-free numbers
+  - `mobile` - Mobile numbers
+</ParamField>
+
+<ParamField query="areaCode" type="string">
+  Area code or prefix to filter numbers (e.g., `415` for San Francisco)
+</ParamField>
+
+<ParamField query="dialerProvider" type="string" required>
+  The dialer provider to search numbers from
+  - `plivo` - Plivo Communications
+  - `exotel` - Exotel (India)
+</ParamField>
+
+<ParamField query="limit" type="integer" default="20">
+  Maximum number of results to return (1-100)
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="numbers" type="array">
+      Array of available phone numbers
+      <Expandable title="number object">
+        <ResponseField name="number" type="string">
+          The phone number in E.164 format
+        </ResponseField>
+        <ResponseField name="country" type="string">
+          Country code
+        </ResponseField>
+        <ResponseField name="type" type="string">
+          Number type (local, toll-free, mobile)
+        </ResponseField>
+        <ResponseField name="region" type="string">
+          Region or state name
+        </ResponseField>
+        <ResponseField name="areaCode" type="string">
+          Area code of the number
+        </ResponseField>
+        <ResponseField name="monthlyPrice" type="number">
+          Monthly rental cost in USD
+        </ResponseField>
+        <ResponseField name="setupPrice" type="number">
+          One-time setup cost in USD
+        </ResponseField>
+        <ResponseField name="capabilities" type="object">
+          Number capabilities (voice, SMS, MMS)
+        </ResponseField>
+        <ResponseField name="provider" type="string">
+          Dialer provider name
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="count" type="integer">
+      Total number of results returned
+    </ResponseField>
+    <ResponseField name="hasMore" type="boolean">
+      Whether more results are available
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/numbers/search?country=US&type=local&areaCode=415&dialerProvider=plivo&limit=10" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript Node.js
+const response = await fetch(
+  'https://api.talkos.io/api/numbers/search?country=US&type=local&areaCode=415&dialerProvider=plivo&limit=10',
+  {
+    method: 'GET',
+    headers: {
+      'x-api-key': 'your-api-key',
+      'x-tenant-id': 'your-tenant-id'
+    }
+  }
+);
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/numbers/search',
+    params={
+        'country': 'US',
+        'type': 'local',
+        'areaCode': '415',
+        'dialerProvider': 'plivo',
+        'limit': 10
+    },
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "data": {
+    "numbers": [
+      {
+        "number": "+14155551234",
+        "country": "US",
+        "type": "local",
+        "region": "California",
+        "areaCode": "415",
+        "monthlyPrice": 1.00,
+        "setupPrice": 0.00,
+        "capabilities": {
+          "voice": true,
+          "sms": true,
+          "mms": true
+        },
+        "provider": "plivo"
+      },
+      {
+        "number": "+14155555678",
+        "country": "US",
+        "type": "local",
+        "region": "California",
+        "areaCode": "415",
+        "monthlyPrice": 1.00,
+        "setupPrice": 0.00,
+        "capabilities": {
+          "voice": true,
+          "sms": true,
+          "mms": false
+        },
+        "provider": "plivo"
+      }
+    ],
+    "count": 2,
+    "hasMore": true
+  }
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_COUNTRY",
+    "message": "Invalid country code provided"
+  }
+}
+```
+
+```json 401
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Invalid or missing API key"
+  }
+}
+```
+</ResponseExample>

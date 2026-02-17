@@ -1,0 +1,187 @@
+---
+title: "Opt In"
+description: "Opt a phone number back in to receive surveys"
+api: "POST https://api.talkos.io/api/features/survey/opt-in"
+---
+
+# Opt In
+
+Opt a phone number back in to receive post-call surveys. This reverses a previous opt-out.
+
+## Endpoint
+
+```
+POST /api/features/survey/opt-in
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Request Body
+
+<ParamField body="phoneNumber" type="string" required>
+  Phone number to opt back in, in E.164 format (e.g., `+14155551234`)
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the opt-in was processed successfully
+</ResponseField>
+
+<ResponseField name="phoneNumber" type="string">
+  The phone number that was opted in
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The new status: `opted_in`
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST https://api.talkos.io/api/features/survey/opt-in \
+  -H "x-api-key: tk_live_xxxxxxxxxxxxxxxxxxxx" \
+  -H "x-tenant-id: tenant_abc123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phoneNumber": "+14155551234"
+  }'
+```
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "phoneNumber": "+14155551234",
+  "status": "opted_in"
+}
+```
+
+## Use Cases
+
+### SMS Opt-In
+
+Handle START messages to opt back in:
+
+```javascript
+// SMS webhook handler
+app.post('/sms/incoming', async (req, res) => {
+  const { from, body } = req.body;
+  
+  if (body.toUpperCase().includes('START')) {
+    await fetch('https://api.talkos.io/api/features/survey/opt-in', {
+      method: 'POST',
+      headers: {
+        'x-api-key': API_KEY,
+        'x-tenant-id': TENANT_ID,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ phoneNumber: from })
+    });
+    
+    await sendSMS(from, 'You have been opted back in to receive surveys. Thank you!');
+  }
+});
+```
+
+### Customer Portal Integration
+
+Allow customers to manage their preferences:
+
+```javascript
+async function updateSurveyPreference(phoneNumber, wantsSurveys) {
+  const endpoint = wantsSurveys ? 'opt-in' : 'opt-out';
+  
+  const response = await fetch(
+    `https://api.talkos.io/api/features/survey/${endpoint}`,
+    {
+      method: 'POST',
+      headers: {
+        'x-api-key': API_KEY,
+        'x-tenant-id': TENANT_ID,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ phoneNumber })
+    }
+  );
+  
+  return response.json();
+}
+
+// In customer portal
+app.post('/preferences/surveys', async (req, res) => {
+  const { receivesSurveys } = req.body;
+  const phoneNumber = req.user.phoneNumber;
+  
+  const result = await updateSurveyPreference(phoneNumber, receivesSurveys);
+  res.json(result);
+});
+```
+
+### Admin Dashboard
+
+Manage opt-out list from admin interface:
+
+```javascript
+// Admin panel component
+function OptOutManager({ phoneNumber }) {
+  const [status, setStatus] = useState(null);
+  
+  const handleOptIn = async () => {
+    const result = await fetch('/api/features/survey/opt-in', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phoneNumber })
+    }).then(r => r.json());
+    
+    setStatus(result.status);
+  };
+  
+  const handleOptOut = async () => {
+    const result = await fetch('/api/features/survey/opt-out', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phoneNumber })
+    }).then(r => r.json());
+    
+    setStatus(result.status);
+  };
+  
+  return (
+    <div>
+      <p>Survey Status: {status || 'opted_in'}</p>
+      <button onClick={handleOptIn}>Opt In</button>
+      <button onClick={handleOptOut}>Opt Out</button>
+    </div>
+  );
+}
+```
+
+## Behavior
+
+| Before | After Opt-In |
+|--------|--------------|
+| `opted_out` | `opted_in` (eligible for surveys) |
+| `opted_in` | `opted_in` (no change) |
+| Never opted out | `opted_in` (no change) |
+
+## Notes
+
+- Opt-in is immediate and applies to future survey eligibility checks
+- Opting in a number that was never opted out is a no-op
+- Rate limiting still applies after opt-in (24-hour cooldown by default)
+- Phone numbers should be in E.164 format for consistency
+- Each tenant maintains their own opt-in/opt-out list

@@ -1,0 +1,371 @@
+---
+title: 'Plivo Setup Guide'
+description: 'Configure Plivo as your voice provider for TalkOS'
+---
+
+Plivo is a cloud communications platform that provides voice calling capabilities globally. This guide walks you through setting up Plivo with TalkOS for both outbound and inbound calling.
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- A TalkOS tenant with API credentials
+- A valid email address for Plivo signup
+- A payment method for Plivo (for production numbers)
+
+<Steps>
+  <Step title="Create a Plivo Account">
+    Sign up for a Plivo account at [console.plivo.com](https://console.plivo.com/accounts/register/).
+
+    1. Enter your email and create a password
+    2. Verify your email address
+    3. Complete the account setup wizard
+    4. Add payment method (required for buying numbers)
+
+    <Note>
+    Plivo provides free trial credits for testing. You can make test calls without adding a payment method initially.
+    </Note>
+  </Step>
+
+  <Step title="Get Your API Credentials">
+    Navigate to your Plivo console dashboard to find your credentials:
+
+    1. Log in to [console.plivo.com](https://console.plivo.com/)
+    2. Click on your account name in the top-right corner
+    3. Select **API** from the dropdown
+    4. Copy your **Auth ID** and **Auth Token**
+
+    <Warning>
+    Never expose your Auth Token in client-side code or public repositories. These credentials provide full access to your Plivo account.
+    </Warning>
+
+    Your credentials will look like:
+    ```
+    Auth ID:    MAXXXXXXXXXXXXXXXXXX
+    Auth Token: YmRhNTQxNjAxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    ```
+  </Step>
+
+  <Step title="Configure TalkOS Tenant">
+    Add your Plivo credentials to your TalkOS tenant configuration:
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X PUT https://api.talkos.io/api/tenants/{tenantId} \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "config": {
+          "defaultProvider": "plivo",
+          "plivo": {
+            "authId": "MAXXXXXXXXXXXXXXXXXX",
+            "authToken": "YmRhNTQxNjAxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          }
+        }
+      }'
+    ```
+
+    ```javascript Node.js
+    const response = await fetch(`https://api.talkos.io/api/tenants/${tenantId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        config: {
+          defaultProvider: 'plivo',
+          plivo: {
+            authId: 'MAXXXXXXXXXXXXXXXXXX',
+            authToken: 'YmRhNTQxNjAxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+          }
+        }
+      })
+    });
+    ```
+
+    ```python Python
+    import requests
+
+    response = requests.put(
+        f'https://api.talkos.io/api/tenants/{tenant_id}',
+        headers={
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        },
+        json={
+            'config': {
+                'defaultProvider': 'plivo',
+                'plivo': {
+                    'authId': 'MAXXXXXXXXXXXXXXXXXX',
+                    'authToken': 'YmRhNTQxNjAxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                }
+            }
+        }
+    )
+    ```
+
+    </CodeGroup>
+  </Step>
+
+  <Step title="Buy Phone Numbers">
+    Purchase phone numbers through TalkOS or directly from Plivo:
+
+    ### Option A: Buy via TalkOS API (Recommended)
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X POST https://api.talkos.io/api/numbers/buy \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "countryCode": "US",
+        "type": "local",
+        "capabilities": ["voice"],
+        "quantity": 1,
+        "direction": "both"
+      }'
+    ```
+
+    ```javascript Node.js
+    const response = await fetch('https://api.talkos.io/api/numbers/buy', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        countryCode: 'US',
+        type: 'local',
+        capabilities: ['voice'],
+        quantity: 1,
+        direction: 'both'
+      })
+    });
+    ```
+
+    </CodeGroup>
+
+    ### Option B: Buy via Plivo Console
+
+    1. Go to **Phone Numbers** → **Buy Numbers** in Plivo console
+    2. Select country and number type (local, toll-free, mobile)
+    3. Purchase the number
+    4. Register the number with TalkOS:
+
+    ```bash
+    curl -X POST https://api.talkos.io/api/numbers/register \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "number": "+14155551234",
+        "provider": "plivo",
+        "direction": "both"
+      }'
+    ```
+  </Step>
+
+  <Step title="Configure Webhooks">
+    For inbound calling, configure Plivo to forward calls to TalkOS:
+
+    ### Set Answer URL (Required for Inbound)
+
+    In Plivo Console:
+    1. Go to **Phone Numbers** → **Your Numbers**
+    2. Click on the number you want to configure
+    3. Under **Voice**, set:
+       - **Answer URL**: `https://api.talkos.io/api/plivo/inbound/answer`
+       - **Answer Method**: `POST`
+       - **Hangup URL**: `https://api.talkos.io/api/plivo/inbound/hangup`
+       - **Hangup Method**: `POST`
+
+    <Tip>
+    Replace `api.talkos.io` with your TalkOS deployment URL if self-hosting.
+    </Tip>
+
+    ### Alternative: Configure via API
+
+    ```bash
+    curl -X POST https://api.plivo.com/v1/Account/{auth_id}/Number/{number}/ \
+      -u "{auth_id}:{auth_token}" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "app_id": "",
+        "answer_url": "https://api.talkos.io/api/plivo/inbound/answer",
+        "answer_method": "POST",
+        "hangup_url": "https://api.talkos.io/api/plivo/inbound/hangup",
+        "hangup_method": "POST"
+      }'
+    ```
+  </Step>
+
+  <Step title="Configure Inbound Webhook (Optional)">
+    If you want TalkOS to consult your server for call configuration:
+
+    ```bash
+    curl -X POST https://api.talkos.io/api/inbound/config \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "webhookUrl": "https://your-server.com/api/talkos/inbound-config",
+        "webhookTimeoutMs": 5000,
+        "fallbackConfig": {
+          "prompt": "You are a helpful customer support agent for Acme Corp.",
+          "greeting": "Hello! Thank you for calling Acme Corp. How can I help you today?",
+          "maxDuration": 600,
+          "language": "en-US"
+        }
+      }'
+    ```
+
+    Your webhook will receive:
+
+    ```json
+    {
+      "callId": "call_abc123",
+      "from": "+14155551234",
+      "to": "+18005551234",
+      "event": "inbound_call"
+    }
+    ```
+
+    Return the call configuration:
+
+    ```json
+    {
+      "accept": true,
+      "prompt": "You are a support agent. The caller ID shows this is John Smith.",
+      "greeting": "Hello John! How can I help you today?",
+      "maxDuration": 900,
+      "tools": ["check_order_status", "create_ticket"]
+    }
+    ```
+  </Step>
+
+  <Step title="Test Your Integration">
+    Make a test outbound call to verify everything is working:
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X POST https://api.talkos.io/api/calls/outbound \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": "+14155551234",
+        "from": "+18005551234",
+        "prompt": "You are a friendly assistant. Greet the user and ask how you can help.",
+        "greeting": "Hello! This is a test call from TalkOS. How can I help you?",
+        "maxDuration": 120
+      }'
+    ```
+
+    ```javascript Node.js
+    const response = await fetch('https://api.talkos.io/api/calls/outbound', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: '+14155551234',
+        from: '+18005551234',
+        prompt: 'You are a friendly assistant. Greet the user and ask how you can help.',
+        greeting: 'Hello! This is a test call from TalkOS. How can I help you?',
+        maxDuration: 120
+      })
+    });
+
+    const data = await response.json();
+    console.log('Call ID:', data.callId);
+    ```
+
+    </CodeGroup>
+
+    <Check>
+    If the call connects and you hear the AI greeting, your Plivo integration is working correctly!
+    </Check>
+  </Step>
+</Steps>
+
+## Webhook Reference
+
+### Answer URL Events
+
+TalkOS handles these automatically, but for reference:
+
+| Event | Description |
+|-------|-------------|
+| `CallStatus: ringing` | Call is ringing |
+| `CallStatus: in-progress` | Call was answered |
+| `Direction: inbound` | Incoming call to your number |
+
+### Hangup URL Events
+
+| Event | Description |
+|-------|-------------|
+| `HangupCause: normalClearing` | Call ended normally |
+| `HangupCause: busy` | Callee was busy |
+| `HangupCause: noAnswer` | No answer within timeout |
+| `HangupCause: cancel` | Caller hung up before answer |
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Call fails with 'Invalid credentials'">
+    - Verify your Auth ID and Auth Token are correct
+    - Check that credentials are properly URL-encoded if they contain special characters
+    - Ensure your Plivo account is active and not suspended
+  </Accordion>
+
+  <Accordion title="Outbound calls don't connect">
+    - Verify the 'from' number belongs to your Plivo account
+    - Check that the number has voice capability enabled
+    - Ensure you have sufficient Plivo balance
+    - Verify the 'to' number is in E.164 format (+1XXXXXXXXXX)
+  </Accordion>
+
+  <Accordion title="Inbound calls aren't reaching TalkOS">
+    - Verify the Answer URL is correctly configured in Plivo
+    - Check that TalkOS is accessible from the internet (not localhost)
+    - Review Plivo debug logs for webhook delivery errors
+    - Ensure the number is registered with TalkOS
+  </Accordion>
+
+  <Accordion title="Audio quality issues">
+    - Plivo uses different media servers per region
+    - Consider using a region closer to your users
+    - Check your server's network latency to Plivo endpoints
+  </Accordion>
+</AccordionGroup>
+
+## Pricing Considerations
+
+Plivo charges for:
+
+- **Phone number rental**: Monthly fee per number (~$0.80-$2.00/month for US local)
+- **Outbound calls**: Per-minute charges based on destination (US: ~$0.01/min)
+- **Inbound calls**: Per-minute charges (US: ~$0.0055/min)
+
+<Tip>
+Use Plivo's [pricing calculator](https://www.plivo.com/voice/pricing/) to estimate costs for your use case.
+</Tip>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Make Your First Call" icon="phone" href="/quickstart">
+    Follow the quickstart to make an AI-powered call
+  </Card>
+  <Card title="Configure AI Prompts" icon="robot" href="/api-reference/calls/outbound">
+    Learn how to customize AI behavior for calls
+  </Card>
+  <Card title="Set Up Inbound IVR" icon="phone-volume" href="/api-reference/inbound/configure">
+    Configure intelligent inbound call handling
+  </Card>
+  <Card title="Monitor Calls" icon="chart-line" href="/api-reference/realtime/subscribe">
+    Real-time call monitoring and analytics
+  </Card>
+</CardGroup>

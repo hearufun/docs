@@ -1,0 +1,53 @@
+---
+title: "Resume Session"
+api: "POST https://api.talkos.io/api/web-sessions/{sessionId}/resume"
+description: "Resume a paused web session"
+---
+
+Resume a previously paused web session. This restarts speech-to-text processing and allows the conversation to continue.
+
+## Path Parameters
+
+<ParamField path="sessionId" type="string" required>
+  The unique session identifier.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/web-sessions/ws-42e299e5-6bbf-4503-af0a-f8218524f8cf/resume \
+  -H "x-api-key: your-api-key"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "sessionId": "ws-42e299e5-6bbf-4503-af0a-f8218524f8cf",
+  "status": "active",
+  "resumedAt": "2026-02-17T14:40:00.000Z",
+  "pauseDuration": 300,
+  "message": "Session resumed successfully"
+}
+```
+
+```json 404
+{
+  "error": "Session not found or not paused"
+}
+```
+
+```json 500
+{
+  "error": "Failed to resume session",
+  "message": "Internal server error"
+}
+```
+</ResponseExample>
+
+## Notes
+
+- Only sessions with `paused` status can be resumed
+- The conversation continues from where it was paused
+- All previous context and transcript are preserved
+- The session's remaining duration is based on total elapsed time including pause duration

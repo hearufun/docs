@@ -1,0 +1,70 @@
+---
+title: "Get Session Status"
+api: "GET https://api.talkos.io/api/web-sessions/{sessionId}/status"
+description: "Get the current status of a web session"
+---
+
+Retrieve the current status and details of a specific web session.
+
+## Path Parameters
+
+<ParamField path="sessionId" type="string" required>
+  The unique session identifier.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X GET https://api.talkos.io/api/web-sessions/ws-42e299e5-6bbf-4503-af0a-f8218524f8cf/status \
+  -H "x-api-key: your-api-key"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "sessionId": "ws-42e299e5-6bbf-4503-af0a-f8218524f8cf",
+  "status": "active",
+  "agentName": "Support Agent",
+  "agentType": "support",
+  "language": "en",
+  "createdAt": "2026-02-17T14:30:00.000Z",
+  "duration": 145,
+  "turns": 8,
+  "lastActivity": "2026-02-17T14:32:25.000Z",
+  "config": {
+    "maxDuration": 1800,
+    "voiceId": "21m00Tcm4TlvDq8ikWAM",
+    "speed": 1.0,
+    "language": "en",
+    "reengagement": {
+      "enabled": true,
+      "intervalSeconds": 20,
+      "maxAttempts": 2
+    }
+  },
+  "metrics": {
+    "userSpeechDuration": 78,
+    "agentSpeechDuration": 62,
+    "silenceDuration": 5,
+    "averageTurnDuration": 18
+  },
+  "metadata": {
+    "customerId": "cust_123",
+    "source": "website"
+  }
+}
+```
+
+```json 404
+{
+  "error": "Session not found"
+}
+```
+
+```json 500
+{
+  "error": "Failed to get session status",
+  "message": "Internal server error"
+}
+```
+</ResponseExample>

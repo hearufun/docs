@@ -1,0 +1,143 @@
+---
+title: 'Get Masking Statistics'
+api: 'GET https://api.talkos.io/api/features/masking/stats'
+description: 'Get statistics about call masking usage'
+---
+
+Retrieve aggregated statistics about call masking activity, including unmask request rates and approval metrics.
+
+## Query Parameters
+
+<ParamField query="startDate" type="string">
+  ISO 8601 date to start the statistics period. Defaults to 30 days ago.
+</ParamField>
+
+<ParamField query="endDate" type="string">
+  ISO 8601 date to end the statistics period. Defaults to now.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request was successful.
+</ResponseField>
+
+<ResponseField name="period" type="object">
+  <Expandable title="period properties">
+    <ResponseField name="startDate" type="string">
+      Start of the statistics period.
+    </ResponseField>
+    <ResponseField name="endDate" type="string">
+      End of the statistics period.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="stats" type="object">
+  <Expandable title="stats properties">
+    <ResponseField name="totalCallsMasked" type="number">
+      Total number of calls with masked phone numbers.
+    </ResponseField>
+    <ResponseField name="unmaskRequests" type="object">
+      <Expandable title="unmaskRequests properties">
+        <ResponseField name="total" type="number">
+          Total unmask requests submitted.
+        </ResponseField>
+        <ResponseField name="approved" type="number">
+          Number of approved requests.
+        </ResponseField>
+        <ResponseField name="denied" type="number">
+          Number of denied requests.
+        </ResponseField>
+        <ResponseField name="pending" type="number">
+          Number of currently pending requests.
+        </ResponseField>
+        <ResponseField name="autoApproved" type="number">
+          Number of automatically approved requests.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="approvalRate" type="number">
+      Percentage of unmask requests that were approved.
+    </ResponseField>
+    <ResponseField name="averageApprovalTime" type="number">
+      Average time in seconds between request and approval.
+    </ResponseField>
+    <ResponseField name="topRequestReasons" type="array">
+      Most common reasons provided for unmask requests.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/features/masking/stats?startDate=2026-01-01&endDate=2026-02-18" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/masking/stats?startDate=2026-01-01&endDate=2026-02-18', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/features/masking/stats',
+    headers={
+        'Authorization': 'Bearer YOUR_API_KEY'
+    },
+    params={
+        'startDate': '2026-01-01',
+        'endDate': '2026-02-18'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "period": {
+    "startDate": "2026-01-01T00:00:00.000Z",
+    "endDate": "2026-02-18T23:59:59.999Z"
+  },
+  "stats": {
+    "totalCallsMasked": 15420,
+    "unmaskRequests": {
+      "total": 234,
+      "approved": 198,
+      "denied": 12,
+      "pending": 3,
+      "autoApproved": 21
+    },
+    "approvalRate": 84.6,
+    "averageApprovalTime": 127,
+    "topRequestReasons": [
+      {
+        "reason": "Customer callback verification",
+        "count": 89
+      },
+      {
+        "reason": "Account verification required",
+        "count": 67
+      },
+      {
+        "reason": "Billing issue resolution",
+        "count": 45
+      }
+    ]
+  }
+}
+```
+</ResponseExample>

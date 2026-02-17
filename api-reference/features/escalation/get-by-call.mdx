@@ -1,0 +1,158 @@
+---
+title: "Get Call Escalations"
+description: "Retrieve all escalations for a specific call"
+api: "GET https://api.talkos.io/api/features/escalation/:callUuid"
+---
+
+# Get Call Escalations
+
+Retrieve the complete escalation history for a specific call, including all triggered rules and actions taken.
+
+## Endpoint
+
+```
+GET /api/features/escalation/:callUuid
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="callUuid" type="string" required>
+  Unique identifier of the call
+</ParamField>
+
+## Response
+
+<ResponseField name="callUuid" type="string">
+  The call UUID
+</ResponseField>
+
+<ResponseField name="escalations" type="array">
+  Array of escalation events for this call
+</ResponseField>
+
+<ResponseField name="escalations[].ruleId" type="string">
+  ID of the rule that was triggered
+</ResponseField>
+
+<ResponseField name="escalations[].ruleName" type="string">
+  Name of the triggered rule
+</ResponseField>
+
+<ResponseField name="escalations[].priority" type="string">
+  Priority level: `low`, `medium`, `high`, or `critical`
+</ResponseField>
+
+<ResponseField name="escalations[].action" type="object">
+  Action that was triggered
+</ResponseField>
+
+<ResponseField name="escalations[].action.type" type="string">
+  Action type: `transfer`, `notify`, or `flag`
+</ResponseField>
+
+<ResponseField name="escalations[].action.target" type="string">
+  Target of the action
+</ResponseField>
+
+<ResponseField name="escalations[].triggeredAt" type="string">
+  ISO 8601 timestamp when the escalation was triggered
+</ResponseField>
+
+<ResponseField name="escalations[].context" type="object">
+  Context data at the time of escalation
+</ResponseField>
+
+<ResponseField name="escalations[].resolved" type="boolean">
+  Whether the escalation has been resolved
+</ResponseField>
+
+<ResponseField name="escalations[].resolvedAt" type="string">
+  ISO 8601 timestamp when resolved (if applicable)
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET https://api.talkos.io/api/features/escalation/call-abc123-def456 \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/escalation/call-abc123-def456', {
+  method: 'GET',
+  headers: {
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/features/escalation/call-abc123-def456',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "callUuid": "call-abc123-def456",
+  "escalations": [
+    {
+      "ruleId": "rule_negative_sentiment_3x",
+      "ruleName": "3+ Negative Turns",
+      "priority": "high",
+      "action": { "type": "transfer", "target": "senior_agent" },
+      "triggeredAt": "2026-02-18T10:25:00.000Z",
+      "context": {
+        "consecutiveNegativeTurns": 3,
+        "sentiment": -0.6,
+        "callDurationSeconds": 180
+      },
+      "resolved": true,
+      "resolvedAt": "2026-02-18T10:26:30.000Z"
+    },
+    {
+      "ruleId": "rule_anger_detected",
+      "ruleName": "Anger Detection",
+      "priority": "critical",
+      "action": { "type": "transfer", "target": "supervisor" },
+      "triggeredAt": "2026-02-18T10:28:00.000Z",
+      "context": {
+        "emotion": "anger",
+        "emotionConfidence": 0.92,
+        "sentiment": -0.8
+      },
+      "resolved": false
+    }
+  ]
+}
+```
+
+```json 500
+{
+  "error": "Failed to retrieve call escalations"
+}
+```
+</ResponseExample>

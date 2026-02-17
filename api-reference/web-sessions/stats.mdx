@@ -1,0 +1,72 @@
+---
+title: "Get Session Statistics"
+api: "GET https://api.talkos.io/api/web-sessions/stats"
+description: "Get aggregate statistics for web sessions"
+---
+
+Retrieve aggregate statistics for web sessions including counts, durations, and usage metrics.
+
+<RequestExample>
+```bash cURL
+curl -X GET https://api.talkos.io/api/web-sessions/stats \
+  -H "x-api-key: your-api-key"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "totalSessions": 1256,
+  "activeSessions": 12,
+  "completedSessions": 1198,
+  "failedSessions": 46,
+  "averageDuration": 482,
+  "totalDuration": 605392,
+  "averageTurns": 18,
+  "byStatus": {
+    "active": 12,
+    "completed": 1198,
+    "paused": 0,
+    "failed": 46
+  },
+  "byAgentType": {
+    "support": 523,
+    "interviewer": 412,
+    "sales": 198,
+    "custom": 123
+  },
+  "byLanguage": {
+    "en": 890,
+    "hi": 234,
+    "es": 98,
+    "auto": 34
+  },
+  "byEndReason": {
+    "completed": 756,
+    "user_hangup": 312,
+    "timeout": 89,
+    "error": 41,
+    "max_duration": 46
+  },
+  "last24Hours": {
+    "total": 89,
+    "completed": 82,
+    "failed": 3,
+    "active": 4
+  },
+  "last7Days": {
+    "total": 456,
+    "completed": 432,
+    "failed": 18,
+    "averageDuration": 498
+  }
+}
+```
+
+```json 500
+{
+  "error": "Failed to get stats",
+  "message": "Database query timeout"
+}
+```
+</ResponseExample>

@@ -1,0 +1,210 @@
+---
+title: "Get Surveys by Call"
+description: "Retrieve all surveys associated with a specific call"
+api: "GET https://api.talkos.io/api/features/survey/call/:callUuid"
+---
+
+# Get Surveys by Call
+
+Retrieve all surveys associated with a specific call. A call may have multiple surveys if the original survey expired and a new one was triggered.
+
+## Endpoint
+
+```
+GET /api/features/survey/call/:callUuid
+```
+
+## Path Parameters
+
+<ParamField path="callUuid" type="string" required>
+  The unique identifier of the call
+</ParamField>
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Response
+
+<ResponseField name="callUuid" type="string">
+  The call identifier
+</ResponseField>
+
+<ResponseField name="surveys" type="array">
+  Array of surveys associated with the call
+</ResponseField>
+
+<ResponseField name="surveys[].surveyId" type="string">
+  Unique survey identifier
+</ResponseField>
+
+<ResponseField name="surveys[].template" type="string">
+  Survey template used
+</ResponseField>
+
+<ResponseField name="surveys[].status" type="string">
+  Survey status
+</ResponseField>
+
+<ResponseField name="surveys[].responses" type="object">
+  Survey responses
+</ResponseField>
+
+<ResponseField name="surveys[].createdAt" type="number">
+  When the survey was created
+</ResponseField>
+
+<ResponseField name="surveys[].completedAt" type="number">
+  When the survey was completed (null if not completed)
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X GET https://api.talkos.io/api/features/survey/call/call_abc123def456 \
+  -H "x-api-key: tk_live_xxxxxxxxxxxxxxxxxxxx" \
+  -H "x-tenant-id: tenant_abc123"
+```
+
+## Example Response - Single Survey
+
+```json
+{
+  "callUuid": "call_abc123def456",
+  "surveys": [
+    {
+      "surveyId": "survey_1739836800000_x7k2m9",
+      "callUuid": "call_abc123def456",
+      "tenantId": "tenant_abc123",
+      "phoneNumber": "+14155551234",
+      "agentId": "agent_support_001",
+      "template": "csat",
+      "questions": [...],
+      "responses": {
+        "q_csat_1": {
+          "value": 5,
+          "timestamp": 1739836820000
+        },
+        "q_csat_2": {
+          "value": "yes",
+          "timestamp": 1739836830000
+        }
+      },
+      "status": "completed",
+      "deliveryMethod": "ivr",
+      "createdAt": 1739836800000,
+      "completedAt": 1739836830000,
+      "expiresAt": 1739923200000
+    }
+  ]
+}
+```
+
+## Example Response - Multiple Surveys
+
+```json
+{
+  "callUuid": "call_abc123def456",
+  "surveys": [
+    {
+      "surveyId": "survey_1739836800000_x7k2m9",
+      "template": "csat",
+      "status": "expired",
+      "responses": {},
+      "deliveryMethod": "ivr",
+      "createdAt": 1739836800000,
+      "completedAt": null,
+      "expiresAt": 1739923200000
+    },
+    {
+      "surveyId": "survey_1739923300000_z9m4o1",
+      "template": "csat",
+      "status": "completed",
+      "responses": {
+        "q_csat_1": {
+          "value": 4,
+          "timestamp": 1739923400000
+        }
+      },
+      "deliveryMethod": "sms",
+      "createdAt": 1739923300000,
+      "completedAt": 1739923400000,
+      "expiresAt": 1740009700000
+    }
+  ]
+}
+```
+
+## Example Response - No Surveys
+
+```json
+{
+  "callUuid": "call_xyz789",
+  "surveys": []
+}
+```
+
+## Use Cases
+
+### Post-Call Dashboard
+
+Display survey results alongside call details:
+
+```javascript
+async function getCallWithSurvey(callUuid) {
+  const [callDetails, surveyData] = await Promise.all([
+    fetch(`/api/calls/${callUuid}`).then(r => r.json()),
+    fetch(`/api/features/survey/call/${callUuid}`).then(r => r.json())
+  ]);
+  
+  const completedSurvey = surveyData.surveys.find(s => s.status === 'completed');
+  
+  return {
+    call: callDetails,
+    survey: completedSurvey || null,
+    surveyScore: completedSurvey?.responses?.q_csat_1?.value || null
+  };
+}
+```
+
+### CRM Integration
+
+Update CRM record with survey feedback:
+
+```javascript
+async function syncSurveyToCRM(callUuid, crmTicketId) {
+  const { surveys } = await fetch(
+    `/api/features/survey/call/${callUuid}`,
+    { headers: { 'x-api-key': API_KEY, 'x-tenant-id': TENANT_ID } }
+  ).then(r => r.json());
+  
+  const completed = surveys.find(s => s.status === 'completed');
+  if (!completed) return;
+  
+  // Extract scores
+  const satisfaction = completed.responses.q_csat_1?.value;
+  const resolved = completed.responses.q_csat_2?.value;
+  const feedback = completed.responses.q_csat_3?.value;
+  
+  // Update CRM
+  await crm.updateTicket(crmTicketId, {
+    satisfaction_score: satisfaction,
+    issue_resolved: resolved === 'yes',
+    customer_feedback: feedback
+  });
+}
+```
+
+## Notes
+
+- Returns an empty array if no surveys exist for the call
+- Surveys are ordered by creation time (oldest first)
+- In most cases, only one survey will exist per call
+- Multiple surveys can exist if the first expired and a retry was triggered
+- Surveys are retained for 7 days; older surveys won't appear in results

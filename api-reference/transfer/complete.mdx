@@ -1,0 +1,312 @@
+---
+title: 'Complete Transfer'
+api: 'POST https://api.talkos.io/api/transfer/{callUuid}/complete'
+description: 'Mark a call transfer as successfully completed'
+---
+
+## Overview
+
+Marks a call transfer as successfully completed after the agent has finished handling the call. This endpoint should be called when the transferred call ends normally, allowing for proper analytics tracking and transfer metrics.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="callUuid" type="string" required>
+  The unique identifier of the transferred call
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="agentId" type="string" required>
+  The ID of the agent who handled the transfer
+</ParamField>
+
+<ParamField body="resolution" type="string">
+  The outcome of the transferred call
+  - `resolved` - Customer issue was fully resolved
+  - `escalated` - Required further escalation
+  - `callback_scheduled` - Callback scheduled for follow-up
+  - `transferred_again` - Transferred to another party
+  - `abandoned` - Customer disconnected
+  - `voicemail` - Left voicemail for customer
+</ParamField>
+
+<ParamField body="notes" type="string">
+  Agent notes about the call and resolution
+</ParamField>
+
+<ParamField body="dispositionCode" type="string">
+  Custom disposition code for categorization
+</ParamField>
+
+<ParamField body="followUpRequired" type="boolean" default="false">
+  Whether follow-up action is needed
+</ParamField>
+
+<ParamField body="followUpDetails" type="object">
+  Details for required follow-up
+  <Expandable title="properties">
+    <ParamField body="type" type="string">
+      Follow-up type: `callback`, `email`, `ticket`, `review`
+    </ParamField>
+    <ParamField body="dueDate" type="string">
+      ISO 8601 date when follow-up should occur
+    </ParamField>
+    <ParamField body="assignedTo" type="string">
+      Agent ID assigned for follow-up
+    </ParamField>
+    <ParamField body="notes" type="string">
+      Notes for the follow-up task
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="customerSatisfaction" type="integer">
+  Customer satisfaction score if collected (1-5)
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the completion was recorded successfully
+</ResponseField>
+
+<ResponseField name="transferId" type="string">
+  Unique identifier for this transfer
+</ResponseField>
+
+<ResponseField name="callUuid" type="string">
+  The call UUID that was transferred
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Final transfer status: `completed`
+</ResponseField>
+
+<ResponseField name="resolution" type="string">
+  The recorded resolution outcome
+</ResponseField>
+
+<ResponseField name="metrics" type="object">
+  Transfer performance metrics
+  <Expandable title="properties">
+    <ResponseField name="totalDuration" type="integer">
+      Total call duration in seconds
+    </ResponseField>
+    <ResponseField name="aiDuration" type="integer">
+      Time spent with AI in seconds
+    </ResponseField>
+    <ResponseField name="holdDuration" type="integer">
+      Time caller spent on hold in seconds
+    </ResponseField>
+    <ResponseField name="agentDuration" type="integer">
+      Time spent with agent in seconds
+    </ResponseField>
+    <ResponseField name="transferTime" type="integer">
+      Time to complete transfer in seconds
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="agent" type="object">
+  Information about the handling agent
+  <Expandable title="properties">
+    <ResponseField name="agentId" type="string">
+      The agent's unique identifier
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      The agent's display name
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="followUp" type="object">
+  Follow-up task details if created
+  <Expandable title="properties">
+    <ResponseField name="taskId" type="string">
+      Unique identifier for the follow-up task
+    </ResponseField>
+    <ResponseField name="type" type="string">
+      Type of follow-up
+    </ResponseField>
+    <ResponseField name="dueDate" type="string">
+      When the follow-up is due
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="completedAt" type="string">
+  ISO 8601 timestamp when the transfer was completed
+</ResponseField>
+
+<RequestExample>
+```bash cURL - Issue Resolved
+curl -X POST https://api.talkos.io/api/transfer/call_abc123def456/complete \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "agentId": "agent_789xyz",
+    "resolution": "resolved",
+    "notes": "Applied $49.99 credit to customer account. Explained billing cycle dates.",
+    "dispositionCode": "BILLING_CREDIT_APPLIED",
+    "customerSatisfaction": 5
+  }'
+```
+
+```bash cURL - Follow-up Required
+curl -X POST https://api.talkos.io/api/transfer/call_abc123def456/complete \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "agentId": "agent_789xyz",
+    "resolution": "callback_scheduled",
+    "notes": "Customer needs to verify bank statement. Scheduled callback for Thursday.",
+    "dispositionCode": "PENDING_VERIFICATION",
+    "followUpRequired": true,
+    "followUpDetails": {
+      "type": "callback",
+      "dueDate": "2026-02-20T10:00:00.000Z",
+      "assignedTo": "agent_789xyz",
+      "notes": "Call back to verify bank statement details"
+    }
+  }'
+```
+
+```bash cURL - Escalated
+curl -X POST https://api.talkos.io/api/transfer/call_abc123def456/complete \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "agentId": "agent_789xyz",
+    "resolution": "escalated",
+    "notes": "Customer requesting legal team contact regarding contract dispute",
+    "dispositionCode": "LEGAL_ESCALATION",
+    "followUpRequired": true,
+    "followUpDetails": {
+      "type": "ticket",
+      "dueDate": "2026-02-19T09:00:00.000Z",
+      "notes": "Forward to legal department for contract review"
+    }
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 - Success
+{
+  "success": true,
+  "transferId": "xfer_a1b2c3d4e5f6",
+  "callUuid": "call_abc123def456",
+  "status": "completed",
+  "resolution": "resolved",
+  "metrics": {
+    "totalDuration": 485,
+    "aiDuration": 120,
+    "holdDuration": 15,
+    "agentDuration": 350,
+    "transferTime": 18
+  },
+  "agent": {
+    "agentId": "agent_789xyz",
+    "name": "Sarah Johnson"
+  },
+  "completedAt": "2026-02-18T14:38:05.000Z"
+}
+```
+
+```json 200 - Success with Follow-up
+{
+  "success": true,
+  "transferId": "xfer_a1b2c3d4e5f6",
+  "callUuid": "call_abc123def456",
+  "status": "completed",
+  "resolution": "callback_scheduled",
+  "metrics": {
+    "totalDuration": 320,
+    "aiDuration": 90,
+    "holdDuration": 12,
+    "agentDuration": 218,
+    "transferTime": 14
+  },
+  "agent": {
+    "agentId": "agent_789xyz",
+    "name": "Sarah Johnson"
+  },
+  "followUp": {
+    "taskId": "task_follow_789abc",
+    "type": "callback",
+    "dueDate": "2026-02-20T10:00:00.000Z"
+  },
+  "completedAt": "2026-02-18T14:35:20.000Z"
+}
+```
+
+```json 400 - Bad Request
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_RESOLUTION",
+    "message": "Resolution must be one of: resolved, escalated, callback_scheduled, transferred_again, abandoned, voicemail"
+  }
+}
+```
+
+```json 404 - Not Found
+{
+  "success": false,
+  "error": {
+    "code": "TRANSFER_NOT_FOUND",
+    "message": "No transfer record found for this call"
+  }
+}
+```
+
+```json 409 - Invalid State
+{
+  "success": false,
+  "error": {
+    "code": "TRANSFER_NOT_ACCEPTED",
+    "message": "Cannot complete a transfer that was not accepted"
+  }
+}
+```
+</ResponseExample>
+
+## Resolution Types
+
+| Resolution | Description | Typical Follow-up |
+|------------|-------------|-------------------|
+| `resolved` | Issue fully addressed | None required |
+| `escalated` | Sent to higher authority | Ticket or review |
+| `callback_scheduled` | Will call customer back | Callback task |
+| `transferred_again` | Sent to another party | Track new transfer |
+| `abandoned` | Customer hung up | Possible callback |
+| `voicemail` | Left message | Callback attempt |
+
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| `TRANSFER_NOT_FOUND` | No transfer record exists for this call |
+| `TRANSFER_NOT_ACCEPTED` | Transfer was not in accepted state |
+| `TRANSFER_ALREADY_COMPLETED` | Transfer was already marked complete |
+| `INVALID_RESOLUTION` | Resolution code not recognized |
+| `AGENT_MISMATCH` | Agent ID doesn't match accepting agent |
+| `INVALID_SATISFACTION_SCORE` | Score must be between 1 and 5 |
+| `INVALID_FOLLOW_UP_DATE` | Follow-up date must be in the future |

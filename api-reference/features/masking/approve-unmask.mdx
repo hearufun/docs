@@ -1,0 +1,110 @@
+---
+title: 'Approve Unmask Request'
+api: 'POST https://api.talkos.io/api/features/masking/{callUuid}/unmask/approve'
+description: 'Approve a pending unmask request'
+---
+
+Approve a pending request to unmask a phone number. This endpoint is restricted to supervisors and administrators.
+
+## Path Parameters
+
+<ParamField path="callUuid" type="string" required>
+  The unique identifier of the call.
+</ParamField>
+
+## Request Body
+
+<ParamField body="approvedBy" type="string" required>
+  The identifier of the supervisor or administrator approving the request.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the approval was processed successfully.
+</ResponseField>
+
+<ResponseField name="requestId" type="string">
+  The unmask request identifier that was approved.
+</ResponseField>
+
+<ResponseField name="phoneNumber" type="string">
+  The unmasked phone number.
+</ResponseField>
+
+<ResponseField name="approvedBy" type="string">
+  The identifier of the approver.
+</ResponseField>
+
+<ResponseField name="approvedAt" type="string">
+  ISO 8601 timestamp of the approval.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/features/masking/call_abc123/unmask/approve \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "approvedBy": "supervisor_001"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/masking/call_abc123/unmask/approve', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    approvedBy: 'supervisor_001'
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/features/masking/call_abc123/unmask/approve',
+    headers={
+        'Authorization': 'Bearer YOUR_API_KEY',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'approvedBy': 'supervisor_001'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "requestId": "unmask_req_456",
+  "phoneNumber": "+1-555-123-4567",
+  "approvedBy": "supervisor_001",
+  "approvedAt": "2026-02-18T10:45:00.000Z"
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": "No pending unmask request found for this call"
+}
+```
+
+```json 403
+{
+  "success": false,
+  "error": "Insufficient permissions to approve unmask requests"
+}
+```
+</ResponseExample>

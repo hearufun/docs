@@ -1,0 +1,239 @@
+---
+title: "Get Live Transcript"
+description: "Retrieve the real-time transcript and statistics for an active or completed call"
+api: "GET https://api.talkos.io/api/transcript/:callUuid"
+---
+
+# Get Live Transcript
+
+Retrieve the complete transcript for a call along with real-time statistics. This endpoint works for both active calls (returning the current transcript state) and completed calls.
+
+## Endpoint
+
+```
+GET /api/transcript/:callUuid
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="callUuid" type="string" required>
+  Unique identifier of the call
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request was successful
+</ResponseField>
+
+<ResponseField name="callUuid" type="string">
+  The call identifier
+</ResponseField>
+
+<ResponseField name="transcript" type="array">
+  Array of transcript segments:
+
+  <Expandable title="segment properties">
+    <ResponseField name="speaker" type="string">
+      Who is speaking: `agent`, `customer`, or `system`
+    </ResponseField>
+
+    <ResponseField name="text" type="string">
+      The transcribed text content
+    </ResponseField>
+
+    <ResponseField name="timestamp" type="number">
+      Seconds from call start when this segment began
+    </ResponseField>
+
+    <ResponseField name="endTime" type="number">
+      Seconds from call start when this segment ended
+    </ResponseField>
+
+    <ResponseField name="confidence" type="number">
+      Transcription confidence score (0-1)
+    </ResponseField>
+
+    <ResponseField name="sentiment" type="string">
+      Segment-level sentiment: `positive`, `neutral`, `negative`
+    </ResponseField>
+
+    <ResponseField name="isFinal" type="boolean">
+      Whether this is a finalized segment (for live transcripts)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="stats" type="object">
+  Transcript statistics:
+
+  <Expandable title="stats properties">
+    <ResponseField name="duration" type="number">
+      Total transcript duration in seconds
+    </ResponseField>
+
+    <ResponseField name="segmentCount" type="number">
+      Total number of transcript segments
+    </ResponseField>
+
+    <ResponseField name="agentWordCount" type="number">
+      Total words spoken by agent
+    </ResponseField>
+
+    <ResponseField name="customerWordCount" type="number">
+      Total words spoken by customer
+    </ResponseField>
+
+    <ResponseField name="agentTalkTimePercent" type="number">
+      Percentage of time agent was speaking
+    </ResponseField>
+
+    <ResponseField name="customerTalkTimePercent" type="number">
+      Percentage of time customer was speaking
+    </ResponseField>
+
+    <ResponseField name="averageConfidence" type="number">
+      Average transcription confidence score
+    </ResponseField>
+
+    <ResponseField name="overallSentiment" type="string">
+      Overall call sentiment: `positive`, `neutral`, `negative`
+    </ResponseField>
+
+    <ResponseField name="sentimentTrend" type="string">
+      How sentiment is changing: `improving`, `stable`, `declining`
+    </ResponseField>
+
+    <ResponseField name="silencePercent" type="number">
+      Percentage of call that was silence
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/transcript/call_abc123-def456-789" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript Node.js
+const callUuid = 'call_abc123-def456-789';
+
+const response = await fetch(
+  `https://api.talkos.io/api/transcript/${callUuid}`,
+  {
+    method: 'GET',
+    headers: {
+      'x-api-key': 'your-api-key',
+      'x-tenant-id': 'your-tenant-id'
+    }
+  }
+);
+
+const data = await response.json();
+console.log(`Transcript has ${data.transcript.length} segments`);
+console.log(`Overall sentiment: ${data.stats.overallSentiment}`);
+```
+
+```python Python
+import requests
+
+call_uuid = 'call_abc123-def456-789'
+
+response = requests.get(
+    f'https://api.talkos.io/api/transcript/{call_uuid}',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    }
+)
+
+data = response.json()
+print(f"Transcript has {len(data['transcript'])} segments")
+print(f"Overall sentiment: {data['stats']['overallSentiment']}")
+```
+</CodeGroup>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "callUuid": "call_abc123-def456-789",
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling TalkOS support, this is Sarah. How can I help you today?",
+      "timestamp": 0.5,
+      "endTime": 4.8,
+      "confidence": 0.96,
+      "sentiment": "positive",
+      "isFinal": true
+    },
+    {
+      "speaker": "customer",
+      "text": "Hi Sarah, I'm having trouble logging into my account. It keeps saying my password is incorrect.",
+      "timestamp": 5.2,
+      "endTime": 10.1,
+      "confidence": 0.94,
+      "sentiment": "negative",
+      "isFinal": true
+    },
+    {
+      "speaker": "agent",
+      "text": "I'm sorry to hear that. Let me help you resolve this. Can you please verify the email address associated with your account?",
+      "timestamp": 10.8,
+      "endTime": 17.2,
+      "confidence": 0.95,
+      "sentiment": "positive",
+      "isFinal": true
+    },
+    {
+      "speaker": "customer",
+      "text": "Sure, it's john.doe@email.com",
+      "timestamp": 18.0,
+      "endTime": 20.5,
+      "confidence": 0.92,
+      "sentiment": "neutral",
+      "isFinal": true
+    }
+  ],
+  "stats": {
+    "duration": 20.5,
+    "segmentCount": 4,
+    "agentWordCount": 38,
+    "customerWordCount": 28,
+    "agentTalkTimePercent": 52.4,
+    "customerTalkTimePercent": 38.5,
+    "averageConfidence": 0.94,
+    "overallSentiment": "neutral",
+    "sentimentTrend": "improving",
+    "silencePercent": 9.1
+  }
+}
+```
+
+## Error Responses
+
+| Status | Error | Description |
+|--------|-------|-------------|
+| 401 | Unauthorized | Invalid or missing API key |
+| 404 | Transcript not found | No transcript exists for the given callUuid |
+| 500 | Internal server error | Server-side error occurred |
+
+<Note>
+  For live calls, this endpoint returns the current state of the transcript. Use WebSocket connections at `wss://api.talkos.io/ws/transcript/{callUuid}` for real-time streaming updates.
+</Note>

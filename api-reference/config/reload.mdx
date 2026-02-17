@@ -1,0 +1,39 @@
+---
+title: "Reload Config"
+api: "POST https://api.talkos.io/api/config/reload"
+description: "Force an immediate config reload from the database"
+---
+
+Force an immediate configuration reload from the database. Use this when you need changes to take effect immediately without waiting for the next sync interval.
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/config/reload \
+  -H "x-api-key: your-api-key"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "message": "Config reloaded from DB",
+  "version": 13,
+  "reloadedAt": "2026-02-17T14:50:00.000Z",
+  "previousVersion": 12
+}
+```
+
+```json 500
+{
+  "error": "Config reload failed: Database connection error"
+}
+```
+</ResponseExample>
+
+## Notes
+
+- This only reloads config for the current worker/instance
+- Other workers will pick up changes during their regular sync interval
+- Use this after updating config via external means (e.g., direct database update)
+- Normal config updates via `PUT /api/config` automatically reload

@@ -1,0 +1,187 @@
+---
+title: "Initialize Escalation Rules"
+description: "Initialize escalation rules engine for your tenant"
+api: "POST https://api.talkos.io/api/features/escalation/init"
+---
+
+# Initialize Escalation Rules
+
+Initialize the escalation rules engine for your tenant with optional custom rules and configuration. This sets up both built-in rules and any custom escalation logic.
+
+## Endpoint
+
+```
+POST /api/features/escalation/init
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Request Body
+
+<ParamField body="customRules" type="array">
+  Array of custom escalation rules to add alongside built-in rules
+</ParamField>
+
+<ParamField body="config" type="object">
+  Configuration options for the escalation engine
+</ParamField>
+
+<ParamField body="config.enableBuiltInRules" type="boolean">
+  Whether to enable built-in escalation rules (default: true)
+</ParamField>
+
+<ParamField body="config.defaultCooldownSeconds" type="number">
+  Default cooldown period between re-triggers in seconds
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether initialization was successful
+</ResponseField>
+
+<ResponseField name="ruleSet" type="object">
+  The complete rule set configuration
+</ResponseField>
+
+<ResponseField name="ruleSet.tenantId" type="string">
+  Your tenant identifier
+</ResponseField>
+
+<ResponseField name="ruleSet.rules" type="array">
+  Array of all active escalation rules (built-in + custom)
+</ResponseField>
+
+<ResponseField name="ruleSet.totalRules" type="number">
+  Total count of active rules
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/features/escalation/init \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "customRules": [
+      {
+        "name": "VIP Customer Alert",
+        "conditions": [
+          { "field": "customerTier", "operator": "eq", "value": "vip" }
+        ],
+        "priority": "high",
+        "action": { "type": "notify", "target": "account_manager" }
+      }
+    ],
+    "config": {
+      "enableBuiltInRules": true,
+      "defaultCooldownSeconds": 120
+    }
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/escalation/init', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  },
+  body: JSON.stringify({
+    customRules: [
+      {
+        name: 'VIP Customer Alert',
+        conditions: [
+          { field: 'customerTier', operator: 'eq', value: 'vip' }
+        ],
+        priority: 'high',
+        action: { type: 'notify', target: 'account_manager' }
+      }
+    ],
+    config: {
+      enableBuiltInRules: true,
+      defaultCooldownSeconds: 120
+    }
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/features/escalation/init',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    json={
+        'customRules': [
+            {
+                'name': 'VIP Customer Alert',
+                'conditions': [
+                    {'field': 'customerTier', 'operator': 'eq', 'value': 'vip'}
+                ],
+                'priority': 'high',
+                'action': {'type': 'notify', 'target': 'account_manager'}
+            }
+        ],
+        'config': {
+            'enableBuiltInRules': True,
+            'defaultCooldownSeconds': 120
+        }
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "ruleSet": {
+    "tenantId": "your-tenant-id",
+    "rules": [
+      {
+        "id": "rule_negative_sentiment_3x",
+        "name": "3+ Negative Turns",
+        "description": "Escalate if customer is negative for 3+ consecutive turns",
+        "priority": "high",
+        "action": { "type": "transfer", "target": "senior_agent" },
+        "enabled": true,
+        "builtIn": true
+      },
+      {
+        "id": "custom_vip_alert",
+        "name": "VIP Customer Alert",
+        "priority": "high",
+        "action": { "type": "notify", "target": "account_manager" },
+        "enabled": true,
+        "builtIn": false
+      }
+    ],
+    "totalRules": 9
+  }
+}
+```
+
+```json 500
+{
+  "error": "Failed to initialize escalation rules"
+}
+```
+</ResponseExample>

@@ -1,0 +1,155 @@
+---
+title: "Exotel Status Callback"
+api: "POST https://api.talkos.io/api/calls/exotel/status"
+description: "Webhook for Exotel call status updates"
+---
+
+This webhook receives call status updates from Exotel. It handles both call answered events and terminal events (call ended, failed, etc.).
+
+<Note>
+This endpoint is called by Exotel's servers, not by your application directly. Configure this URL as the Status Callback URL in your Exotel application.
+</Note>
+
+## Request Parameters
+
+Exotel sends these parameters as form-encoded data:
+
+<ParamField body="CallSid" type="string">
+  Unique identifier for the call assigned by Exotel.
+</ParamField>
+
+<ParamField body="Status" type="string">
+  Current call status:
+  - `in-progress` - Call is active
+  - `completed` - Call ended normally
+  - `failed` - Call failed to connect
+  - `busy` - Recipient was busy
+  - `no-answer` - Recipient didn't answer
+</ParamField>
+
+<ParamField body="EventType" type="string">
+  Type of event:
+  - `answered` - Call was answered
+  - `terminal` - Call has ended
+</ParamField>
+
+<ParamField body="From" type="string">
+  The caller's phone number.
+</ParamField>
+
+<ParamField body="To" type="string">
+  The recipient's phone number.
+</ParamField>
+
+<ParamField body="Direction" type="string">
+  Call direction: "inbound" or "outbound".
+</ParamField>
+
+<ParamField body="StartTime" type="string">
+  Timestamp when the call started.
+</ParamField>
+
+<ParamField body="EndTime" type="string">
+  Timestamp when the call ended (for terminal events).
+</ParamField>
+
+<ParamField body="ConversationDuration" type="string">
+  Duration of the conversation in seconds.
+</ParamField>
+
+<ParamField body="Duration" type="string">
+  Total call duration in seconds.
+</ParamField>
+
+<ParamField body="RecordingUrl" type="string">
+  URL to the call recording (if enabled).
+</ParamField>
+
+<ParamField body="Legs" type="array">
+  Array of call leg information for multi-party calls.
+</ParamField>
+
+## Response
+
+TalkOS always returns a JSON acknowledgment:
+
+```json
+{
+  "status": "ok"
+}
+```
+
+## Event Handling
+
+### Answered Event (`EventType: answered`)
+
+When a call is answered:
+1. TalkOS registers the call if not already tracked
+2. Call state is updated to "answered"
+3. Audio streaming begins for AI conversation
+
+### Terminal Event (`EventType: terminal`)
+
+When a call ends:
+1. Post-call processing is triggered
+2. Analytics are computed
+3. Transcripts are saved
+4. Client webhooks are notified
+
+## Inbound Call Detection
+
+Similar to Plivo, if the `To` number is a registered TalkOS bot number, the call is treated as inbound and configured accordingly.
+
+<RequestExample>
+```bash cURL (Answered Event)
+curl -X POST https://api.talkos.io/api/calls/exotel/status \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "CallSid=exotel-call-123" \
+  -d "Status=in-progress" \
+  -d "EventType=answered" \
+  -d "From=+919876543210" \
+  -d "To=+911234567890" \
+  -d "Direction=outbound"
+```
+
+```bash cURL (Terminal Event)
+curl -X POST https://api.talkos.io/api/calls/exotel/status \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "CallSid=exotel-call-123" \
+  -d "Status=completed" \
+  -d "EventType=terminal" \
+  -d "From=+919876543210" \
+  -d "To=+911234567890" \
+  -d "Direction=outbound" \
+  -d "ConversationDuration=180" \
+  -d "Duration=185"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "status": "ok"
+}
+```
+</ResponseExample>
+
+## Status Values
+
+| Status | Description |
+|--------|-------------|
+| `in-progress` | Call is currently active |
+| `completed` | Call ended normally |
+| `failed` | Call failed to connect |
+| `busy` | Recipient was busy |
+| `no-answer` | No answer within timeout |
+| `canceled` | Call was canceled before connecting |
+
+## Comparison with Plivo
+
+| Feature | Plivo | Exotel |
+|---------|-------|--------|
+| Answer Webhook | Separate `/answer` endpoint | Single `/status` with `EventType: answered` |
+| Hangup Webhook | Separate `/hangup` endpoint | Single `/status` with `EventType: terminal` |
+| Audio Format | μ-law 8kHz | Provider-dependent |
+| Call ID Field | `CallUUID` | `CallSid` |

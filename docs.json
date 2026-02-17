@@ -1,68 +1,362 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "TalkOS",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#6366F1",
+    "light": "#818CF8",
+    "dark": "#4F46E5"
   },
   "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "api": {
+    "baseUrl": "https://api.talkos.io",
+    "auth": {
+      "method": "key",
+      "name": "x-api-key"
+    },
+    "playground": {
+      "mode": "simple"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Getting Started",
             "pages": [
-              "index",
+              "introduction",
               "quickstart",
-              "development"
+              "authentication",
+              "concepts"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Integration Guides",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "guides/plivo-setup",
+              "guides/exotel-setup",
+              "guides/inbound-calling",
+              "guides/batch-calling",
+              "guides/webhooks",
+              "guides/knowledge-base",
+              "guides/best-practices"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Overview",
             "pages": [
-              "api-reference/introduction"
+              "api-reference/introduction",
+              "api-reference/errors",
+              "api-reference/rate-limits"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Tenant Management",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api-reference/tenant/create-tenant",
+              "api-reference/tenant/get-tenant",
+              "api-reference/tenant/update-tenant",
+              "api-reference/tenant/rotate-api-key",
+              "api-reference/tenant/get-usage",
+              "api-reference/tenant/suspend-tenant",
+              "api-reference/tenant/activate-tenant",
+              "api-reference/tenant/delete-tenant"
+            ]
+          },
+          {
+            "group": "Call Management",
+            "pages": [
+              "api-reference/calls/start-call",
+              "api-reference/calls/get-call-status",
+              "api-reference/calls/batch-start",
+              "api-reference/calls/get-batch-status",
+              "api-reference/calls/queue-status",
+              "api-reference/calls/health"
+            ]
+          },
+          {
+            "group": "Inbound Calling",
+            "pages": [
+              "api-reference/inbound/configure-webhook",
+              "api-reference/inbound/get-config",
+              "api-reference/inbound/update-config",
+              "api-reference/inbound/disable",
+              "api-reference/inbound/list-bot-numbers",
+              "api-reference/inbound/get-stats",
+              "api-reference/inbound/circuit-breaker-status",
+              "api-reference/inbound/circuit-breaker-reset"
+            ]
+          },
+          {
+            "group": "Number Management",
+            "pages": [
+              "api-reference/numbers/search",
+              "api-reference/numbers/get-countries",
+              "api-reference/numbers/buy",
+              "api-reference/numbers/list",
+              "api-reference/numbers/get",
+              "api-reference/numbers/update",
+              "api-reference/numbers/release",
+              "api-reference/numbers/inventory-import",
+              "api-reference/numbers/inventory-list",
+              "api-reference/numbers/inventory-stats"
+            ]
+          },
+          {
+            "group": "Knowledge Base",
+            "pages": [
+              "api-reference/knowledge-base/create",
+              "api-reference/knowledge-base/upload-documents",
+              "api-reference/knowledge-base/search",
+              "api-reference/knowledge-base/list",
+              "api-reference/knowledge-base/get-stats",
+              "api-reference/knowledge-base/delete"
+            ]
+          },
+          {
+            "group": "Voices & Languages",
+            "pages": [
+              "api-reference/voices/create-voice",
+              "api-reference/voices/list-voices",
+              "api-reference/voices/delete-voice",
+              "api-reference/voices/list-languages"
+            ]
+          },
+          {
+            "group": "Call Transfer",
+            "pages": [
+              "api-reference/transfer/initiate",
+              "api-reference/transfer/accept",
+              "api-reference/transfer/reject",
+              "api-reference/transfer/complete",
+              "api-reference/transfer/cancel",
+              "api-reference/transfer/metrics"
+            ]
+          },
+          {
+            "group": "Agent Management",
+            "pages": [
+              "api-reference/agents/register",
+              "api-reference/agents/update-status",
+              "api-reference/agents/get-all-status"
+            ]
+          },
+          {
+            "group": "Analytics",
+            "pages": [
+              "api-reference/analytics/realtime",
+              "api-reference/analytics/calls",
+              "api-reference/analytics/sentiment",
+              "api-reference/analytics/sentiment-by-call",
+              "api-reference/analytics/performance",
+              "api-reference/analytics/cost",
+              "api-reference/analytics/capacity",
+              "api-reference/analytics/quality"
+            ]
+          },
+          {
+            "group": "Transcription",
+            "pages": [
+              "api-reference/transcription/search",
+              "api-reference/transcription/export",
+              "api-reference/transcription/analytics"
+            ]
+          },
+          {
+            "group": "Real-time Dashboard",
+            "pages": [
+              "api-reference/realtime/dashboard",
+              "api-reference/realtime/agent-stats",
+              "api-reference/realtime/transcript",
+              "api-reference/realtime/connections"
+            ]
+          },
+          {
+            "group": "Live Coaching",
+            "pages": [
+              "api-reference/coaching/start",
+              "api-reference/coaching/send-message",
+              "api-reference/coaching/end",
+              "api-reference/coaching/get-session",
+              "api-reference/coaching/stats"
+            ]
+          },
+          {
+            "group": "Voice Biometrics",
+            "pages": [
+              "api-reference/biometrics/enroll",
+              "api-reference/biometrics/add-sample",
+              "api-reference/biometrics/verify",
+              "api-reference/biometrics/get-profile",
+              "api-reference/biometrics/delete-profile",
+              "api-reference/biometrics/list-profiles"
+            ]
+          },
+          {
+            "group": "Compliance (GDPR/PII)",
+            "pages": [
+              "api-reference/compliance/detect-pii",
+              "api-reference/compliance/redact-pii",
+              "api-reference/compliance/gdpr-access",
+              "api-reference/compliance/gdpr-erasure",
+              "api-reference/compliance/consent",
+              "api-reference/compliance/retention",
+              "api-reference/compliance/audit-log",
+              "api-reference/compliance/metrics"
+            ]
+          },
+          {
+            "group": "Call Masking",
+            "pages": [
+              "api-reference/features/masking/configure",
+              "api-reference/features/masking/mask-number",
+              "api-reference/features/masking/get-display",
+              "api-reference/features/masking/request-unmask",
+              "api-reference/features/masking/approve-unmask",
+              "api-reference/features/masking/get-audit",
+              "api-reference/features/masking/stats"
+            ]
+          },
+          {
+            "group": "Hold Music",
+            "pages": [
+              "api-reference/features/hold-music/configure",
+              "api-reference/features/hold-music/library",
+              "api-reference/features/hold-music/select",
+              "api-reference/features/hold-music/start",
+              "api-reference/features/hold-music/end",
+              "api-reference/features/hold-music/upload-custom",
+              "api-reference/features/hold-music/active",
+              "api-reference/features/hold-music/stats"
+            ]
+          },
+          {
+            "group": "Escalation Rules",
+            "pages": [
+              "api-reference/features/escalation/init",
+              "api-reference/features/escalation/list-rules",
+              "api-reference/features/escalation/create-rule",
+              "api-reference/features/escalation/update-rule",
+              "api-reference/features/escalation/delete-rule",
+              "api-reference/features/escalation/toggle-rule",
+              "api-reference/features/escalation/evaluate",
+              "api-reference/features/escalation/get-by-call",
+              "api-reference/features/escalation/recent",
+              "api-reference/features/escalation/stats"
+            ]
+          },
+          {
+            "group": "Call Tagging",
+            "pages": [
+              "api-reference/features/tags/configure",
+              "api-reference/features/tags/register",
+              "api-reference/features/tags/add-to-call",
+              "api-reference/features/tags/remove-from-call",
+              "api-reference/features/tags/get-call-tags",
+              "api-reference/features/tags/auto-tag",
+              "api-reference/features/tags/search-by-tags",
+              "api-reference/features/tags/analytics"
+            ]
+          },
+          {
+            "group": "Predictive Analytics",
+            "pages": [
+              "api-reference/features/predictions/init",
+              "api-reference/features/predictions/record",
+              "api-reference/features/predictions/predict-call",
+              "api-reference/features/predictions/escalation-risk",
+              "api-reference/features/predictions/churn",
+              "api-reference/features/predictions/forecast",
+              "api-reference/features/predictions/snapshot"
+            ]
+          },
+          {
+            "group": "Chat (During Call)",
+            "pages": [
+              "api-reference/features/chat/configure",
+              "api-reference/features/chat/start",
+              "api-reference/features/chat/send-message",
+              "api-reference/features/chat/history",
+              "api-reference/features/chat/typing",
+              "api-reference/features/chat/mark-read",
+              "api-reference/features/chat/export",
+              "api-reference/features/chat/search",
+              "api-reference/features/chat/canned-responses",
+              "api-reference/features/chat/add-canned-response",
+              "api-reference/features/chat/stats"
+            ]
+          },
+          {
+            "group": "Post-Call Survey",
+            "pages": [
+              "api-reference/features/survey/configure",
+              "api-reference/features/survey/add-questions",
+              "api-reference/features/survey/check-eligibility",
+              "api-reference/features/survey/trigger",
+              "api-reference/features/survey/ivr-prompts",
+              "api-reference/features/survey/dtmf-response",
+              "api-reference/features/survey/submit",
+              "api-reference/features/survey/get",
+              "api-reference/features/survey/get-by-call",
+              "api-reference/features/survey/opt-out",
+              "api-reference/features/survey/opt-in",
+              "api-reference/features/survey/analytics"
+            ]
+          },
+          {
+            "group": "Web Sessions",
+            "pages": [
+              "api-reference/web-sessions/start",
+              "api-reference/web-sessions/search",
+              "api-reference/web-sessions/stats",
+              "api-reference/web-sessions/get-status",
+              "api-reference/web-sessions/get-transcript",
+              "api-reference/web-sessions/export-transcript",
+              "api-reference/web-sessions/update-config",
+              "api-reference/web-sessions/pause",
+              "api-reference/web-sessions/resume"
+            ]
+          },
+          {
+            "group": "System Configuration",
+            "pages": [
+              "api-reference/config/get",
+              "api-reference/config/update",
+              "api-reference/config/reload",
+              "api-reference/config/sync-status",
+              "api-reference/config/reset"
+            ]
+          },
+          {
+            "group": "Admin Authentication",
+            "pages": [
+              "api-reference/admin/register",
+              "api-reference/admin/login",
+              "api-reference/admin/me",
+              "api-reference/admin/logout",
+              "api-reference/admin/change-password",
+              "api-reference/admin/list-users",
+              "api-reference/admin/delete-user"
+            ]
+          },
+          {
+            "group": "Webhooks (Provider)",
+            "pages": [
+              "api-reference/webhooks/overview",
+              "api-reference/webhooks/plivo-answer",
+              "api-reference/webhooks/plivo-hangup",
+              "api-reference/webhooks/exotel-status"
             ]
           }
         ]
@@ -71,52 +365,38 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
+          "anchor": "API Status",
+          "href": "https://status.talkos.io",
+          "icon": "signal"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "Support",
+          "href": "mailto:support@talkos.io",
+          "icon": "envelope"
         }
       ]
     }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
   },
   "navbar": {
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:support@talkos.io"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "href": "https://dashboard.talkos.io"
     }
   },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
+  "footerSocials": {
+    "github": "https://github.com/talkos",
+    "twitter": "https://twitter.com/talkos_io",
+    "linkedin": "https://linkedin.com/company/talkos"
   },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+  "feedback": {
+    "thumbsRating": true,
+    "suggestEdit": true
   }
 }

@@ -1,0 +1,217 @@
+---
+title: "Reset Circuit Breaker"
+api: "POST https://api.talkos.io/api/inbound/circuit-breaker/reset"
+description: "Manually reset the circuit breaker to immediately resume webhook requests."
+---
+
+Force the circuit breaker to close and resume sending requests to your webhook. Use this after you've fixed issues with your webhook endpoint and want to immediately restore normal operation without waiting for the automatic timeout.
+
+<Warning>
+  Only reset the circuit breaker after confirming your webhook is healthy. Resetting while your webhook is still failing will cause more calls to fail before the circuit opens again.
+</Warning>
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="reason" type="string">
+  Optional reason for the manual reset. Logged for audit purposes.
+</ParamField>
+
+<ParamField body="testFirst" type="boolean" default={true}>
+  When true, sends a test request to verify webhook health before fully closing. Recommended.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.talkos.io/api/inbound/circuit-breaker/reset \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "reason": "Webhook server restarted after fix",
+    "testFirst": true
+  }'
+```
+
+```javascript Node.js
+const response = await fetch('https://api.talkos.io/api/inbound/circuit-breaker/reset', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  },
+  body: JSON.stringify({
+    reason: 'Webhook server restarted after fix',
+    testFirst: true
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/inbound/circuit-breaker/reset',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    json={
+        'reason': 'Webhook server restarted after fix',
+        'testFirst': True
+    }
+)
+
+data = response.json()
+```
+</CodeGroup>
+
+## Response
+
+<CodeGroup>
+```json 200 OK - Reset Successful
+{
+  "success": true,
+  "message": "Circuit breaker reset successfully",
+  "data": {
+    "previousState": "open",
+    "currentState": "closed",
+    "resetAt": "2026-02-18T15:10:00.000Z",
+    "reason": "Webhook server restarted after fix",
+    "resetBy": "api-key-abc123",
+    "webhookTest": {
+      "performed": true,
+      "success": true,
+      "latencyMs": 142,
+      "statusCode": 200
+    },
+    "metrics": {
+      "callsOnFallback": 47,
+      "fallbackDurationSeconds": 542
+    }
+  }
+}
+```
+
+```json 200 OK - Test Failed
+{
+  "success": false,
+  "message": "Circuit breaker reset failed - webhook test unsuccessful",
+  "data": {
+    "previousState": "open",
+    "currentState": "open",
+    "webhookTest": {
+      "performed": true,
+      "success": false,
+      "error": "Connection timeout after 5000ms",
+      "statusCode": null
+    },
+    "recommendation": "Verify your webhook endpoint is accessible and responding within the timeout period"
+  }
+}
+```
+
+```json 400 Bad Request - Already Closed
+{
+  "success": false,
+  "error": "Circuit breaker is already closed",
+  "message": "No reset needed - webhook is operating normally",
+  "data": {
+    "currentState": "closed",
+    "isHealthy": true
+  }
+}
+```
+
+```json 429 Too Many Requests
+{
+  "success": false,
+  "error": "Rate limited",
+  "message": "Circuit breaker reset can only be attempted once per minute",
+  "retryAfter": 45
+}
+```
+</CodeGroup>
+
+## Response Fields
+
+<ResponseField name="data.previousState" type="string">
+  Circuit breaker state before the reset attempt.
+</ResponseField>
+
+<ResponseField name="data.currentState" type="string">
+  Circuit breaker state after the reset attempt.
+</ResponseField>
+
+<ResponseField name="data.webhookTest" type="object">
+  Results of the optional health check test.
+</ResponseField>
+
+<ResponseField name="data.webhookTest.success" type="boolean">
+  Whether the test request to your webhook succeeded.
+</ResponseField>
+
+<ResponseField name="data.webhookTest.latencyMs" type="number">
+  Response time of the test request.
+</ResponseField>
+
+<ResponseField name="data.metrics.callsOnFallback" type="integer">
+  Number of calls that used fallback while circuit was open.
+</ResponseField>
+
+## Force Reset (Skip Test)
+
+If you need to reset immediately without testing:
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.talkos.io/api/inbound/circuit-breaker/reset \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "reason": "Emergency reset - webhook verified externally",
+    "testFirst": false
+  }'
+```
+</CodeGroup>
+
+<Warning>
+  Setting `testFirst: false` bypasses the health check. Use only when you've verified webhook health through other means.
+</Warning>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Verify Before Reset" icon="stethoscope">
+    Test your webhook endpoint manually before resetting to avoid repeated circuit trips.
+  </Card>
+  <Card title="Use Test Mode" icon="vial">
+    Keep `testFirst: true` to let TalkOS verify connectivity before resuming traffic.
+  </Card>
+  <Card title="Monitor After Reset" icon="chart-line">
+    Watch your metrics closely after reset to catch any recurring issues early.
+  </Card>
+  <Card title="Document Reasons" icon="clipboard">
+    Include a `reason` for audit trails and debugging future incidents.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Integrate circuit breaker monitoring with your incident management system. Automatic resets after deployment can be triggered via this API.
+</Tip>

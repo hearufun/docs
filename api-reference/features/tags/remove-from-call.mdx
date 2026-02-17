@@ -1,0 +1,132 @@
+---
+title: "Remove Tag from Call"
+description: "Remove a tag from a specific call"
+api: "DELETE https://api.talkos.io/api/features/tags/:callUuid/:tag"
+---
+
+# Remove Tag from Call
+
+Remove a specific tag from a call.
+
+## Endpoint
+
+```
+DELETE /api/features/tags/:callUuid/:tag
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="callUuid" type="string" required>
+  Unique identifier of the call
+</ParamField>
+
+<ParamField path="tag" type="string" required>
+  Name of the tag to remove
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="removedBy" type="string">
+  Identifier of who removed the tag (default: "api")
+</ParamField>
+
+## Response
+
+<ResponseField name="callUuid" type="string">
+  The call UUID
+</ResponseField>
+
+<ResponseField name="tag" type="string">
+  The tag that was removed
+</ResponseField>
+
+<ResponseField name="removed" type="boolean">
+  Whether the tag was successfully removed
+</ResponseField>
+
+<ResponseField name="removedBy" type="string">
+  Who removed the tag
+</ResponseField>
+
+<ResponseField name="removedAt" type="string">
+  ISO 8601 timestamp when the tag was removed
+</ResponseField>
+
+<ResponseField name="remainingTags" type="number">
+  Number of tags remaining on this call
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X DELETE "https://api.talkos.io/api/features/tags/call-abc123-def456/vip-customer?removedBy=supervisor-001" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/tags/call-abc123-def456/vip-customer?removedBy=supervisor-001', {
+  method: 'DELETE',
+  headers: {
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.delete(
+    'https://api.talkos.io/api/features/tags/call-abc123-def456/vip-customer',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    params={
+        'removedBy': 'supervisor-001'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "callUuid": "call-abc123-def456",
+  "tag": "vip-customer",
+  "removed": true,
+  "removedBy": "supervisor-001",
+  "removedAt": "2026-02-18T10:45:00.000Z",
+  "remainingTags": 3
+}
+```
+
+```json 200 (Not Found)
+{
+  "callUuid": "call-abc123-def456",
+  "tag": "vip-customer",
+  "removed": false,
+  "remainingTags": 3
+}
+```
+
+```json 500
+{
+  "error": "Failed to remove tag"
+}
+```
+</ResponseExample>

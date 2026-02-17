@@ -1,0 +1,107 @@
+---
+title: "Plivo Answer Webhook"
+api: "POST https://api.talkos.io/api/calls/plivo/answer"
+description: "Webhook called when a Plivo call is answered"
+---
+
+This webhook is called by Plivo when the recipient answers the call. TalkOS responds with XML instructions that include a greeting message and establish an audio stream for real-time conversation.
+
+<Note>
+This endpoint is called by Plivo's servers, not by your application directly. Configure this URL in your Plivo application settings.
+</Note>
+
+## Request Parameters
+
+Plivo sends these parameters as form-encoded data or query parameters:
+
+<ParamField query="CallUUID" type="string">
+  Unique identifier for the call assigned by Plivo.
+</ParamField>
+
+<ParamField query="From" type="string">
+  The caller's phone number in E.164 format.
+</ParamField>
+
+<ParamField query="To" type="string">
+  The recipient's phone number in E.164 format.
+</ParamField>
+
+<ParamField query="Direction" type="string">
+  Call direction: "inbound" or "outbound".
+</ParamField>
+
+<ParamField query="ALegUUID" type="string">
+  UUID of the A-leg (first leg) of the call.
+</ParamField>
+
+<ParamField query="CallStatus" type="string">
+  Current status of the call (e.g., "in-progress").
+</ParamField>
+
+## Response
+
+TalkOS returns Plivo XML instructions:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Speak voice="Polly.Joanna">
+    Hello! I'm your AI assistant. How can I help you today?
+  </Speak>
+  <Stream 
+    bidirectional="true"
+    contentType="audio/x-mulaw;rate=8000"
+    streamTimeout="1800">
+    wss://api.talkos.io/audio-stream/{callUuid}
+  </Stream>
+</Response>
+```
+
+## Call Flow
+
+1. **Call Answered**: Plivo POSTs to this webhook
+2. **Greeting**: TalkOS returns XML with `<Speak>` for the greeting
+3. **Audio Stream**: `<Stream>` establishes bidirectional WebSocket
+4. **Conversation**: Real-time audio flows through the WebSocket
+5. **Hangup**: When call ends, Plivo calls the hangup webhook
+
+## Inbound Call Detection
+
+If the `To` number is registered as a TalkOS bot number, the call is treated as an inbound call:
+
+1. TalkOS fetches configuration from the tenant's inbound webhook
+2. Custom prompts, greetings, and settings are applied
+3. The AI responds according to the inbound configuration
+
+<RequestExample>
+```bash cURL (Simulated)
+curl -X POST https://api.talkos.io/api/calls/plivo/answer \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "CallUUID=abc123-def456" \
+  -d "From=+14155551234" \
+  -d "To=+919876543210" \
+  -d "Direction=outbound" \
+  -d "CallStatus=in-progress"
+```
+</RequestExample>
+
+<ResponseExample>
+```xml 200
+<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Speak voice="Polly.Joanna">
+    Hello! I'm your AI assistant. How can I help you today?
+  </Speak>
+  <Stream 
+    bidirectional="true"
+    contentType="audio/x-mulaw;rate=8000"
+    streamTimeout="1800">
+    wss://api.talkos.io/audio-stream/abc123-def456
+  </Stream>
+</Response>
+```
+</ResponseExample>
+
+## Error Handling
+
+If an error occurs during webhook processing, TalkOS still returns a valid XML response to prevent call failures. Errors are logged internally for debugging.

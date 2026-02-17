@@ -1,0 +1,150 @@
+---
+title: "Check Survey Eligibility"
+description: "Check if a survey should be triggered for a specific call"
+api: "POST https://api.talkos.io/api/features/survey/check"
+---
+
+# Check Survey Eligibility
+
+Check if a post-call survey should be triggered for a specific call based on tenant configuration, rate limiting, opt-out status, and other conditions.
+
+## Endpoint
+
+```
+POST /api/features/survey/check
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Request Body
+
+<ParamField body="callUuid" type="string" required>
+  The unique identifier of the call to check
+</ParamField>
+
+<ParamField body="phoneNumber" type="string" required>
+  Customer's phone number in E.164 format (e.g., `+14155551234`)
+</ParamField>
+
+<ParamField body="duration" type="number" required>
+  Call duration in seconds
+</ParamField>
+
+<ParamField body="escalated" type="boolean">
+  Whether the call was escalated to a human agent
+</ParamField>
+
+<ParamField body="agentId" type="string">
+  AI agent identifier that handled the call
+</ParamField>
+
+## Response
+
+<ResponseField name="trigger" type="boolean">
+  Whether a survey should be triggered for this call
+</ResponseField>
+
+<ResponseField name="reason" type="string">
+  Explanation for the decision:
+  - `eligible` - Survey should be triggered
+  - `survey_disabled` - Surveys are disabled for this tenant
+  - `call_too_short` - Call duration below minimum threshold
+  - `escalated_call_excluded` - Escalated calls are excluded
+  - `sampled_out` - Call was not selected based on sample rate
+  - `customer_opted_out` - Customer has opted out of surveys
+  - `rate_limited` - Customer was surveyed recently
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST https://api.talkos.io/api/features/survey/check \
+  -H "x-api-key: tk_live_xxxxxxxxxxxxxxxxxxxx" \
+  -H "x-tenant-id: tenant_abc123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "callUuid": "call_abc123def456",
+    "phoneNumber": "+14155551234",
+    "duration": 180,
+    "escalated": false
+  }'
+```
+
+## Example Response - Eligible
+
+```json
+{
+  "trigger": true,
+  "reason": "eligible"
+}
+```
+
+## Example Response - Not Eligible
+
+```json
+{
+  "trigger": false,
+  "reason": "rate_limited"
+}
+```
+
+## Eligibility Checks
+
+The following checks are performed in order:
+
+| Check | Condition |
+|-------|-----------|
+| Survey enabled | Surveys must be enabled for tenant |
+| Call duration | Must meet minimum duration threshold |
+| Escalation | Check if escalated calls are excluded |
+| Sample rate | Random sampling based on configured rate |
+| Opt-out | Customer hasn't opted out |
+| Rate limit | Customer hasn't been surveyed within cooldown period |
+
+## Use Cases
+
+### Pre-check Before Triggering
+
+```javascript
+// Check eligibility before triggering survey
+const eligibility = await fetch('/api/features/survey/check', {
+  method: 'POST',
+  headers: {
+    'x-api-key': apiKey,
+    'x-tenant-id': tenantId,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    callUuid: call.uuid,
+    phoneNumber: call.to,
+    duration: call.duration,
+    escalated: call.wasEscalated
+  })
+}).then(r => r.json());
+
+if (eligibility.trigger) {
+  // Proceed to trigger survey
+  await triggerSurvey(callData);
+} else {
+  console.log(`Survey skipped: ${eligibility.reason}`);
+}
+```
+
+## Notes
+
+- This endpoint only checks eligibility; it does not create or trigger a survey
+- Use the [Trigger Survey](./trigger) endpoint to actually initiate a survey
+- Rate limit checks are based on the phone number, not the call UUID
+- Sample rate uses random selection, so results may vary for identical requests

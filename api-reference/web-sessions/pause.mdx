@@ -1,0 +1,52 @@
+---
+title: "Pause Session"
+api: "POST https://api.talkos.io/api/web-sessions/{sessionId}/pause"
+description: "Pause an active web session"
+---
+
+Pause an active web session. This stops speech-to-text processing while preserving the session state, allowing the session to be resumed later.
+
+## Path Parameters
+
+<ParamField path="sessionId" type="string" required>
+  The unique session identifier.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/web-sessions/ws-42e299e5-6bbf-4503-af0a-f8218524f8cf/pause \
+  -H "x-api-key: your-api-key"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "sessionId": "ws-42e299e5-6bbf-4503-af0a-f8218524f8cf",
+  "status": "paused",
+  "pausedAt": "2026-02-17T14:35:00.000Z",
+  "message": "Session paused successfully"
+}
+```
+
+```json 404
+{
+  "error": "Session not found or not pausable"
+}
+```
+
+```json 500
+{
+  "error": "Failed to pause session",
+  "message": "Internal server error"
+}
+```
+</ResponseExample>
+
+## Notes
+
+- Only sessions with `active` status can be paused
+- Pausing stops STT processing but maintains the WebSocket connection
+- Session duration timer continues while paused
+- Use [Resume Session](/api-reference/web-sessions/resume) to continue the conversation

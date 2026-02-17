@@ -1,0 +1,158 @@
+---
+title: "Update Session Config"
+api: "POST https://api.talkos.io/api/web-sessions/{sessionId}/config"
+description: "Update session configuration mid-session"
+---
+
+Dynamically update a web session's configuration while it's active. Only whitelisted fields can be updated.
+
+## Path Parameters
+
+<ParamField path="sessionId" type="string" required>
+  The unique session identifier.
+</ParamField>
+
+## Request Body
+
+<ParamField body="customPrompt" type="string">
+  Update the system prompt mid-session.
+</ParamField>
+
+<ParamField body="voiceId" type="string">
+  Change the ElevenLabs voice ID.
+</ParamField>
+
+<ParamField body="speed" type="number">
+  Update TTS speed multiplier (0.5-2.0).
+</ParamField>
+
+<ParamField body="pitch" type="number">
+  Update TTS pitch adjustment (-20 to 20).
+</ParamField>
+
+<ParamField body="language" type="string">
+  Change language code.
+</ParamField>
+
+<ParamField body="tools" type="array">
+  Update tool definitions for function calling.
+</ParamField>
+
+<ParamField body="knowledgeBaseId" type="string">
+  Change the knowledge base for RAG.
+</ParamField>
+
+<ParamField body="guardrails" type="object">
+  Update content guardrails.
+  <Expandable title="properties">
+    <ParamField body="enabled" type="boolean">
+      Enable/disable guardrails.
+    </ParamField>
+    <ParamField body="allowedTopics" type="array">
+      Updated list of allowed topics.
+    </ParamField>
+    <ParamField body="blockedTopics" type="array">
+      Updated list of blocked topics.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="scoring" type="object">
+  Update scoring configuration.
+  <Expandable title="properties">
+    <ParamField body="enabled" type="boolean">
+      Enable/disable scoring.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="ttsFormat" type="string">
+  Change TTS output format.
+</ParamField>
+
+<ParamField body="maxHistoryTurns" type="number">
+  Update max conversation turns for LLM context.
+</ParamField>
+
+<ParamField body="autoSummary" type="object">
+  Update auto-summary configuration.
+  <Expandable title="properties">
+    <ParamField body="enabled" type="boolean">
+      Enable/disable auto-summary.
+    </ParamField>
+    <ParamField body="intervalTurns" type="number">
+      Summary generation interval.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="bargeIn" type="object">
+  Update barge-in configuration.
+  <Expandable title="properties">
+    <ParamField body="enabled" type="boolean">
+      Enable/disable barge-in.
+    </ParamField>
+    <ParamField body="minSpeechMs" type="number">
+      Minimum speech duration.
+    </ParamField>
+    <ParamField body="mode" type="string">
+      Barge-in mode: "full" or "soft".
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="turnHooks" type="object">
+  Update webhook hooks.
+  <Expandable title="properties">
+    <ParamField body="beforeTurn" type="string">
+      URL to call before each turn.
+    </ParamField>
+    <ParamField body="afterTurn" type="string">
+      URL to call after each turn.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="llmTemperature" type="number">
+  Update LLM temperature (0-2).
+</ParamField>
+
+<ParamField body="llmMaxTokens" type="number">
+  Update LLM max tokens.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/web-sessions/ws-42e299e5-6bbf-4503-af0a-f8218524f8cf/config \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -d '{
+    "speed": 1.2,
+    "llmTemperature": 0.8,
+    "customPrompt": "You are now in detailed explanation mode. Provide thorough, comprehensive answers."
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "sessionId": "ws-42e299e5-6bbf-4503-af0a-f8218524f8cf",
+  "updatedFields": ["speed", "llmTemperature", "customPrompt"],
+  "message": "Configuration updated successfully"
+}
+```
+
+```json 400
+{
+  "error": "Invalid field: invalidFieldName is not allowed"
+}
+```
+
+```json 404
+{
+  "error": "Session not found or not active"
+}
+```
+</ResponseExample>

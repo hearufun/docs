@@ -1,0 +1,150 @@
+---
+title: 'Upload Custom Audio'
+api: 'POST https://api.talkos.io/api/features/hold-music/custom-audio'
+description: 'Upload custom hold music or announcement audio'
+---
+
+Upload a custom audio file to use as hold music or for queue announcements. Supports MP3, WAV, and OGG formats.
+
+## Request Body
+
+<ParamField body="file" type="file" required>
+  The audio file to upload. Maximum size: 10MB. Supported formats: MP3, WAV, OGG.
+</ParamField>
+
+<ParamField body="name" type="string" required>
+  Display name for the audio track.
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Type of audio: `music` for hold music, `announcement` for queue announcements.
+</ParamField>
+
+<ParamField body="category" type="string" default="custom">
+  Category for organization purposes.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Optional description of the audio content.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the upload was successful.
+</ResponseField>
+
+<ResponseField name="track" type="object">
+  <Expandable title="track properties">
+    <ResponseField name="id" type="string">
+      Unique identifier for the uploaded track.
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Display name of the track.
+    </ResponseField>
+    <ResponseField name="type" type="string">
+      Audio type (music/announcement).
+    </ResponseField>
+    <ResponseField name="category" type="string">
+      Track category.
+    </ResponseField>
+    <ResponseField name="duration" type="number">
+      Track duration in seconds.
+    </ResponseField>
+    <ResponseField name="format" type="string">
+      Audio format (mp3/wav/ogg).
+    </ResponseField>
+    <ResponseField name="fileSize" type="number">
+      File size in bytes.
+    </ResponseField>
+    <ResponseField name="uploadedAt" type="string">
+      ISO 8601 timestamp of the upload.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/features/hold-music/custom-audio \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -F "file=@/path/to/company-jingle.mp3" \
+  -F "name=Company Jingle" \
+  -F "type=music" \
+  -F "category=branding" \
+  -F "description=Our official company jingle for hold music"
+```
+
+```javascript JavaScript
+const formData = new FormData();
+formData.append('file', audioFile);
+formData.append('name', 'Company Jingle');
+formData.append('type', 'music');
+formData.append('category', 'branding');
+formData.append('description', 'Our official company jingle for hold music');
+
+const response = await fetch('https://api.talkos.io/api/features/hold-music/custom-audio', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY'
+  },
+  body: formData
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+with open('/path/to/company-jingle.mp3', 'rb') as f:
+    response = requests.post(
+        'https://api.talkos.io/api/features/hold-music/custom-audio',
+        headers={
+            'Authorization': 'Bearer YOUR_API_KEY'
+        },
+        files={
+            'file': ('company-jingle.mp3', f, 'audio/mpeg')
+        },
+        data={
+            'name': 'Company Jingle',
+            'type': 'music',
+            'category': 'branding',
+            'description': 'Our official company jingle for hold music'
+        }
+    )
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "track": {
+    "id": "track_custom_def456",
+    "name": "Company Jingle",
+    "type": "music",
+    "category": "branding",
+    "duration": 62,
+    "format": "mp3",
+    "fileSize": 1048576,
+    "uploadedAt": "2026-02-18T10:30:00.000Z"
+  }
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": "Invalid audio format. Supported formats: MP3, WAV, OGG"
+}
+```
+
+```json 413
+{
+  "success": false,
+  "error": "File size exceeds maximum limit of 10MB"
+}
+```
+</ResponseExample>

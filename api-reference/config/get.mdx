@@ -1,0 +1,89 @@
+---
+title: "Get System Config"
+api: "GET https://api.talkos.io/api/config"
+description: "View the current server configuration"
+---
+
+Retrieve the current server configuration. API keys are masked for security.
+
+<RequestExample>
+```bash cURL
+curl -X GET https://api.talkos.io/api/config \
+  -H "x-api-key: your-api-key"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "config": {
+    "llmProvider": "groq",
+    "groq": {
+      "apiKey": "gsk_****...****",
+      "model": "llama-3.3-70b-versatile"
+    },
+    "openai": {
+      "apiKey": "sk-****...****",
+      "model": "gpt-4o"
+    },
+    "elevenlabs": {
+      "apiKey": "****...****",
+      "voiceId": "21m00Tcm4TlvDq8ikWAM",
+      "model": "eleven_turbo_v2_5"
+    },
+    "deepgram": {
+      "apiKey": "****...****",
+      "model": "nova-2"
+    },
+    "dialerProvider": "twilio",
+    "twilio": {
+      "accountSid": "AC****...****",
+      "authToken": "****...****"
+    },
+    "timeouts": {
+      "llm": 10000,
+      "stt": 30000,
+      "tts": 15000
+    },
+    "defaults": {
+      "maxDuration": 5400,
+      "language": "en",
+      "speed": 1.0
+    },
+    "features": {
+      "recording": true,
+      "analytics": true,
+      "webhooks": true
+    },
+    "version": 12,
+    "updatedAt": "2026-02-17T10:00:00.000Z",
+    "updatedBy": "admin@example.com"
+  },
+  "syncStatus": {
+    "lastSync": "2026-02-17T14:30:00.000Z",
+    "syncInterval": 10000,
+    "version": 12,
+    "isHealthy": true
+  }
+}
+```
+
+```json 404
+{
+  "error": "Config not found. Server may not have seeded yet."
+}
+```
+
+```json 500
+{
+  "error": "Internal server error"
+}
+```
+</ResponseExample>
+
+## Notes
+
+- API keys and sensitive credentials are masked in the response
+- The `syncStatus` object shows the health of the config synchronization service
+- The `version` field increments with each config update

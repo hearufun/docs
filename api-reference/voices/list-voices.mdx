@@ -1,0 +1,223 @@
+---
+title: "List Voices"
+api: "GET https://api.talkos.io/api/voices"
+description: "Retrieve all available voices including custom and preset voices"
+---
+
+## Overview
+
+List all voices available to your tenant, including custom cloned voices and TalkOS preset voices. Use this endpoint to discover voice options for your AI agents.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="type" type="string">
+  Filter by voice type. Options: `all`, `cloned`, `preset`. Default: `all`.
+</ParamField>
+
+<ParamField query="language" type="string">
+  Filter by language code (e.g., `en-US`, `es-ES`). Returns voices supporting this language.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by status. Options: `all`, `ready`, `processing`, `failed`. Default: `ready`.
+</ParamField>
+
+<ParamField query="page" type="number">
+  Page number for pagination. Default: `1`.
+</ParamField>
+
+<ParamField query="limit" type="number">
+  Results per page. Default: `20`. Maximum: `100`.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request completed successfully
+</ResponseField>
+
+<ResponseField name="voices" type="array">
+  Array of voice objects
+  <Expandable title="voice object">
+    <ResponseField name="id" type="string">
+      Unique identifier for the voice
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Display name of the voice
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      Description of voice characteristics
+    </ResponseField>
+    <ResponseField name="type" type="string">
+      Voice type: `cloned` (custom) or `preset` (built-in)
+    </ResponseField>
+    <ResponseField name="language" type="string">
+      Primary language code
+    </ResponseField>
+    <ResponseField name="supportedLanguages" type="array">
+      All languages the voice supports
+    </ResponseField>
+    <ResponseField name="gender" type="string">
+      Voice gender: `male`, `female`, `neutral`
+    </ResponseField>
+    <ResponseField name="age" type="string">
+      Voice age range: `young`, `middle`, `mature`
+    </ResponseField>
+    <ResponseField name="accent" type="string">
+      Voice accent (e.g., `american`, `british`, `australian`)
+    </ResponseField>
+    <ResponseField name="previewUrl" type="string">
+      URL to preview audio sample
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Status: `ready`, `processing`, `failed`
+    </ResponseField>
+    <ResponseField name="isDefault" type="boolean">
+      Whether this is a preset voice
+    </ResponseField>
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp (null for preset voices)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="pagination" type="object">
+  <Expandable title="properties">
+    <ResponseField name="page" type="number">
+      Current page number
+    </ResponseField>
+    <ResponseField name="limit" type="number">
+      Results per page
+    </ResponseField>
+    <ResponseField name="totalPages" type="number">
+      Total number of pages
+    </ResponseField>
+    <ResponseField name="totalCount" type="number">
+      Total number of voices
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/voices" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```bash cURL (Filter by Type)
+curl -X GET "https://api.talkos.io/api/voices?type=cloned" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```bash cURL (Filter by Language)
+curl -X GET "https://api.talkos.io/api/voices?language=es-ES" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "voices": [
+    {
+      "id": "voice_4e5f6a7b-8c9d-0e1f-2a3b-4c5d6e7f8a9b",
+      "name": "Emma - Support Agent",
+      "description": "Friendly, professional female voice for customer support",
+      "type": "cloned",
+      "language": "en-US",
+      "supportedLanguages": ["en-US"],
+      "gender": "female",
+      "age": "middle",
+      "accent": "american",
+      "previewUrl": "https://cdn.talkos.io/voices/voice_4e5f6a7b.mp3",
+      "status": "ready",
+      "isDefault": false,
+      "createdAt": "2026-02-18T11:00:00.000Z"
+    },
+    {
+      "id": "voice_preset_allison",
+      "name": "Allison",
+      "description": "Warm, conversational American English voice",
+      "type": "preset",
+      "language": "en-US",
+      "supportedLanguages": ["en-US", "en-GB", "en-AU"],
+      "gender": "female",
+      "age": "middle",
+      "accent": "american",
+      "previewUrl": "https://cdn.talkos.io/voices/preset_allison.mp3",
+      "status": "ready",
+      "isDefault": true,
+      "createdAt": null
+    },
+    {
+      "id": "voice_preset_marcus",
+      "name": "Marcus",
+      "description": "Professional, authoritative male voice for business",
+      "type": "preset",
+      "language": "en-US",
+      "supportedLanguages": ["en-US", "en-GB"],
+      "gender": "male",
+      "age": "mature",
+      "accent": "american",
+      "previewUrl": "https://cdn.talkos.io/voices/preset_marcus.mp3",
+      "status": "ready",
+      "isDefault": true,
+      "createdAt": null
+    },
+    {
+      "id": "voice_preset_sofia",
+      "name": "Sofía",
+      "description": "Natural Spanish voice with neutral Latin American accent",
+      "type": "preset",
+      "language": "es-MX",
+      "supportedLanguages": ["es-MX", "es-ES", "es-AR"],
+      "gender": "female",
+      "age": "young",
+      "accent": "latin-american",
+      "previewUrl": "https://cdn.talkos.io/voices/preset_sofia.mp3",
+      "status": "ready",
+      "isDefault": true,
+      "createdAt": null
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "totalPages": 1,
+    "totalCount": 4
+  }
+}
+```
+
+```json 401
+{
+  "success": false,
+  "error": "Invalid API key"
+}
+```
+</ResponseExample>
+
+## Voice Categories
+
+| Type | Description |
+|------|-------------|
+| `preset` | Built-in TalkOS voices, professionally recorded and optimized |
+| `cloned` | Custom voices created by cloning audio samples |
+
+## Usage with Agents
+
+To assign a voice to an AI agent, use the voice `id` when [creating](/api-reference/agents/create) or [updating](/api-reference/agents/update) an agent configuration.

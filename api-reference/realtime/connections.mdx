@@ -1,0 +1,182 @@
+---
+title: "Get Connection Statistics"
+description: "Retrieve WebSocket connection statistics and health metrics"
+api: "GET https://api.talkos.io/api/connections"
+---
+
+# Get Connection Statistics
+
+Retrieve current WebSocket connection statistics, including active connections by type, connection health metrics, and bandwidth usage.
+
+## Endpoint
+
+```
+GET /api/connections
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request was successful
+</ResponseField>
+
+<ResponseField name="timestamp" type="number">
+  Unix timestamp (milliseconds) when the data was generated
+</ResponseField>
+
+<ResponseField name="connections" type="object">
+  Connection statistics object containing:
+
+  <Expandable title="connections properties">
+    <ResponseField name="total" type="number">
+      Total number of active WebSocket connections
+    </ResponseField>
+
+    <ResponseField name="byType" type="object">
+      Breakdown of connections by type:
+      - `agent` (number): Agent dashboard connections
+      - `supervisor` (number): Supervisor dashboard connections
+      - `transcript` (number): Live transcript stream connections
+      - `analytics` (number): Analytics dashboard connections
+    </ResponseField>
+
+    <ResponseField name="byTenant" type="object">
+      Connections grouped by tenant ID (admin only)
+    </ResponseField>
+
+    <ResponseField name="health" type="object">
+      Connection health metrics:
+      - `avgLatency` (number): Average connection latency in ms
+      - `messageRate` (number): Messages per second
+      - `errorRate` (number): Error rate percentage
+      - `reconnectRate` (number): Reconnection rate per minute
+    </ResponseField>
+
+    <ResponseField name="bandwidth" type="object">
+      Bandwidth usage:
+      - `inbound` (number): Inbound bytes per second
+      - `outbound` (number): Outbound bytes per second
+      - `totalToday` (number): Total bytes transferred today
+    </ResponseField>
+
+    <ResponseField name="uptime" type="number">
+      WebSocket server uptime in seconds
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/connections" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript Node.js
+const response = await fetch('https://api.talkos.io/api/connections', {
+  method: 'GET',
+  headers: {
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  }
+});
+
+const data = await response.json();
+console.log(`Total connections: ${data.connections.total}`);
+console.log(`Average latency: ${data.connections.health.avgLatency}ms`);
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/connections',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    }
+)
+
+data = response.json()
+print(f"Total connections: {data['connections']['total']}")
+print(f"Average latency: {data['connections']['health']['avgLatency']}ms")
+```
+</CodeGroup>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "timestamp": 1739875200000,
+  "connections": {
+    "total": 156,
+    "byType": {
+      "agent": 85,
+      "supervisor": 12,
+      "transcript": 52,
+      "analytics": 7
+    },
+    "health": {
+      "avgLatency": 45,
+      "messageRate": 1250,
+      "errorRate": 0.02,
+      "reconnectRate": 2.3
+    },
+    "bandwidth": {
+      "inbound": 125000,
+      "outbound": 890000,
+      "totalToday": 4520000000
+    },
+    "uptime": 864000
+  }
+}
+```
+
+## Error Responses
+
+| Status | Error | Description |
+|--------|-------|-------------|
+| 401 | Unauthorized | Invalid or missing API key |
+| 403 | Forbidden | API key does not have monitoring access |
+| 500 | Internal server error | Server-side error occurred |
+
+## Understanding the Metrics
+
+<AccordionGroup>
+  <Accordion title="Connection Types">
+    - **Agent**: Connections from agent dashboards receiving call assignments and updates
+    - **Supervisor**: Connections from supervisor dashboards monitoring team activity
+    - **Transcript**: Connections streaming live transcripts for active calls
+    - **Analytics**: Connections receiving real-time analytics updates
+  </Accordion>
+  
+  <Accordion title="Health Metrics">
+    - **avgLatency**: Target should be under 100ms for real-time features
+    - **messageRate**: Higher rates indicate more active calls and updates
+    - **errorRate**: Should stay below 1% for healthy operations
+    - **reconnectRate**: High values may indicate network issues
+  </Accordion>
+
+  <Accordion title="Bandwidth">
+    - **inbound**: Data received from connected clients
+    - **outbound**: Data sent to connected clients (typically higher due to broadcasts)
+    - **totalToday**: Cumulative transfer for capacity planning
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  Monitor the `errorRate` and `reconnectRate` metrics to proactively identify network or infrastructure issues before they impact user experience.
+</Tip>

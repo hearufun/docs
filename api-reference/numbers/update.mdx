@@ -1,0 +1,253 @@
+---
+title: "Update Phone Number"
+api: "PUT https://api.talkos.io/api/numbers/{identifier}"
+description: "Update configuration and settings for a phone number"
+---
+
+Update the configuration, webhook URLs, friendly name, and other settings for an existing phone number.
+
+## Authentication
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="identifier" type="string" required>
+  The phone number ID or E.164 formatted number (e.g., `num_abc123xyz` or `+14155551234`)
+</ParamField>
+
+## Request Body
+
+<ParamField body="friendlyName" type="string">
+  Update the friendly name or label for the number
+</ParamField>
+
+<ParamField body="direction" type="string">
+  Update call direction configuration
+  - `outbound` - Outbound calls only
+  - `inbound` - Inbound calls only
+  - `both` - Both inbound and outbound calls
+</ParamField>
+
+<ParamField body="webhookUrl" type="string">
+  Webhook URL for inbound call notifications
+</ParamField>
+
+<ParamField body="fallbackUrl" type="string">
+  Fallback webhook URL if primary webhook fails
+</ParamField>
+
+<ParamField body="voicemailEnabled" type="boolean">
+  Enable or disable voicemail for this number
+</ParamField>
+
+<ParamField body="recordingEnabled" type="boolean">
+  Enable or disable automatic call recording
+</ParamField>
+
+<ParamField body="transcriptionEnabled" type="boolean">
+  Enable or disable automatic transcription for recordings
+</ParamField>
+
+<ParamField body="tags" type="object">
+  Custom key-value tags for organizing numbers. Replaces existing tags.
+</ParamField>
+
+<ParamField body="agentId" type="string">
+  Associate an AI agent with this number for inbound calls
+</ParamField>
+
+<ParamField body="status" type="string">
+  Update number status (limited to `active` or `suspended`)
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="id" type="string">
+      Unique identifier for the number
+    </ResponseField>
+    <ResponseField name="number" type="string">
+      Phone number in E.164 format
+    </ResponseField>
+    <ResponseField name="country" type="string">
+      Country code
+    </ResponseField>
+    <ResponseField name="type" type="string">
+      Number type
+    </ResponseField>
+    <ResponseField name="direction" type="string">
+      Updated call direction configuration
+    </ResponseField>
+    <ResponseField name="friendlyName" type="string">
+      Updated friendly name
+    </ResponseField>
+    <ResponseField name="webhookUrl" type="string">
+      Updated webhook URL
+    </ResponseField>
+    <ResponseField name="fallbackUrl" type="string">
+      Updated fallback URL
+    </ResponseField>
+    <ResponseField name="voicemailEnabled" type="boolean">
+      Voicemail status
+    </ResponseField>
+    <ResponseField name="recordingEnabled" type="boolean">
+      Recording status
+    </ResponseField>
+    <ResponseField name="transcriptionEnabled" type="boolean">
+      Transcription status
+    </ResponseField>
+    <ResponseField name="tags" type="object">
+      Updated tags
+    </ResponseField>
+    <ResponseField name="agentId" type="string">
+      Associated agent ID
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Current status
+    </ResponseField>
+    <ResponseField name="updatedAt" type="string">
+      Update timestamp
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X PUT "https://api.talkos.io/api/numbers/num_abc123xyz" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "friendlyName": "New Sales Line",
+    "webhookUrl": "https://your-server.com/webhooks/new-inbound",
+    "voicemailEnabled": true,
+    "recordingEnabled": true,
+    "tags": {
+      "department": "sales",
+      "team": "enterprise"
+    }
+  }'
+```
+
+```javascript Node.js
+const response = await fetch(
+  'https://api.talkos.io/api/numbers/num_abc123xyz',
+  {
+    method: 'PUT',
+    headers: {
+      'x-api-key': 'your-api-key',
+      'x-tenant-id': 'your-tenant-id',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      friendlyName: 'New Sales Line',
+      webhookUrl: 'https://your-server.com/webhooks/new-inbound',
+      voicemailEnabled: true,
+      recordingEnabled: true,
+      tags: {
+        department: 'sales',
+        team: 'enterprise'
+      }
+    })
+  }
+);
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.put(
+    'https://api.talkos.io/api/numbers/num_abc123xyz',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'friendlyName': 'New Sales Line',
+        'webhookUrl': 'https://your-server.com/webhooks/new-inbound',
+        'voicemailEnabled': True,
+        'recordingEnabled': True,
+        'tags': {
+            'department': 'sales',
+            'team': 'enterprise'
+        }
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "data": {
+    "id": "num_abc123xyz",
+    "number": "+14155551234",
+    "country": "US",
+    "type": "local",
+    "direction": "both",
+    "friendlyName": "New Sales Line",
+    "dialerProvider": "plivo",
+    "status": "active",
+    "webhookUrl": "https://your-server.com/webhooks/new-inbound",
+    "fallbackUrl": "https://your-server.com/webhooks/fallback",
+    "voicemailEnabled": true,
+    "recordingEnabled": true,
+    "transcriptionEnabled": false,
+    "tags": {
+      "department": "sales",
+      "team": "enterprise"
+    },
+    "agentId": null,
+    "updatedAt": "2026-02-18T10:45:00Z"
+  }
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid webhook URL format"
+  }
+}
+```
+
+```json 404
+{
+  "success": false,
+  "error": {
+    "code": "NUMBER_NOT_FOUND",
+    "message": "Phone number not found"
+  }
+}
+```
+
+```json 409
+{
+  "success": false,
+  "error": {
+    "code": "UPDATE_CONFLICT",
+    "message": "Cannot update a suspended number. Reactivate first."
+  }
+}
+```
+</ResponseExample>

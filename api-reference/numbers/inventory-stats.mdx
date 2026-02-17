@@ -1,0 +1,364 @@
+---
+title: "Get Inventory Statistics"
+api: "GET https://api.talkos.io/api/numbers/inventory/stats"
+description: "Retrieve statistics and analytics for your phone number inventory"
+---
+
+Get comprehensive statistics about your phone number inventory including counts by status, type, country, and provider. Useful for monitoring inventory health and planning capacity.
+
+## Authentication
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="includeUsage" type="boolean" default="false">
+  Include detailed usage statistics for each category
+</ParamField>
+
+<ParamField query="includeHistory" type="boolean" default="false">
+  Include historical trend data (last 30 days)
+</ParamField>
+
+<ParamField query="groupBy" type="string">
+  Additional grouping for statistics
+  - `country` - Group by country
+  - `type` - Group by number type
+  - `provider` - Group by dialer provider
+  - `tags` - Group by tags
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="summary" type="object">
+      <Expandable title="summary">
+        <ResponseField name="total" type="integer">
+          Total numbers in inventory
+        </ResponseField>
+        <ResponseField name="available" type="integer">
+          Numbers available for assignment
+        </ResponseField>
+        <ResponseField name="assigned" type="integer">
+          Numbers currently assigned
+        </ResponseField>
+        <ResponseField name="reserved" type="integer">
+          Numbers in reserved status
+        </ResponseField>
+        <ResponseField name="quarantine" type="integer">
+          Numbers in quarantine
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="byStatus" type="object">
+      Count breakdown by status
+    </ResponseField>
+    <ResponseField name="byCountry" type="object">
+      Count breakdown by country
+    </ResponseField>
+    <ResponseField name="byType" type="object">
+      Count breakdown by number type
+    </ResponseField>
+    <ResponseField name="byProvider" type="object">
+      Count breakdown by dialer provider
+    </ResponseField>
+    <ResponseField name="usage" type="object">
+      Usage statistics (when includeUsage=true)
+      <Expandable title="usage">
+        <ResponseField name="totalCalls" type="integer">
+          Total calls across all inventory numbers
+        </ResponseField>
+        <ResponseField name="totalMinutes" type="number">
+          Total minutes used
+        </ResponseField>
+        <ResponseField name="averageCallsPerNumber" type="number">
+          Average calls per number
+        </ResponseField>
+        <ResponseField name="utilizationRate" type="number">
+          Percentage of numbers with activity
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="billing" type="object">
+      Billing summary
+      <Expandable title="billing">
+        <ResponseField name="monthlyTotal" type="number">
+          Total monthly cost for all inventory numbers
+        </ResponseField>
+        <ResponseField name="currency" type="string">
+          Billing currency
+        </ResponseField>
+        <ResponseField name="averageCostPerNumber" type="number">
+          Average cost per number
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="capacity" type="object">
+      Capacity information
+      <Expandable title="capacity">
+        <ResponseField name="limit" type="integer">
+          Maximum allowed numbers in inventory
+        </ResponseField>
+        <ResponseField name="used" type="integer">
+          Currently used
+        </ResponseField>
+        <ResponseField name="remaining" type="integer">
+          Remaining capacity
+        </ResponseField>
+        <ResponseField name="usagePercent" type="number">
+          Capacity usage percentage
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="history" type="array">
+      Historical trend data (when includeHistory=true)
+      <Expandable title="history entry">
+        <ResponseField name="date" type="string">
+          Date
+        </ResponseField>
+        <ResponseField name="total" type="integer">
+          Total numbers on that date
+        </ResponseField>
+        <ResponseField name="available" type="integer">
+          Available numbers
+        </ResponseField>
+        <ResponseField name="assigned" type="integer">
+          Assigned numbers
+        </ResponseField>
+        <ResponseField name="added" type="integer">
+          Numbers added that day
+        </ResponseField>
+        <ResponseField name="removed" type="integer">
+          Numbers removed that day
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="alerts" type="array">
+      Inventory health alerts
+      <Expandable title="alert">
+        <ResponseField name="type" type="string">
+          Alert type (low_inventory, high_quarantine, etc.)
+        </ResponseField>
+        <ResponseField name="severity" type="string">
+          Severity level (info, warning, critical)
+        </ResponseField>
+        <ResponseField name="message" type="string">
+          Alert message
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="generatedAt" type="string">
+      Timestamp when stats were generated
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/numbers/inventory/stats?includeUsage=true" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```bash cURL (with history)
+curl -X GET "https://api.talkos.io/api/numbers/inventory/stats?includeUsage=true&includeHistory=true" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript Node.js
+const response = await fetch(
+  'https://api.talkos.io/api/numbers/inventory/stats?includeUsage=true',
+  {
+    method: 'GET',
+    headers: {
+      'x-api-key': 'your-api-key',
+      'x-tenant-id': 'your-tenant-id'
+    }
+  }
+);
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/numbers/inventory/stats',
+    params={
+        'includeUsage': True
+    },
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "total": 150,
+      "available": 45,
+      "assigned": 92,
+      "reserved": 10,
+      "quarantine": 3
+    },
+    "byStatus": {
+      "available": 45,
+      "assigned": 92,
+      "reserved": 10,
+      "quarantine": 3
+    },
+    "byCountry": {
+      "US": 120,
+      "CA": 20,
+      "GB": 10
+    },
+    "byType": {
+      "local": 110,
+      "toll-free": 30,
+      "mobile": 10
+    },
+    "byProvider": {
+      "plivo": 140,
+      "exotel": 10
+    },
+    "usage": {
+      "totalCalls": 45892,
+      "totalMinutes": 125430.5,
+      "averageCallsPerNumber": 306,
+      "utilizationRate": 87.5
+    },
+    "billing": {
+      "monthlyTotal": 185.00,
+      "currency": "USD",
+      "averageCostPerNumber": 1.23
+    },
+    "capacity": {
+      "limit": 500,
+      "used": 150,
+      "remaining": 350,
+      "usagePercent": 30
+    },
+    "alerts": [
+      {
+        "type": "low_available",
+        "severity": "warning",
+        "message": "Available number pool is below 35%. Consider adding more numbers to inventory."
+      }
+    ],
+    "generatedAt": "2026-02-18T11:15:00Z"
+  }
+}
+```
+
+```json 200 (with history)
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "total": 150,
+      "available": 45,
+      "assigned": 92,
+      "reserved": 10,
+      "quarantine": 3
+    },
+    "byStatus": {
+      "available": 45,
+      "assigned": 92,
+      "reserved": 10,
+      "quarantine": 3
+    },
+    "byCountry": {
+      "US": 120,
+      "CA": 20,
+      "GB": 10
+    },
+    "byType": {
+      "local": 110,
+      "toll-free": 30,
+      "mobile": 10
+    },
+    "byProvider": {
+      "plivo": 140,
+      "exotel": 10
+    },
+    "history": [
+      {
+        "date": "2026-02-16",
+        "total": 145,
+        "available": 50,
+        "assigned": 85,
+        "added": 0,
+        "removed": 0
+      },
+      {
+        "date": "2026-02-17",
+        "total": 148,
+        "available": 48,
+        "assigned": 90,
+        "added": 3,
+        "removed": 0
+      },
+      {
+        "date": "2026-02-18",
+        "total": 150,
+        "available": 45,
+        "assigned": 92,
+        "added": 2,
+        "removed": 0
+      }
+    ],
+    "billing": {
+      "monthlyTotal": 185.00,
+      "currency": "USD",
+      "averageCostPerNumber": 1.23
+    },
+    "capacity": {
+      "limit": 500,
+      "used": 150,
+      "remaining": 350,
+      "usagePercent": 30
+    },
+    "alerts": [],
+    "generatedAt": "2026-02-18T11:15:00Z"
+  }
+}
+```
+
+```json 401
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Invalid or missing API key"
+  }
+}
+```
+</ResponseExample>
+
+## Use Cases
+
+- **Capacity Planning**: Monitor `capacity.remaining` to know when to purchase more numbers
+- **Cost Optimization**: Use `billing` data to identify underutilized numbers
+- **Health Monitoring**: Check `alerts` for issues requiring attention
+- **Trend Analysis**: Use `history` data to understand inventory changes over time

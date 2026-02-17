@@ -1,0 +1,348 @@
+---
+title: "Get Agent Performance"
+api: "GET https://api.talkos.io/api/analytics/performance"
+description: "Retrieve agent performance metrics including calls handled, average duration, and transfer rates"
+---
+
+## Overview
+
+Get comprehensive performance analytics for your AI agents. This endpoint provides key metrics to evaluate agent efficiency, effectiveness, and areas for improvement.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="startDate" type="string" required>
+  Start date for the query range in ISO 8601 format
+</ParamField>
+
+<ParamField query="endDate" type="string" required>
+  End date for the query range in ISO 8601 format
+</ParamField>
+
+<ParamField query="agentId" type="string">
+  Filter by specific agent ID (optional, returns all agents if not specified)
+</ParamField>
+
+<ParamField query="direction" type="string">
+  Filter by call direction. Options: `inbound`, `outbound`
+</ParamField>
+
+<ParamField query="groupBy" type="string" default="day">
+  Group results by time period. Options: `hour`, `day`, `week`, `month`
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="summary" type="object">
+      Aggregate performance metrics
+      <Expandable title="properties">
+        <ResponseField name="totalCallsHandled" type="integer">
+          Total number of calls handled by agents
+        </ResponseField>
+        <ResponseField name="avgCallDuration" type="number">
+          Average call duration in seconds
+        </ResponseField>
+        <ResponseField name="avgHandleTime" type="number">
+          Average handle time including wrap-up in seconds
+        </ResponseField>
+        <ResponseField name="transferRate" type="number">
+          Percentage of calls transferred to human agents
+        </ResponseField>
+        <ResponseField name="firstCallResolution" type="number">
+          Percentage of calls resolved without follow-up
+        </ResponseField>
+        <ResponseField name="avgResponseTime" type="number">
+          Average time to first response in seconds
+        </ResponseField>
+        <ResponseField name="abandonmentRate" type="number">
+          Percentage of calls abandoned by callers
+        </ResponseField>
+        <ResponseField name="avgSentimentScore" type="number">
+          Average customer sentiment score
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="byAgent" type="array">
+      Performance breakdown by agent
+      <Expandable title="agent metrics">
+        <ResponseField name="agentId" type="string">
+          Agent identifier
+        </ResponseField>
+        <ResponseField name="agentName" type="string">
+          Agent display name
+        </ResponseField>
+        <ResponseField name="callsHandled" type="integer">
+          Number of calls handled
+        </ResponseField>
+        <ResponseField name="avgDuration" type="number">
+          Average call duration in seconds
+        </ResponseField>
+        <ResponseField name="transferRate" type="number">
+          Transfer rate percentage
+        </ResponseField>
+        <ResponseField name="firstCallResolution" type="number">
+          FCR percentage
+        </ResponseField>
+        <ResponseField name="avgSentiment" type="number">
+          Average sentiment score
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="trends" type="array">
+      Performance trends over time
+      <Expandable title="trend object">
+        <ResponseField name="period" type="string">
+          Time period
+        </ResponseField>
+        <ResponseField name="callsHandled" type="integer">
+          Calls handled in this period
+        </ResponseField>
+        <ResponseField name="avgDuration" type="number">
+          Average duration for this period
+        </ResponseField>
+        <ResponseField name="transferRate" type="number">
+          Transfer rate for this period
+        </ResponseField>
+        <ResponseField name="avgSentiment" type="number">
+          Average sentiment for this period
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="transferReasons" type="array">
+      Top reasons for transfers to human agents
+      <Expandable title="reason object">
+        <ResponseField name="reason" type="string">
+          Transfer reason category
+        </ResponseField>
+        <ResponseField name="count" type="integer">
+          Number of transfers for this reason
+        </ResponseField>
+        <ResponseField name="percent" type="number">
+          Percentage of total transfers
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/analytics/performance?startDate=2026-02-01T00:00:00Z&endDate=2026-02-18T23:59:59Z&groupBy=day" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({
+  startDate: '2026-02-01T00:00:00Z',
+  endDate: '2026-02-18T23:59:59Z',
+  groupBy: 'day'
+});
+
+const response = await fetch(`https://api.talkos.io/api/analytics/performance?${params}`, {
+  method: 'GET',
+  headers: {
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/analytics/performance',
+    params={
+        'startDate': '2026-02-01T00:00:00Z',
+        'endDate': '2026-02-18T23:59:59Z',
+        'groupBy': 'day'
+    },
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "totalCallsHandled": 12847,
+      "avgCallDuration": 192.4,
+      "avgHandleTime": 215.8,
+      "transferRate": 8.2,
+      "firstCallResolution": 87.3,
+      "avgResponseTime": 0.8,
+      "abandonmentRate": 3.1,
+      "avgSentimentScore": 0.42
+    },
+    "byAgent": [
+      {
+        "agentId": "agent_support_general",
+        "agentName": "General Support Agent",
+        "callsHandled": 5842,
+        "avgDuration": 178.2,
+        "transferRate": 6.8,
+        "firstCallResolution": 89.1,
+        "avgSentiment": 0.48
+      },
+      {
+        "agentId": "agent_billing",
+        "agentName": "Billing Agent",
+        "callsHandled": 4215,
+        "avgDuration": 205.6,
+        "transferRate": 9.4,
+        "firstCallResolution": 85.2,
+        "avgSentiment": 0.38
+      },
+      {
+        "agentId": "agent_technical",
+        "agentName": "Technical Support Agent",
+        "callsHandled": 2790,
+        "avgDuration": 248.3,
+        "transferRate": 12.1,
+        "firstCallResolution": 82.4,
+        "avgSentiment": 0.35
+      }
+    ],
+    "trends": [
+      {
+        "period": "2026-02-17",
+        "callsHandled": 724,
+        "avgDuration": 188.5,
+        "transferRate": 7.9,
+        "avgSentiment": 0.44
+      },
+      {
+        "period": "2026-02-18",
+        "callsHandled": 698,
+        "avgDuration": 195.2,
+        "transferRate": 8.5,
+        "avgSentiment": 0.41
+      }
+    ],
+    "transferReasons": [
+      {
+        "reason": "complex_technical_issue",
+        "count": 412,
+        "percent": 39.1
+      },
+      {
+        "reason": "customer_requested",
+        "count": 245,
+        "percent": 23.2
+      },
+      {
+        "reason": "authorization_required",
+        "count": 178,
+        "percent": 16.9
+      },
+      {
+        "reason": "policy_exception",
+        "count": 124,
+        "percent": 11.8
+      },
+      {
+        "reason": "language_barrier",
+        "count": 95,
+        "percent": 9.0
+      }
+    ]
+  }
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_PARAMETERS",
+    "message": "startDate must be before endDate"
+  }
+}
+```
+
+```json 401
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Invalid or missing API key"
+  }
+}
+```
+</ResponseExample>
+
+## Key Metrics Explained
+
+<CardGroup cols={2}>
+  <Card title="First Call Resolution (FCR)" icon="check-circle">
+    Percentage of calls resolved without requiring a follow-up call. Higher FCR indicates effective issue resolution.
+  </Card>
+  <Card title="Transfer Rate" icon="arrow-right-arrow-left">
+    Percentage of calls escalated to human agents. Lower rates indicate better AI agent capability.
+  </Card>
+  <Card title="Average Handle Time" icon="clock">
+    Total time from call start to completion including any wrap-up. Key efficiency metric.
+  </Card>
+  <Card title="Abandonment Rate" icon="phone-slash">
+    Percentage of callers who hung up before connecting. High rates may indicate capacity issues.
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Reduce Transfer Rate">
+    Monitor `transferReasons` to identify gaps in AI agent training. High "complex_technical_issue" transfers may indicate need for expanded knowledge base.
+  </Accordion>
+  <Accordion title="Optimize Handle Time">
+    Compare `avgCallDuration` across agents to identify efficiency patterns. Share best practices from high-performing agents.
+  </Accordion>
+  <Accordion title="Track Trends">
+    Use time-series data to correlate performance changes with system updates, training changes, or external factors.
+  </Accordion>
+</AccordionGroup>
+
+## Benchmarks
+
+| Metric | Good | Excellent |
+|--------|------|-----------|
+| Transfer Rate | < 15% | < 8% |
+| First Call Resolution | > 80% | > 90% |
+| Avg Response Time | < 2s | < 1s |
+| Abandonment Rate | < 5% | < 2% |
+| Avg Sentiment Score | > 0.3 | > 0.5 |
+
+<Note>
+  Benchmarks are based on industry averages for AI-powered call centers. Your targets may vary based on use case complexity.
+</Note>
+
+## Rate Limits
+
+- **Standard tier**: 30 requests per minute
+- **Enterprise tier**: 120 requests per minute

@@ -1,0 +1,158 @@
+---
+title: "Get Recent Escalations"
+description: "Retrieve recent escalations across all calls"
+api: "GET https://api.talkos.io/api/features/escalation/recent/all"
+---
+
+# Get Recent Escalations
+
+Retrieve recent escalation events across all calls for your tenant. Useful for monitoring escalation activity and supervisor dashboards.
+
+## Endpoint
+
+```
+GET /api/features/escalation/recent/all
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="limit" type="number">
+  Maximum number of escalations to return (default: 50, max: 200)
+</ParamField>
+
+## Response
+
+<ResponseField name="escalations" type="array">
+  Array of recent escalation events
+</ResponseField>
+
+<ResponseField name="escalations[].callUuid" type="string">
+  Call UUID associated with the escalation
+</ResponseField>
+
+<ResponseField name="escalations[].ruleId" type="string">
+  ID of the rule that was triggered
+</ResponseField>
+
+<ResponseField name="escalations[].ruleName" type="string">
+  Name of the triggered rule
+</ResponseField>
+
+<ResponseField name="escalations[].priority" type="string">
+  Priority level: `low`, `medium`, `high`, or `critical`
+</ResponseField>
+
+<ResponseField name="escalations[].action" type="object">
+  Action that was triggered
+</ResponseField>
+
+<ResponseField name="escalations[].triggeredAt" type="string">
+  ISO 8601 timestamp when the escalation was triggered
+</ResponseField>
+
+<ResponseField name="escalations[].resolved" type="boolean">
+  Whether the escalation has been resolved
+</ResponseField>
+
+<ResponseField name="escalations[].agentId" type="string">
+  ID of the agent handling the call
+</ResponseField>
+
+<ResponseField name="escalations[].customerNumber" type="string">
+  Customer phone number (masked)
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/features/escalation/recent/all?limit=25" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/escalation/recent/all?limit=25', {
+  method: 'GET',
+  headers: {
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/features/escalation/recent/all',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    params={
+        'limit': 25
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "escalations": [
+    {
+      "callUuid": "call-xyz789-ghi012",
+      "ruleId": "rule_anger_detected",
+      "ruleName": "Anger Detection",
+      "priority": "critical",
+      "action": { "type": "transfer", "target": "supervisor" },
+      "triggeredAt": "2026-02-18T10:45:00.000Z",
+      "resolved": false,
+      "agentId": "agent-001",
+      "customerNumber": "+1***-***-5678"
+    },
+    {
+      "callUuid": "call-abc123-def456",
+      "ruleId": "rule_long_call",
+      "ruleName": "Long Call Duration",
+      "priority": "medium",
+      "action": { "type": "notify", "target": "supervisor" },
+      "triggeredAt": "2026-02-18T10:40:00.000Z",
+      "resolved": true,
+      "agentId": "agent-003",
+      "customerNumber": "+1***-***-1234"
+    },
+    {
+      "callUuid": "call-def456-ghi789",
+      "ruleId": "rule_pii_violation",
+      "ruleName": "PII Violation",
+      "priority": "critical",
+      "action": { "type": "flag", "target": "compliance" },
+      "triggeredAt": "2026-02-18T10:35:00.000Z",
+      "resolved": false,
+      "agentId": "agent-002",
+      "customerNumber": "+1***-***-9012"
+    }
+  ]
+}
+```
+
+```json 500
+{
+  "error": "Failed to retrieve recent escalations"
+}
+```
+</ResponseExample>

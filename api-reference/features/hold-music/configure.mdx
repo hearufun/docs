@@ -1,0 +1,133 @@
+---
+title: 'Configure Hold Music'
+api: 'POST https://api.talkos.io/api/features/hold-music/configure'
+description: 'Configure hold music settings for your tenant'
+---
+
+Configure global hold music settings including default track, volume levels, and announcement intervals.
+
+## Request Body
+
+<ParamField body="defaultTrackId" type="string">
+  The ID of the default hold music track to use.
+</ParamField>
+
+<ParamField body="volume" type="number" default={80}>
+  Volume level from 0 to 100.
+</ParamField>
+
+<ParamField body="announcementInterval" type="number" default={60}>
+  Interval in seconds between queue position announcements. Set to 0 to disable.
+</ParamField>
+
+<ParamField body="announcementMessage" type="string">
+  Custom message template for queue announcements. Use `{position}` and `{waitTime}` placeholders.
+</ParamField>
+
+<ParamField body="fadeInDuration" type="number" default={2}>
+  Duration in seconds for the music fade-in effect.
+</ParamField>
+
+<ParamField body="fadeOutDuration" type="number" default={1}>
+  Duration in seconds for the music fade-out effect when the hold ends.
+</ParamField>
+
+<ParamField body="enabled" type="boolean" default={true}>
+  Whether hold music is enabled for the tenant.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the configuration was saved successfully.
+</ResponseField>
+
+<ResponseField name="config" type="object">
+  The complete hold music configuration object.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/features/hold-music/configure \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "defaultTrackId": "track_classical_001",
+    "volume": 75,
+    "announcementInterval": 30,
+    "announcementMessage": "You are number {position} in the queue. Estimated wait time is {waitTime}.",
+    "fadeInDuration": 2,
+    "fadeOutDuration": 1,
+    "enabled": true
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/hold-music/configure', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    defaultTrackId: 'track_classical_001',
+    volume: 75,
+    announcementInterval: 30,
+    announcementMessage: 'You are number {position} in the queue. Estimated wait time is {waitTime}.',
+    fadeInDuration: 2,
+    fadeOutDuration: 1,
+    enabled: true
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/features/hold-music/configure',
+    headers={
+        'Authorization': 'Bearer YOUR_API_KEY',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'defaultTrackId': 'track_classical_001',
+        'volume': 75,
+        'announcementInterval': 30,
+        'announcementMessage': 'You are number {position} in the queue. Estimated wait time is {waitTime}.',
+        'fadeInDuration': 2,
+        'fadeOutDuration': 1,
+        'enabled': True
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "config": {
+    "defaultTrackId": "track_classical_001",
+    "volume": 75,
+    "announcementInterval": 30,
+    "announcementMessage": "You are number {position} in the queue. Estimated wait time is {waitTime}.",
+    "fadeInDuration": 2,
+    "fadeOutDuration": 1,
+    "enabled": true,
+    "updatedAt": "2026-02-18T10:30:00.000Z"
+  }
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": "Invalid track ID specified"
+}
+```
+</ResponseExample>

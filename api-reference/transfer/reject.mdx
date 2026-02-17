@@ -1,0 +1,273 @@
+---
+title: 'Reject Transfer'
+api: 'POST https://api.talkos.io/api/transfer/{callUuid}/reject'
+description: 'Reject an incoming call transfer request'
+---
+
+## Overview
+
+Rejects a pending call transfer request. When an agent rejects a transfer, the system can either route the call to another available agent or return the caller to the AI assistant, depending on your configuration.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="callUuid" type="string" required>
+  The unique identifier of the call being transferred
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="agentId" type="string" required>
+  The ID of the agent rejecting the transfer
+</ParamField>
+
+<ParamField body="reason" type="string" required>
+  The reason for rejecting the transfer
+  - `unavailable` - Agent is temporarily unavailable
+  - `skill_mismatch` - Issue requires different expertise
+  - `capacity` - Agent is at maximum capacity
+  - `customer_request` - Customer requested different agent
+  - `technical_issue` - Technical problems preventing acceptance
+  - `other` - Other reason (specify in notes)
+</ParamField>
+
+<ParamField body="notes" type="string">
+  Additional details about the rejection reason
+</ParamField>
+
+<ParamField body="suggestReroute" type="boolean" default="true">
+  Whether to suggest routing to another available agent
+</ParamField>
+
+<ParamField body="suggestedAgentId" type="string">
+  Optionally suggest a specific agent to handle the transfer
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the rejection was processed successfully
+</ResponseField>
+
+<ResponseField name="transferId" type="string">
+  Unique identifier for this transfer
+</ResponseField>
+
+<ResponseField name="callUuid" type="string">
+  The call UUID that was being transferred
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Updated transfer status: `rejected`
+</ResponseField>
+
+<ResponseField name="rejectedBy" type="object">
+  Information about the rejecting agent
+  <Expandable title="properties">
+    <ResponseField name="agentId" type="string">
+      The agent's unique identifier
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      The agent's display name
+    </ResponseField>
+    <ResponseField name="rejectedAt" type="string">
+      ISO 8601 timestamp when rejected
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="reason" type="string">
+  The rejection reason code
+</ResponseField>
+
+<ResponseField name="nextAction" type="object">
+  What happens next with the call
+  <Expandable title="properties">
+    <ResponseField name="action" type="string">
+      Action taken: `rerouting`, `returning_to_ai`, `queued`
+    </ResponseField>
+    <ResponseField name="targetAgentId" type="string">
+      New target agent ID if rerouting
+    </ResponseField>
+    <ResponseField name="queuePosition" type="integer">
+      Queue position if queued
+    </ResponseField>
+    <ResponseField name="estimatedWait" type="integer">
+      Estimated wait time in seconds
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="rejectedAt" type="string">
+  ISO 8601 timestamp when the rejection was processed
+</ResponseField>
+
+<RequestExample>
+```bash cURL - Skill Mismatch
+curl -X POST https://api.talkos.io/api/transfer/call_abc123def456/reject \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "agentId": "agent_789xyz",
+    "reason": "skill_mismatch",
+    "notes": "Customer needs Spanish-speaking agent",
+    "suggestReroute": true,
+    "suggestedAgentId": "agent_spanish_001"
+  }'
+```
+
+```bash cURL - Capacity Issue
+curl -X POST https://api.talkos.io/api/transfer/call_abc123def456/reject \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "agentId": "agent_789xyz",
+    "reason": "capacity",
+    "notes": "Currently handling high-priority escalation",
+    "suggestReroute": true
+  }'
+```
+
+```bash cURL - Unavailable
+curl -X POST https://api.talkos.io/api/transfer/call_abc123def456/reject \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "agentId": "agent_789xyz",
+    "reason": "unavailable",
+    "suggestReroute": false
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 - Success with Rerouting
+{
+  "success": true,
+  "transferId": "xfer_a1b2c3d4e5f6",
+  "callUuid": "call_abc123def456",
+  "status": "rejected",
+  "rejectedBy": {
+    "agentId": "agent_789xyz",
+    "name": "Sarah Johnson",
+    "rejectedAt": "2026-02-18T14:30:20.000Z"
+  },
+  "reason": "skill_mismatch",
+  "nextAction": {
+    "action": "rerouting",
+    "targetAgentId": "agent_spanish_001",
+    "estimatedWait": 15
+  },
+  "rejectedAt": "2026-02-18T14:30:20.000Z"
+}
+```
+
+```json 200 - Success Returning to AI
+{
+  "success": true,
+  "transferId": "xfer_a1b2c3d4e5f6",
+  "callUuid": "call_abc123def456",
+  "status": "rejected",
+  "rejectedBy": {
+    "agentId": "agent_789xyz",
+    "name": "Sarah Johnson",
+    "rejectedAt": "2026-02-18T14:30:20.000Z"
+  },
+  "reason": "unavailable",
+  "nextAction": {
+    "action": "returning_to_ai"
+  },
+  "rejectedAt": "2026-02-18T14:30:20.000Z"
+}
+```
+
+```json 200 - Success with Queue
+{
+  "success": true,
+  "transferId": "xfer_a1b2c3d4e5f6",
+  "callUuid": "call_abc123def456",
+  "status": "rejected",
+  "rejectedBy": {
+    "agentId": "agent_789xyz",
+    "name": "Sarah Johnson",
+    "rejectedAt": "2026-02-18T14:30:20.000Z"
+  },
+  "reason": "capacity",
+  "nextAction": {
+    "action": "queued",
+    "queuePosition": 3,
+    "estimatedWait": 180
+  },
+  "rejectedAt": "2026-02-18T14:30:20.000Z"
+}
+```
+
+```json 400 - Bad Request
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_REASON",
+    "message": "Rejection reason must be one of: unavailable, skill_mismatch, capacity, customer_request, technical_issue, other"
+  }
+}
+```
+
+```json 404 - Not Found
+{
+  "success": false,
+  "error": {
+    "code": "TRANSFER_NOT_FOUND",
+    "message": "No pending transfer found for this call"
+  }
+}
+```
+
+```json 409 - Already Processed
+{
+  "success": false,
+  "error": {
+    "code": "TRANSFER_ALREADY_PROCESSED",
+    "message": "This transfer has already been accepted or rejected"
+  }
+}
+```
+</ResponseExample>
+
+## Rejection Reasons
+
+| Reason | Description | Recommended Action |
+|--------|-------------|-------------------|
+| `unavailable` | Agent temporarily can't take calls | Reroute to another agent |
+| `skill_mismatch` | Different expertise needed | Route to specialist |
+| `capacity` | Agent at maximum load | Queue or reroute |
+| `customer_request` | Customer wants different agent | Honor customer preference |
+| `technical_issue` | Connection or system problems | Retry or return to AI |
+| `other` | Miscellaneous reasons | Review notes for action |
+
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| `TRANSFER_NOT_FOUND` | No pending transfer exists for this call UUID |
+| `TRANSFER_ALREADY_PROCESSED` | Transfer was already accepted or rejected |
+| `INVALID_REASON` | Rejection reason not recognized |
+| `AGENT_MISMATCH` | Agent ID doesn't match the transfer target |
+| `AGENT_NOT_FOUND` | Agent ID does not exist |
+| `SUGGESTED_AGENT_NOT_FOUND` | Suggested agent ID does not exist |
+| `SUGGESTED_AGENT_UNAVAILABLE` | Suggested agent not available |

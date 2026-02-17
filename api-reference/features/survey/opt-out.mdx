@@ -1,0 +1,194 @@
+---
+title: "Opt Out"
+description: "Opt a phone number out of receiving surveys"
+api: "POST https://api.talkos.io/api/features/survey/opt-out"
+---
+
+# Opt Out
+
+Opt a phone number out of receiving post-call surveys. Once opted out, the customer will not receive surveys regardless of other eligibility criteria.
+
+## Endpoint
+
+```
+POST /api/features/survey/opt-out
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Request Body
+
+<ParamField body="phoneNumber" type="string" required>
+  Phone number to opt out in E.164 format (e.g., `+14155551234`)
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the opt-out was processed successfully
+</ResponseField>
+
+<ResponseField name="phoneNumber" type="string">
+  The phone number that was opted out
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The new status: `opted_out`
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST https://api.talkos.io/api/features/survey/opt-out \
+  -H "x-api-key: tk_live_xxxxxxxxxxxxxxxxxxxx" \
+  -H "x-tenant-id: tenant_abc123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phoneNumber": "+14155551234"
+  }'
+```
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "phoneNumber": "+14155551234",
+  "status": "opted_out"
+}
+```
+
+## Use Cases
+
+### IVR Opt-Out
+
+Allow customers to opt out during the IVR survey:
+
+```javascript
+// When customer presses a specific key to opt out
+app.post('/ivr/opt-out-callback', async (req, res) => {
+  const { phoneNumber, digits } = req.body;
+  
+  if (digits === '9') { // Press 9 to opt out
+    await fetch('https://api.talkos.io/api/features/survey/opt-out', {
+      method: 'POST',
+      headers: {
+        'x-api-key': API_KEY,
+        'x-tenant-id': TENANT_ID,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ phoneNumber })
+    });
+    
+    return res.json({
+      action: 'speak',
+      text: 'You have been opted out of future surveys. Thank you.'
+    });
+  }
+});
+```
+
+### Web Form Opt-Out
+
+Provide an opt-out option on survey web forms:
+
+```html
+<form id="opt-out-form">
+  <p>Don't want to receive surveys?</p>
+  <button type="submit">Opt Out of Future Surveys</button>
+</form>
+
+<script>
+document.getElementById('opt-out-form').onsubmit = async (e) => {
+  e.preventDefault();
+  
+  await fetch('/api/features/survey/opt-out', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'x-tenant-id': tenantId,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ phoneNumber: customerPhone })
+  });
+  
+  alert('You have been opted out of future surveys.');
+};
+</script>
+```
+
+### SMS Opt-Out
+
+Handle STOP messages for SMS surveys:
+
+```javascript
+// SMS webhook handler
+app.post('/sms/incoming', async (req, res) => {
+  const { from, body } = req.body;
+  
+  if (body.toUpperCase().includes('STOP')) {
+    await fetch('https://api.talkos.io/api/features/survey/opt-out', {
+      method: 'POST',
+      headers: {
+        'x-api-key': API_KEY,
+        'x-tenant-id': TENANT_ID,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ phoneNumber: from })
+    });
+    
+    // Send confirmation
+    await sendSMS(from, 'You have been opted out of surveys. Reply START to opt back in.');
+  }
+});
+```
+
+### Bulk Opt-Out Import
+
+Import existing opt-out list:
+
+```javascript
+async function importOptOutList(phoneNumbers) {
+  for (const phoneNumber of phoneNumbers) {
+    await fetch('https://api.talkos.io/api/features/survey/opt-out', {
+      method: 'POST',
+      headers: {
+        'x-api-key': API_KEY,
+        'x-tenant-id': TENANT_ID,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ phoneNumber })
+    });
+    
+    // Rate limit to avoid overwhelming the API
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+}
+```
+
+## Compliance Considerations
+
+- Maintain opt-out records for compliance auditing
+- Honor opt-outs immediately; no surveys should be sent after opt-out
+- Provide easy opt-out mechanisms in all survey delivery methods
+- Consider adding opt-out instructions to IVR intro and SMS messages
+
+## Notes
+
+- Opt-out is immediate and applies to all future surveys
+- Opting out the same number multiple times is idempotent
+- Opt-out is per-tenant; each tenant maintains their own list
+- Phone numbers should be in E.164 format for consistency
+- Use the [Opt In](./opt-in) endpoint to reverse an opt-out

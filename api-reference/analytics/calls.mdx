@@ -1,0 +1,267 @@
+---
+title: "Get Call Analytics"
+api: "GET https://api.talkos.io/api/analytics/calls"
+description: "Query historical call data with filtering, sorting, and pagination support"
+---
+
+## Overview
+
+Retrieve historical call analytics with powerful filtering and pagination. Use this endpoint to analyze call patterns, export call data, and generate reports.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="startDate" type="string" required>
+  Start date for the query range in ISO 8601 format (e.g., `2026-02-01T00:00:00Z`)
+</ParamField>
+
+<ParamField query="endDate" type="string" required>
+  End date for the query range in ISO 8601 format (e.g., `2026-02-18T23:59:59Z`)
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by call status. Options: `completed`, `failed`, `abandoned`, `transferred`, `in-progress`
+</ParamField>
+
+<ParamField query="direction" type="string">
+  Filter by call direction. Options: `inbound`, `outbound`
+</ParamField>
+
+<ParamField query="phoneNumber" type="string">
+  Filter by phone number (caller or callee)
+</ParamField>
+
+<ParamField query="minDuration" type="integer">
+  Minimum call duration in seconds
+</ParamField>
+
+<ParamField query="maxDuration" type="integer">
+  Maximum call duration in seconds
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  Number of records to return per page (max: 500)
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of records to skip for pagination
+</ParamField>
+
+<ParamField query="sortBy" type="string" default="startTime">
+  Field to sort by. Options: `startTime`, `duration`, `status`
+</ParamField>
+
+<ParamField query="sortOrder" type="string" default="desc">
+  Sort order. Options: `asc`, `desc`
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="calls" type="array">
+      Array of call records
+      <Expandable title="call object">
+        <ResponseField name="callUuid" type="string">
+          Unique identifier for the call
+        </ResponseField>
+        <ResponseField name="direction" type="string">
+          Call direction: `inbound` or `outbound`
+        </ResponseField>
+        <ResponseField name="status" type="string">
+          Call status: `completed`, `failed`, `abandoned`, `transferred`
+        </ResponseField>
+        <ResponseField name="from" type="string">
+          Caller phone number (E.164 format)
+        </ResponseField>
+        <ResponseField name="to" type="string">
+          Callee phone number (E.164 format)
+        </ResponseField>
+        <ResponseField name="startTime" type="string">
+          Call start time in ISO 8601 format
+        </ResponseField>
+        <ResponseField name="endTime" type="string">
+          Call end time in ISO 8601 format
+        </ResponseField>
+        <ResponseField name="duration" type="integer">
+          Call duration in seconds
+        </ResponseField>
+        <ResponseField name="queueWaitTime" type="integer">
+          Time spent in queue in seconds (inbound only)
+        </ResponseField>
+        <ResponseField name="sentiment" type="string">
+          Overall call sentiment: `positive`, `neutral`, `negative`
+        </ResponseField>
+        <ResponseField name="cost" type="number">
+          Total cost of the call in USD
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="pagination" type="object">
+      <Expandable title="properties">
+        <ResponseField name="total" type="integer">
+          Total number of matching records
+        </ResponseField>
+        <ResponseField name="limit" type="integer">
+          Records per page
+        </ResponseField>
+        <ResponseField name="offset" type="integer">
+          Current offset
+        </ResponseField>
+        <ResponseField name="hasMore" type="boolean">
+          Whether more records exist
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/analytics/calls?startDate=2026-02-01T00:00:00Z&endDate=2026-02-18T23:59:59Z&status=completed&limit=50&offset=0" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({
+  startDate: '2026-02-01T00:00:00Z',
+  endDate: '2026-02-18T23:59:59Z',
+  status: 'completed',
+  limit: '50',
+  offset: '0'
+});
+
+const response = await fetch(`https://api.talkos.io/api/analytics/calls?${params}`, {
+  method: 'GET',
+  headers: {
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/analytics/calls',
+    params={
+        'startDate': '2026-02-01T00:00:00Z',
+        'endDate': '2026-02-18T23:59:59Z',
+        'status': 'completed',
+        'limit': 50,
+        'offset': 0
+    },
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "data": {
+    "calls": [
+      {
+        "callUuid": "call_8f2a9c4e-1b3d-4e5f-a6b7-c8d9e0f1a2b3",
+        "direction": "outbound",
+        "status": "completed",
+        "from": "+14155551234",
+        "to": "+14155555678",
+        "startTime": "2026-02-18T10:30:00Z",
+        "endTime": "2026-02-18T10:35:42Z",
+        "duration": 342,
+        "queueWaitTime": 0,
+        "sentiment": "positive",
+        "cost": 0.0856
+      },
+      {
+        "callUuid": "call_7e1b8d3c-0a2b-3c4d-5e6f-7a8b9c0d1e2f",
+        "direction": "inbound",
+        "status": "completed",
+        "from": "+14155559876",
+        "to": "+18005551234",
+        "startTime": "2026-02-18T10:28:15Z",
+        "endTime": "2026-02-18T10:32:08Z",
+        "duration": 233,
+        "queueWaitTime": 8,
+        "sentiment": "neutral",
+        "cost": 0.0582
+      }
+    ],
+    "pagination": {
+      "total": 1247,
+      "limit": 50,
+      "offset": 0,
+      "hasMore": true
+    }
+  }
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_PARAMETERS",
+    "message": "startDate and endDate are required",
+    "details": {
+      "missing": ["startDate", "endDate"]
+    }
+  }
+}
+```
+
+```json 401
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Invalid or missing API key"
+  }
+}
+```
+</ResponseExample>
+
+## Pagination
+
+Use `limit` and `offset` parameters for pagination through large result sets:
+
+```bash
+# First page
+curl "https://api.talkos.io/api/analytics/calls?startDate=2026-02-01T00:00:00Z&endDate=2026-02-18T23:59:59Z&limit=50&offset=0"
+
+# Second page
+curl "https://api.talkos.io/api/analytics/calls?startDate=2026-02-01T00:00:00Z&endDate=2026-02-18T23:59:59Z&limit=50&offset=50"
+```
+
+<Warning>
+  The maximum date range is 90 days. For longer ranges, make multiple requests with different date windows.
+</Warning>
+
+## Rate Limits
+
+- **Standard tier**: 30 requests per minute
+- **Enterprise tier**: 120 requests per minute

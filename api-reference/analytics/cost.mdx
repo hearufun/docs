@@ -1,0 +1,362 @@
+---
+title: "Get Cost Analytics"
+api: "GET https://api.talkos.io/api/analytics/cost"
+description: "Retrieve cost analytics including total cost, cost per call, cost by provider, and daily cost breakdown"
+---
+
+## Overview
+
+Get detailed cost analytics for your TalkOS usage. This endpoint provides comprehensive cost breakdowns by provider, call type, and time period to help you optimize spending and forecast budgets.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="startDate" type="string" required>
+  Start date for the query range in ISO 8601 format
+</ParamField>
+
+<ParamField query="endDate" type="string" required>
+  End date for the query range in ISO 8601 format
+</ParamField>
+
+<ParamField query="groupBy" type="string" default="day">
+  Group results by time period. Options: `hour`, `day`, `week`, `month`
+</ParamField>
+
+<ParamField query="direction" type="string">
+  Filter by call direction. Options: `inbound`, `outbound`
+</ParamField>
+
+<ParamField query="currency" type="string" default="USD">
+  Currency for cost values. Options: `USD`, `EUR`, `GBP`
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="summary" type="object">
+      Aggregate cost metrics
+      <Expandable title="properties">
+        <ResponseField name="totalCost" type="number">
+          Total cost for the period
+        </ResponseField>
+        <ResponseField name="totalCalls" type="integer">
+          Total number of calls
+        </ResponseField>
+        <ResponseField name="costPerCall" type="number">
+          Average cost per call
+        </ResponseField>
+        <ResponseField name="costPerMinute" type="number">
+          Average cost per minute of call time
+        </ResponseField>
+        <ResponseField name="totalMinutes" type="number">
+          Total call minutes
+        </ResponseField>
+        <ResponseField name="currency" type="string">
+          Currency code
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="costByProvider" type="array">
+      Cost breakdown by service provider
+      <Expandable title="provider cost">
+        <ResponseField name="provider" type="string">
+          Provider name (e.g., `telephony`, `stt`, `tts`, `llm`)
+        </ResponseField>
+        <ResponseField name="cost" type="number">
+          Total cost for this provider
+        </ResponseField>
+        <ResponseField name="percent" type="number">
+          Percentage of total cost
+        </ResponseField>
+        <ResponseField name="units" type="number">
+          Units consumed (minutes, tokens, etc.)
+        </ResponseField>
+        <ResponseField name="unitType" type="string">
+          Type of unit (e.g., `minutes`, `tokens`, `requests`)
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="costByDirection" type="object">
+      Cost breakdown by call direction
+      <Expandable title="properties">
+        <ResponseField name="inbound" type="object">
+          <Expandable title="properties">
+            <ResponseField name="cost" type="number">Total inbound cost</ResponseField>
+            <ResponseField name="calls" type="integer">Number of inbound calls</ResponseField>
+            <ResponseField name="avgCostPerCall" type="number">Average cost per inbound call</ResponseField>
+          </Expandable>
+        </ResponseField>
+        <ResponseField name="outbound" type="object">
+          <Expandable title="properties">
+            <ResponseField name="cost" type="number">Total outbound cost</ResponseField>
+            <ResponseField name="calls" type="integer">Number of outbound calls</ResponseField>
+            <ResponseField name="avgCostPerCall" type="number">Average cost per outbound call</ResponseField>
+          </Expandable>
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="costByDay" type="array">
+      Daily cost breakdown
+      <Expandable title="daily cost">
+        <ResponseField name="date" type="string">
+          Date (YYYY-MM-DD)
+        </ResponseField>
+        <ResponseField name="totalCost" type="number">
+          Total cost for the day
+        </ResponseField>
+        <ResponseField name="calls" type="integer">
+          Number of calls
+        </ResponseField>
+        <ResponseField name="minutes" type="number">
+          Total minutes
+        </ResponseField>
+        <ResponseField name="costPerCall" type="number">
+          Average cost per call
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="projections" type="object">
+      Cost projections based on current usage
+      <Expandable title="properties">
+        <ResponseField name="monthToDate" type="number">
+          Cost from start of current month
+        </ResponseField>
+        <ResponseField name="projectedMonthly" type="number">
+          Projected cost for full month
+        </ResponseField>
+        <ResponseField name="dailyAverage" type="number">
+          Average daily cost
+        </ResponseField>
+        <ResponseField name="projectedAnnual" type="number">
+          Projected annual cost at current rate
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/analytics/cost?startDate=2026-02-01T00:00:00Z&endDate=2026-02-18T23:59:59Z&groupBy=day&currency=USD" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({
+  startDate: '2026-02-01T00:00:00Z',
+  endDate: '2026-02-18T23:59:59Z',
+  groupBy: 'day',
+  currency: 'USD'
+});
+
+const response = await fetch(`https://api.talkos.io/api/analytics/cost?${params}`, {
+  method: 'GET',
+  headers: {
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/analytics/cost',
+    params={
+        'startDate': '2026-02-01T00:00:00Z',
+        'endDate': '2026-02-18T23:59:59Z',
+        'groupBy': 'day',
+        'currency': 'USD'
+    },
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "totalCost": 2847.56,
+      "totalCalls": 12847,
+      "costPerCall": 0.2216,
+      "costPerMinute": 0.0685,
+      "totalMinutes": 41570.8,
+      "currency": "USD"
+    },
+    "costByProvider": [
+      {
+        "provider": "telephony",
+        "cost": 1138.24,
+        "percent": 39.97,
+        "units": 41570.8,
+        "unitType": "minutes"
+      },
+      {
+        "provider": "llm",
+        "cost": 854.27,
+        "percent": 30.0,
+        "units": 28475600,
+        "unitType": "tokens"
+      },
+      {
+        "provider": "stt",
+        "cost": 498.71,
+        "percent": 17.51,
+        "units": 41570.8,
+        "unitType": "minutes"
+      },
+      {
+        "provider": "tts",
+        "cost": 356.34,
+        "percent": 12.52,
+        "units": 8942560,
+        "unitType": "characters"
+      }
+    ],
+    "costByDirection": {
+      "inbound": {
+        "cost": 1567.82,
+        "calls": 7418,
+        "avgCostPerCall": 0.2113
+      },
+      "outbound": {
+        "cost": 1279.74,
+        "calls": 5429,
+        "avgCostPerCall": 0.2357
+      }
+    },
+    "costByDay": [
+      {
+        "date": "2026-02-17",
+        "totalCost": 162.45,
+        "calls": 724,
+        "minutes": 2278.4,
+        "costPerCall": 0.2244
+      },
+      {
+        "date": "2026-02-18",
+        "totalCost": 158.92,
+        "calls": 698,
+        "minutes": 2267.8,
+        "costPerCall": 0.2277
+      }
+    ],
+    "projections": {
+      "monthToDate": 2847.56,
+      "projectedMonthly": 4428.42,
+      "dailyAverage": 158.20,
+      "projectedAnnual": 57749.28
+    }
+  }
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_PARAMETERS",
+    "message": "Invalid currency code. Supported: USD, EUR, GBP"
+  }
+}
+```
+
+```json 401
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Invalid or missing API key"
+  }
+}
+```
+</ResponseExample>
+
+## Cost Components
+
+<CardGroup cols={2}>
+  <Card title="Telephony" icon="phone">
+    Per-minute charges for call connectivity via carriers. Rates vary by destination and call direction.
+  </Card>
+  <Card title="LLM" icon="brain">
+    Token-based charges for AI language model processing. Includes both input and output tokens.
+  </Card>
+  <Card title="STT (Speech-to-Text)" icon="microphone">
+    Per-minute charges for real-time speech recognition and transcription.
+  </Card>
+  <Card title="TTS (Text-to-Speech)" icon="volume-up">
+    Per-character charges for voice synthesis. Premium voices may have higher rates.
+  </Card>
+</CardGroup>
+
+## Cost Optimization Tips
+
+<AccordionGroup>
+  <Accordion title="Optimize LLM Usage">
+    LLM costs typically account for 25-35% of total cost. Reduce token usage by:
+    - Using concise system prompts
+    - Implementing context windowing
+    - Caching common responses
+  </Accordion>
+  <Accordion title="Reduce Call Duration">
+    Telephony is billed per minute. Optimize agents to:
+    - Resolve issues faster
+    - Avoid unnecessary confirmations
+    - Use efficient conversation flows
+  </Accordion>
+  <Accordion title="Monitor Cost Spikes">
+    Set up alerts for daily cost thresholds. Sudden spikes may indicate:
+    - Traffic anomalies
+    - Inefficient agent behavior
+    - Configuration issues
+  </Accordion>
+  <Accordion title="Right-size TTS">
+    TTS costs scale with output length. Reduce costs by:
+    - Using shorter responses where appropriate
+    - Avoiding repeated information
+    - Using standard voices for non-critical calls
+  </Accordion>
+</AccordionGroup>
+
+## Budget Alerts
+
+Configure budget alerts in the TalkOS dashboard to receive notifications when:
+- Daily spend exceeds a threshold
+- Monthly projected spend exceeds budget
+- Cost per call increases significantly
+
+<Note>
+  Cost data is updated every 15 minutes. Real-time cost tracking is available via the [WebSocket API](/api-reference/realtime/websocket) for Enterprise tier customers.
+</Note>
+
+## Rate Limits
+
+- **Standard tier**: 30 requests per minute
+- **Enterprise tier**: 120 requests per minute

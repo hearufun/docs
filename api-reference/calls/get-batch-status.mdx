@@ -1,0 +1,455 @@
+---
+title: "Get Batch Status"
+description: "Retrieve the status and progress of a batch calling operation"
+api: "GET https://api.talkos.io/api/batch/:batchId/status"
+---
+
+# Get Batch Status
+
+Retrieve the current status, progress, and statistics of a batch calling operation. Use this endpoint to monitor campaign progress and get aggregate results.
+
+## Endpoint
+
+```
+GET /api/batch/:batchId/status
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="batchId" type="string" required>
+  Unique identifier of the batch (returned from Batch Start endpoint)
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="includeCallDetails" type="boolean" default="false">
+  Include detailed status of each individual call in the response
+</ParamField>
+
+<ParamField query="page" type="number" default="1">
+  Page number for call details pagination (when `includeCallDetails=true`)
+</ParamField>
+
+<ParamField query="limit" type="number" default="50">
+  Number of call details per page (max 100)
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request was successful
+</ResponseField>
+
+<ResponseField name="batch" type="object">
+  Batch details object:
+
+  <Expandable title="batch properties">
+    <ResponseField name="batchId" type="string">
+      Unique identifier for the batch
+    </ResponseField>
+
+    <ResponseField name="campaignId" type="string">
+      Campaign identifier
+    </ResponseField>
+
+    <ResponseField name="campaignName" type="string">
+      Human-readable campaign name
+    </ResponseField>
+
+    <ResponseField name="status" type="string">
+      Current batch status:
+      - `queued` - Batch is waiting to start
+      - `scheduled` - Batch is scheduled for future execution
+      - `processing` - Calls are being made
+      - `paused` - Batch is paused
+      - `completed` - All calls finished
+      - `canceled` - Batch was canceled
+      - `failed` - Batch failed due to error
+    </ResponseField>
+
+    <ResponseField name="priority" type="number">
+      Queue priority (1-10)
+    </ResponseField>
+
+    <ResponseField name="maxConcurrent" type="number">
+      Maximum concurrent calls setting
+    </ResponseField>
+
+    <ResponseField name="progress" type="object">
+      Progress statistics:
+      - `total` (number): Total calls in batch
+      - `completed` (number): Completed calls
+      - `inProgress` (number): Currently active calls
+      - `queued` (number): Calls waiting in queue
+      - `failed` (number): Failed calls
+      - `percentage` (number): Completion percentage
+    </ResponseField>
+
+    <ResponseField name="results" type="object">
+      Aggregate call results:
+      - `answered` (number): Calls that were answered
+      - `noAnswer` (number): Calls with no answer
+      - `busy` (number): Calls that hit busy signal
+      - `failed` (number): Calls that failed to connect
+      - `canceled` (number): Calls that were canceled
+      - `voicemail` (number): Calls that reached voicemail
+    </ResponseField>
+
+    <ResponseField name="statistics" type="object">
+      Performance statistics:
+      - `avgDuration` (number): Average call duration in seconds
+      - `totalDuration` (number): Total talk time in seconds
+      - `avgWaitTime` (number): Average time in queue in seconds
+      - `connectRate` (number): Percentage of calls answered
+      - `completionRate` (number): Percentage of calls completed successfully
+    </ResponseField>
+
+    <ResponseField name="cost" type="object">
+      Cost breakdown (progressive, finalizes when complete):
+      - `total` (number): Total cost in credits
+      - `telephony` (number): Telephony costs
+      - `ai` (number): AI processing costs
+      - `estimated` (boolean): Whether cost is estimated or final
+    </ResponseField>
+
+    <ResponseField name="schedule" type="object">
+      Scheduling information:
+      - `scheduledAt` (string): Scheduled start time (ISO 8601)
+      - `startedAt` (string): Actual start time (ISO 8601)
+      - `completedAt` (string): Completion time (ISO 8601)
+      - `estimatedCompletionTime` (string): Estimated completion (ISO 8601)
+    </ResponseField>
+
+    <ResponseField name="callWindow" type="object">
+      Time window restrictions if configured
+    </ResponseField>
+
+    <ResponseField name="retryPolicy" type="object">
+      Retry configuration if enabled
+    </ResponseField>
+
+    <ResponseField name="retriesRemaining" type="number">
+      Number of retry attempts remaining
+    </ResponseField>
+
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp of batch creation
+    </ResponseField>
+
+    <ResponseField name="updatedAt" type="string">
+      ISO 8601 timestamp of last update
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="calls" type="array">
+  Array of individual call details (only when `includeCallDetails=true`):
+
+  <Expandable title="call object properties">
+    <ResponseField name="callUuid" type="string">
+      Unique call identifier
+    </ResponseField>
+
+    <ResponseField name="to" type="string">
+      Destination phone number
+    </ResponseField>
+
+    <ResponseField name="status" type="string">
+      Call status
+    </ResponseField>
+
+    <ResponseField name="duration" type="number">
+      Call duration in seconds
+    </ResponseField>
+
+    <ResponseField name="outcome" type="string">
+      Call outcome: `success`, `no-answer`, `busy`, `failed`, `voicemail`
+    </ResponseField>
+
+    <ResponseField name="attempts" type="number">
+      Number of call attempts
+    </ResponseField>
+
+    <ResponseField name="startedAt" type="string">
+      ISO 8601 timestamp when call started
+    </ResponseField>
+
+    <ResponseField name="endedAt" type="string">
+      ISO 8601 timestamp when call ended
+    </ResponseField>
+
+    <ResponseField name="metadata" type="object">
+      Custom metadata attached to the call
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="pagination" type="object">
+  Pagination info (when `includeCallDetails=true`):
+  - `page` (number): Current page
+  - `limit` (number): Items per page
+  - `total` (number): Total items
+  - `totalPages` (number): Total pages
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/batch/batch_x7y8z9-a1b2c3d4e5f6/status?includeCallDetails=true&limit=10" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript Node.js
+const response = await fetch(
+  'https://api.talkos.io/api/batch/batch_x7y8z9-a1b2c3d4e5f6/status?includeCallDetails=true&limit=10',
+  {
+    method: 'GET',
+    headers: {
+      'x-api-key': 'your-api-key',
+      'x-tenant-id': 'your-tenant-id'
+    }
+  }
+);
+
+const data = await response.json();
+console.log(`Progress: ${data.batch.progress.percentage}%`);
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/batch/batch_x7y8z9-a1b2c3d4e5f6/status',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    params={
+        'includeCallDetails': True,
+        'limit': 10
+    }
+)
+
+data = response.json()
+print(f"Progress: {data['batch']['progress']['percentage']}%")
+```
+</CodeGroup>
+
+## Example Response (In Progress)
+
+```json
+{
+  "success": true,
+  "batch": {
+    "batchId": "batch_x7y8z9-a1b2c3d4e5f6",
+    "campaignId": "appointment_reminders_feb_2026",
+    "campaignName": "February Appointment Reminders",
+    "status": "processing",
+    "priority": 7,
+    "maxConcurrent": 10,
+    "progress": {
+      "total": 98,
+      "completed": 45,
+      "inProgress": 10,
+      "queued": 43,
+      "failed": 3,
+      "percentage": 45.92
+    },
+    "results": {
+      "answered": 38,
+      "noAnswer": 4,
+      "busy": 2,
+      "failed": 1,
+      "canceled": 0,
+      "voicemail": 3
+    },
+    "statistics": {
+      "avgDuration": 125,
+      "totalDuration": 4750,
+      "avgWaitTime": 15,
+      "connectRate": 84.44,
+      "completionRate": 82.22
+    },
+    "cost": {
+      "total": 2250,
+      "telephony": 900,
+      "ai": 1350,
+      "estimated": true
+    },
+    "schedule": {
+      "scheduledAt": null,
+      "startedAt": "2026-02-18T10:30:00.000Z",
+      "completedAt": null,
+      "estimatedCompletionTime": "2026-02-18T11:15:00.000Z"
+    },
+    "callWindow": {
+      "startTime": "09:00",
+      "endTime": "18:00",
+      "timezone": "America/New_York",
+      "skipWeekends": true
+    },
+    "retryPolicy": {
+      "enabled": true,
+      "maxAttempts": 2,
+      "retryOn": ["no-answer", "busy"],
+      "delayMinutes": 30
+    },
+    "retriesRemaining": 6,
+    "createdAt": "2026-02-18T10:29:55.000Z",
+    "updatedAt": "2026-02-18T10:52:30.000Z"
+  },
+  "calls": [
+    {
+      "callUuid": "call_a1b2c3d4-0001",
+      "to": "+14155551234",
+      "status": "completed",
+      "duration": 145,
+      "outcome": "success",
+      "attempts": 1,
+      "startedAt": "2026-02-18T10:30:05.000Z",
+      "endedAt": "2026-02-18T10:32:30.000Z",
+      "metadata": {
+        "patientId": "pat_001"
+      }
+    },
+    {
+      "callUuid": "call_a1b2c3d4-0002",
+      "to": "+14155555678",
+      "status": "in-progress",
+      "duration": 45,
+      "outcome": null,
+      "attempts": 1,
+      "startedAt": "2026-02-18T10:52:00.000Z",
+      "endedAt": null,
+      "metadata": {
+        "patientId": "pat_002"
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 98,
+    "totalPages": 10
+  }
+}
+```
+
+## Example Response (Completed)
+
+```json
+{
+  "success": true,
+  "batch": {
+    "batchId": "batch_x7y8z9-a1b2c3d4e5f6",
+    "campaignId": "appointment_reminders_feb_2026",
+    "campaignName": "February Appointment Reminders",
+    "status": "completed",
+    "priority": 7,
+    "maxConcurrent": 10,
+    "progress": {
+      "total": 98,
+      "completed": 98,
+      "inProgress": 0,
+      "queued": 0,
+      "failed": 5,
+      "percentage": 100
+    },
+    "results": {
+      "answered": 82,
+      "noAnswer": 8,
+      "busy": 3,
+      "failed": 2,
+      "canceled": 0,
+      "voicemail": 3
+    },
+    "statistics": {
+      "avgDuration": 118,
+      "totalDuration": 9676,
+      "avgWaitTime": 12,
+      "connectRate": 83.67,
+      "completionRate": 80.61
+    },
+    "cost": {
+      "total": 4900,
+      "telephony": 1960,
+      "ai": 2940,
+      "estimated": false
+    },
+    "schedule": {
+      "scheduledAt": null,
+      "startedAt": "2026-02-18T10:30:00.000Z",
+      "completedAt": "2026-02-18T11:08:45.000Z",
+      "estimatedCompletionTime": "2026-02-18T11:15:00.000Z"
+    },
+    "createdAt": "2026-02-18T10:29:55.000Z",
+    "updatedAt": "2026-02-18T11:08:45.000Z"
+  }
+}
+```
+
+## Error Responses
+
+<ResponseField name="401 Unauthorized">
+```json
+{
+  "success": false,
+  "error": "Invalid API key",
+  "code": "UNAUTHORIZED"
+}
+```
+</ResponseField>
+
+<ResponseField name="404 Not Found">
+```json
+{
+  "success": false,
+  "error": "Batch not found",
+  "code": "BATCH_NOT_FOUND",
+  "details": {
+    "batchId": "batch_invalid"
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="403 Forbidden">
+```json
+{
+  "success": false,
+  "error": "Access denied to this batch",
+  "code": "ACCESS_DENIED"
+}
+```
+</ResponseField>
+
+<ResponseField name="500 Internal Server Error">
+```json
+{
+  "success": false,
+  "error": "Internal server error",
+  "code": "INTERNAL_ERROR"
+}
+```
+</ResponseField>
+
+## Notes
+
+- Status updates in real-time during batch execution
+- Cost is estimated until batch completes, then becomes final
+- For large batches, use pagination with `includeCallDetails=true`
+- Statistics are calculated progressively as calls complete
+- Retry attempts are tracked separately from initial call attempts
+- Poll recommendation: every 30 seconds for active batches

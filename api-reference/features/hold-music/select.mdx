@@ -1,0 +1,122 @@
+---
+title: 'Select Hold Music Track'
+api: 'POST https://api.talkos.io/api/features/hold-music/select'
+description: 'Select a track as the default hold music'
+---
+
+Set a specific track from the library as the default hold music for all calls.
+
+## Request Body
+
+<ParamField body="trackId" type="string" required>
+  The ID of the track to set as default.
+</ParamField>
+
+<ParamField body="scheduleStart" type="string">
+  Optional ISO 8601 datetime to schedule when this track becomes active.
+</ParamField>
+
+<ParamField body="scheduleEnd" type="string">
+  Optional ISO 8601 datetime when to revert to the previous default.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the selection was saved successfully.
+</ResponseField>
+
+<ResponseField name="track" type="object">
+  The selected track details.
+</ResponseField>
+
+<ResponseField name="previousDefault" type="string">
+  ID of the previously selected default track.
+</ResponseField>
+
+<ResponseField name="schedule" type="object">
+  Schedule information if a scheduled change was configured.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/features/hold-music/select \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "trackId": "track_jazz_003"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/hold-music/select', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    trackId: 'track_jazz_003'
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/features/hold-music/select',
+    headers={
+        'Authorization': 'Bearer YOUR_API_KEY',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'trackId': 'track_jazz_003'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "track": {
+    "id": "track_jazz_003",
+    "name": "Smooth Jazz Lounge",
+    "category": "jazz",
+    "duration": 210
+  },
+  "previousDefault": "track_classical_001",
+  "schedule": null
+}
+```
+
+```json 200 (Scheduled)
+{
+  "success": true,
+  "track": {
+    "id": "track_holiday_special",
+    "name": "Holiday Favorites",
+    "category": "custom"
+  },
+  "previousDefault": "track_classical_001",
+  "schedule": {
+    "start": "2026-12-20T00:00:00.000Z",
+    "end": "2026-12-26T23:59:59.999Z",
+    "revertTo": "track_classical_001"
+  }
+}
+```
+
+```json 404
+{
+  "success": false,
+  "error": "Track not found"
+}
+```
+</ResponseExample>

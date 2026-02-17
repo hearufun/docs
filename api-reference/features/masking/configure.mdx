@@ -1,0 +1,117 @@
+---
+title: 'Configure Call Masking'
+api: 'POST https://api.talkos.io/api/features/masking/configure'
+description: 'Configure call masking settings for phone number privacy'
+---
+
+Configure how phone numbers are masked during calls to protect customer privacy and comply with data protection regulations.
+
+## Request Body
+
+<ParamField body="pattern" type="string" required>
+  Masking pattern to apply to phone numbers.
+  - `full` - Mask entire number (e.g., `***-***-****`)
+  - `last4` - Show only last 4 digits (e.g., `***-***-1234`)
+  - `first6last4` - Show first 6 and last 4 digits (e.g., `+1 555-***-1234`)
+</ParamField>
+
+<ParamField body="allowUnmask" type="boolean" default={false}>
+  Whether agents are allowed to request unmasking of phone numbers.
+</ParamField>
+
+<ParamField body="unmaskRequiresApproval" type="boolean" default={true}>
+  Whether unmask requests require supervisor approval before revealing the full number.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the configuration was saved successfully.
+</ResponseField>
+
+<ResponseField name="config" type="object">
+  <Expandable title="config properties">
+    <ResponseField name="pattern" type="string">
+      The configured masking pattern.
+    </ResponseField>
+    <ResponseField name="allowUnmask" type="boolean">
+      Whether unmasking is allowed.
+    </ResponseField>
+    <ResponseField name="unmaskRequiresApproval" type="boolean">
+      Whether approval is required for unmasking.
+    </ResponseField>
+    <ResponseField name="updatedAt" type="string">
+      ISO 8601 timestamp of the configuration update.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/features/masking/configure \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pattern": "last4",
+    "allowUnmask": true,
+    "unmaskRequiresApproval": true
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/masking/configure', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    pattern: 'last4',
+    allowUnmask: true,
+    unmaskRequiresApproval: true
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/features/masking/configure',
+    headers={
+        'Authorization': 'Bearer YOUR_API_KEY',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'pattern': 'last4',
+        'allowUnmask': True,
+        'unmaskRequiresApproval': True
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "config": {
+    "pattern": "last4",
+    "allowUnmask": true,
+    "unmaskRequiresApproval": true,
+    "updatedAt": "2026-02-18T10:30:00.000Z"
+  }
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": "Invalid masking pattern. Must be one of: full, last4, first6last4"
+}
+```
+</ResponseExample>

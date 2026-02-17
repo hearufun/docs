@@ -1,0 +1,119 @@
+---
+title: "Create Knowledge Base"
+api: "POST https://api.talkos.io/api/knowledge-base/create"
+description: "Create a new knowledge base for storing and searching documents"
+---
+
+## Overview
+
+Create a new knowledge base to store documents that your AI agents can reference during calls. Knowledge bases enable semantic search across your uploaded content, allowing agents to provide accurate, contextual responses.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="name" type="string" required>
+  Name of the knowledge base. Must be unique within your tenant.
+</ParamField>
+
+<ParamField body="description" type="string" required>
+  Description of the knowledge base content and purpose.
+</ParamField>
+
+<ParamField body="embeddingModel" type="string">
+  The embedding model to use for vectorizing documents. Defaults to `text-embedding-3-small`.
+  
+  Available options:
+  - `text-embedding-3-small` - Fast, cost-effective (default)
+  - `text-embedding-3-large` - Higher accuracy for complex content
+  - `text-embedding-ada-002` - Legacy model
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the knowledge base was created successfully
+</ResponseField>
+
+<ResponseField name="knowledgeBase" type="object">
+  <Expandable title="properties">
+    <ResponseField name="id" type="string">
+      Unique identifier for the knowledge base
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Name of the knowledge base
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      Description of the knowledge base
+    </ResponseField>
+    <ResponseField name="embeddingModel" type="string">
+      The embedding model used
+    </ResponseField>
+    <ResponseField name="documentCount" type="number">
+      Number of documents (initially 0)
+    </ResponseField>
+    <ResponseField name="totalTokens" type="number">
+      Total tokens indexed (initially 0)
+    </ResponseField>
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp of creation
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/knowledge-base/create \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Product Documentation",
+    "description": "Technical documentation and user guides for our SaaS platform",
+    "embeddingModel": "text-embedding-3-small"
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201
+{
+  "success": true,
+  "knowledgeBase": {
+    "id": "kb_8f3d2a1b-4c5e-6f7a-8b9c-0d1e2f3a4b5c",
+    "name": "Product Documentation",
+    "description": "Technical documentation and user guides for our SaaS platform",
+    "embeddingModel": "text-embedding-3-small",
+    "documentCount": 0,
+    "totalTokens": 0,
+    "createdAt": "2026-02-18T10:30:00.000Z"
+  }
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": "Knowledge base with this name already exists"
+}
+```
+
+```json 401
+{
+  "success": false,
+  "error": "Invalid API key"
+}
+```
+</ResponseExample>

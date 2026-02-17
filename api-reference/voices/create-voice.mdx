@@ -1,0 +1,197 @@
+---
+title: "Create Voice"
+api: "POST https://api.talkos.io/api/voices"
+description: "Clone or create a custom voice for your AI agents"
+---
+
+## Overview
+
+Create a custom voice by cloning from an audio sample or configuring voice parameters. Custom voices allow your AI agents to speak with a consistent, branded voice identity tailored to your use case.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="name" type="string" required>
+  Name for the custom voice. Must be unique within your tenant.
+</ParamField>
+
+<ParamField body="description" type="string" required>
+  Description of the voice characteristics and intended use case.
+</ParamField>
+
+<ParamField body="sampleUrl" type="string" required>
+  URL to an audio file for voice cloning. The audio should be:
+  - Clear speech with minimal background noise
+  - 30 seconds to 5 minutes in length
+  - Single speaker only
+  - Supported formats: MP3, WAV, M4A, FLAC
+</ParamField>
+
+<ParamField body="language" type="string">
+  Primary language of the voice. Default: `en-US`. See [List Languages](/api-reference/voices/list-languages) for supported options.
+</ParamField>
+
+<ParamField body="settings" type="object">
+  Voice configuration settings
+  <Expandable title="properties">
+    <ParamField body="stability" type="number">
+      Voice stability (0-1). Higher values produce more consistent output. Default: `0.75`.
+    </ParamField>
+    <ParamField body="similarityBoost" type="number">
+      Similarity to original voice (0-1). Higher values sound more like the sample. Default: `0.75`.
+    </ParamField>
+    <ParamField body="style" type="number">
+      Speaking style expressiveness (0-1). Higher values are more expressive. Default: `0.5`.
+    </ParamField>
+    <ParamField body="speakerBoost" type="boolean">
+      Enable speaker clarity boost. Default: `true`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the voice was created successfully
+</ResponseField>
+
+<ResponseField name="voice" type="object">
+  <Expandable title="properties">
+    <ResponseField name="id" type="string">
+      Unique identifier for the voice
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Name of the voice
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      Voice description
+    </ResponseField>
+    <ResponseField name="type" type="string">
+      Voice type: `cloned` or `preset`
+    </ResponseField>
+    <ResponseField name="language" type="string">
+      Primary language code
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Processing status: `processing`, `ready`, `failed`
+    </ResponseField>
+    <ResponseField name="previewUrl" type="string">
+      URL to a preview audio sample (available when status is `ready`)
+    </ResponseField>
+    <ResponseField name="settings" type="object">
+      Voice settings configuration
+    </ResponseField>
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp of creation
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/voices \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Emma - Support Agent",
+    "description": "Friendly, professional female voice for customer support",
+    "sampleUrl": "https://storage.example.com/voice-samples/emma-sample.mp3",
+    "language": "en-US",
+    "settings": {
+      "stability": 0.8,
+      "similarityBoost": 0.75,
+      "style": 0.4,
+      "speakerBoost": true
+    }
+  }'
+```
+
+```bash cURL (Minimal)
+curl -X POST https://api.talkos.io/api/voices \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Sales Voice",
+    "description": "Confident, engaging voice for sales calls",
+    "sampleUrl": "https://storage.example.com/voice-samples/sales-voice.wav"
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201
+{
+  "success": true,
+  "voice": {
+    "id": "voice_4e5f6a7b-8c9d-0e1f-2a3b-4c5d6e7f8a9b",
+    "name": "Emma - Support Agent",
+    "description": "Friendly, professional female voice for customer support",
+    "type": "cloned",
+    "language": "en-US",
+    "status": "processing",
+    "previewUrl": null,
+    "settings": {
+      "stability": 0.8,
+      "similarityBoost": 0.75,
+      "style": 0.4,
+      "speakerBoost": true
+    },
+    "createdAt": "2026-02-18T11:00:00.000Z"
+  }
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": "Invalid audio sample URL or format"
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": "Audio sample too short. Minimum 30 seconds required."
+}
+```
+
+```json 409
+{
+  "success": false,
+  "error": "A voice with this name already exists"
+}
+```
+</ResponseExample>
+
+## Voice Cloning Requirements
+
+<Note>
+Voice cloning typically takes 1-3 minutes to process. The voice will have a status of `processing` initially and will update to `ready` once complete.
+</Note>
+
+<Tip>
+**For best cloning results:**
+- Use high-quality audio (44.1kHz or higher sample rate)
+- Ensure clean speech without music or background noise
+- Include varied intonation and natural speech patterns
+- Avoid whispered or shouted speech
+</Tip>
+
+<Warning>
+You must have rights to use the voice sample. Do not clone voices without proper authorization from the voice owner.
+</Warning>

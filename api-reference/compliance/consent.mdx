@@ -1,0 +1,74 @@
+---
+title: "Record Consent"
+api: "POST https://api.talkos.io/api/compliance/consent"
+description: "Record user consent for calls, SMS, or marketing communications"
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="phoneNumber" type="string" required>
+  Phone number of the user providing consent
+</ParamField>
+
+<ParamField body="email" type="string">
+  Email address of the user providing consent
+</ParamField>
+
+<ParamField body="consentType" type="string" required>
+  Type of consent being recorded
+  
+  **Allowed values:** `call`, `sms`, `marketing`
+</ParamField>
+
+<ParamField body="granted" type="boolean" required>
+  Whether consent was granted (`true`) or revoked (`false`)
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/compliance/consent \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "phoneNumber": "+14155551234",
+    "email": "user@example.com",
+    "consentType": "call",
+    "granted": true
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "consent": {
+    "id": "consent_abc123",
+    "phoneNumber": "+14155551234",
+    "email": "user@example.com",
+    "consentType": "call",
+    "granted": true,
+    "recordedAt": "2026-02-18T10:30:00Z",
+    "ipAddress": "192.168.1.1"
+  }
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": "Invalid consent type"
+}
+```
+</ResponseExample>

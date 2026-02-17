@@ -1,0 +1,49 @@
+---
+title: "Admin Logout"
+api: "POST https://api.talkos.io/api/auth/admin/logout"
+description: "Logout the current admin user"
+---
+
+Logout the currently authenticated admin user. This invalidates the current session on the server side.
+
+## Authentication
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token from login. Format: `Bearer {token}`
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if logout was successful.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Status message confirming logout.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/auth/admin/logout \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "message": "Logged out successfully"
+}
+```
+
+```json 401
+{
+  "error": "Invalid or expired token"
+}
+```
+</ResponseExample>
+
+<Note>
+After logout, the JWT token should be discarded on the client side. For enhanced security, consider implementing token blacklisting on the server.
+</Note>

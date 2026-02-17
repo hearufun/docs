@@ -1,0 +1,118 @@
+---
+title: "Search Sessions"
+api: "GET https://api.talkos.io/api/web-sessions/search"
+description: "Search and filter past web sessions with pagination"
+---
+
+Search and filter past web sessions with support for multiple criteria and pagination.
+
+## Query Parameters
+
+<ParamField query="status" type="string">
+  Filter by session status. Values: `active`, `completed`, `paused`, `failed`.
+</ParamField>
+
+<ParamField query="agentType" type="string">
+  Filter by agent type (e.g., "interviewer", "support", "sales").
+</ParamField>
+
+<ParamField query="language" type="string">
+  Filter by language code (e.g., "en", "hi", "es").
+</ParamField>
+
+<ParamField query="endReason" type="string">
+  Filter by session end reason.
+</ParamField>
+
+<ParamField query="dateFrom" type="string">
+  Filter sessions created after this date (ISO 8601 format).
+</ParamField>
+
+<ParamField query="dateTo" type="string">
+  Filter sessions created before this date (ISO 8601 format).
+</ParamField>
+
+<ParamField query="minDuration" type="integer">
+  Minimum session duration in seconds.
+</ParamField>
+
+<ParamField query="maxDuration" type="integer">
+  Maximum session duration in seconds.
+</ParamField>
+
+<ParamField query="page" type="integer" default="1">
+  Page number for pagination.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="20">
+  Number of results per page.
+</ParamField>
+
+<ParamField query="sortBy" type="string" default="createdAt">
+  Field to sort by.
+</ParamField>
+
+<ParamField query="sortOrder" type="string" default="desc">
+  Sort order: `asc` or `desc`.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/web-sessions/search?status=completed&agentType=support&dateFrom=2026-02-01&limit=10&sortBy=createdAt&sortOrder=desc" \
+  -H "x-api-key: your-api-key"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "sessions": [
+    {
+      "sessionId": "ws-42e299e5-6bbf-4503-af0a-f8218524f8cf",
+      "agentName": "Support Agent",
+      "agentType": "support",
+      "status": "completed",
+      "language": "en",
+      "duration": 324,
+      "turns": 12,
+      "endReason": "user_hangup",
+      "createdAt": "2026-02-17T14:30:00.000Z",
+      "endedAt": "2026-02-17T14:35:24.000Z",
+      "metadata": {
+        "customerId": "cust_123"
+      }
+    },
+    {
+      "sessionId": "ws-8a1b2c3d-4e5f-6789-abcd-ef0123456789",
+      "agentName": "Interview Bot",
+      "agentType": "interviewer",
+      "status": "completed",
+      "language": "en",
+      "duration": 1205,
+      "turns": 45,
+      "endReason": "completed",
+      "createdAt": "2026-02-17T10:00:00.000Z",
+      "endedAt": "2026-02-17T10:20:05.000Z",
+      "metadata": {
+        "candidateId": "candidate_456"
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 156,
+    "totalPages": 16,
+    "hasNext": true,
+    "hasPrev": false
+  }
+}
+```
+
+```json 500
+{
+  "error": "Search failed",
+  "message": "Database connection error"
+}
+```
+</ResponseExample>

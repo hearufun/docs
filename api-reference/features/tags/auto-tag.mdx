@@ -1,0 +1,165 @@
+---
+title: "Auto-Tag Call"
+description: "Manually trigger auto-tagging for a call"
+api: "POST https://api.talkos.io/api/features/tags/:callUuid/auto"
+---
+
+# Auto-Tag Call
+
+Manually trigger the auto-tagging system to analyze text and context and apply relevant tags. Useful for re-analyzing calls or processing specific transcript segments.
+
+## Endpoint
+
+```
+POST /api/features/tags/:callUuid/auto
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="callUuid" type="string" required>
+  Unique identifier of the call
+</ParamField>
+
+## Request Body
+
+<ParamField body="text" type="string" required>
+  Text content to analyze for auto-tagging (e.g., transcript segment)
+</ParamField>
+
+<ParamField body="context" type="object">
+  Additional context for tag analysis
+</ParamField>
+
+<ParamField body="context.sentiment" type="number">
+  Current sentiment score (-1 to 1)
+</ParamField>
+
+<ParamField body="context.duration" type="number">
+  Call duration in seconds
+</ParamField>
+
+<ParamField body="context.department" type="string">
+  Department handling the call
+</ParamField>
+
+<ParamField body="context.intent" type="string">
+  Detected caller intent
+</ParamField>
+
+## Response
+
+<ResponseField name="newTags" type="array">
+  Array of newly applied tags
+</ResponseField>
+
+<ResponseField name="count" type="number">
+  Number of new tags applied
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/features/tags/call-abc123-def456/auto \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "text": "I am very unhappy with this service. I want to speak to a manager about getting a refund for my invoice. This is unacceptable.",
+    "context": {
+      "sentiment": -0.7,
+      "duration": 180,
+      "department": "support"
+    }
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/tags/call-abc123-def456/auto', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  },
+  body: JSON.stringify({
+    text: 'I am very unhappy with this service. I want to speak to a manager about getting a refund for my invoice. This is unacceptable.',
+    context: {
+      sentiment: -0.7,
+      duration: 180,
+      department: 'support'
+    }
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/features/tags/call-abc123-def456/auto',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    json={
+        'text': 'I am very unhappy with this service. I want to speak to a manager about getting a refund for my invoice. This is unacceptable.',
+        'context': {
+            'sentiment': -0.7,
+            'duration': 180,
+            'department': 'support'
+        }
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "newTags": [
+    "complaint",
+    "billing",
+    "escalated"
+  ],
+  "count": 3
+}
+```
+
+```json 200 (No New Tags)
+{
+  "newTags": [],
+  "count": 0
+}
+```
+
+```json 500
+{
+  "error": "Failed to auto-tag call"
+}
+```
+</ResponseExample>
+
+## How Auto-Tagging Works
+
+The auto-tagging system analyzes the provided text and context against configured rules:
+
+1. **Keyword Matching**: Scans text for configured keywords
+2. **Sentiment Analysis**: Applies tags based on sentiment thresholds
+3. **Duration Rules**: Applies time-based tags (long-call, short-call)
+4. **Custom Rules**: Evaluates tenant-specific auto-tag rules
+
+Tags that already exist on the call will not be duplicated.

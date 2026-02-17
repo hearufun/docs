@@ -1,0 +1,231 @@
+---
+title: "Get Survey"
+description: "Retrieve details of a specific survey"
+api: "GET https://api.talkos.io/api/features/survey/:surveyId"
+---
+
+# Get Survey
+
+Retrieve full details of a specific survey including questions, responses, and status.
+
+## Endpoint
+
+```
+GET /api/features/survey/:surveyId
+```
+
+## Path Parameters
+
+<ParamField path="surveyId" type="string" required>
+  The unique identifier of the survey
+</ParamField>
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Response
+
+<ResponseField name="surveyId" type="string">
+  Unique survey identifier
+</ResponseField>
+
+<ResponseField name="callUuid" type="string">
+  Associated call identifier
+</ResponseField>
+
+<ResponseField name="tenantId" type="string">
+  Tenant identifier
+</ResponseField>
+
+<ResponseField name="phoneNumber" type="string">
+  Customer phone number
+</ResponseField>
+
+<ResponseField name="agentId" type="string">
+  AI agent that handled the call (if provided)
+</ResponseField>
+
+<ResponseField name="template" type="string">
+  Survey template used: `csat`, `nps`, or `quick`
+</ResponseField>
+
+<ResponseField name="questions" type="array">
+  Array of questions in the survey
+</ResponseField>
+
+<ResponseField name="questions[].id" type="string">
+  Unique question identifier
+</ResponseField>
+
+<ResponseField name="questions[].text" type="string">
+  Question text
+</ResponseField>
+
+<ResponseField name="questions[].type" type="string">
+  Question type: `scale`, `yes_no`, `open_text`, `multiple_choice`
+</ResponseField>
+
+<ResponseField name="questions[].required" type="boolean">
+  Whether the question is required
+</ResponseField>
+
+<ResponseField name="responses" type="object">
+  Map of question IDs to response objects
+</ResponseField>
+
+<ResponseField name="responses[questionId].value" type="any">
+  The response value
+</ResponseField>
+
+<ResponseField name="responses[questionId].timestamp" type="number">
+  Unix timestamp when response was recorded
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Survey status: `pending`, `in_progress`, `completed`, `skipped`, `expired`
+</ResponseField>
+
+<ResponseField name="deliveryMethod" type="string">
+  How the survey was delivered: `ivr`, `sms`, `webhook`
+</ResponseField>
+
+<ResponseField name="createdAt" type="number">
+  Unix timestamp when survey was created
+</ResponseField>
+
+<ResponseField name="completedAt" type="number">
+  Unix timestamp when survey was completed (null if not completed)
+</ResponseField>
+
+<ResponseField name="expiresAt" type="number">
+  Unix timestamp when survey expires
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X GET https://api.talkos.io/api/features/survey/survey_1739836800000_x7k2m9 \
+  -H "x-api-key: tk_live_xxxxxxxxxxxxxxxxxxxx" \
+  -H "x-tenant-id: tenant_abc123"
+```
+
+## Example Response - Completed Survey
+
+```json
+{
+  "surveyId": "survey_1739836800000_x7k2m9",
+  "callUuid": "call_abc123def456",
+  "tenantId": "tenant_abc123",
+  "phoneNumber": "+14155551234",
+  "agentId": "agent_support_001",
+  "template": "csat",
+  "questions": [
+    {
+      "id": "q_csat_1",
+      "text": "On a scale of 1 to 5, how satisfied are you with the service you received today?",
+      "type": "scale",
+      "min": 1,
+      "max": 5,
+      "labels": {
+        "1": "Very Unsatisfied",
+        "3": "Neutral",
+        "5": "Very Satisfied"
+      },
+      "required": true
+    },
+    {
+      "id": "q_csat_2",
+      "text": "Was your issue resolved during this call?",
+      "type": "yes_no",
+      "required": true
+    },
+    {
+      "id": "q_csat_3",
+      "text": "Any additional feedback?",
+      "type": "open_text",
+      "required": false,
+      "maxLength": 500
+    }
+  ],
+  "responses": {
+    "q_csat_1": {
+      "value": 5,
+      "timestamp": 1739836820000
+    },
+    "q_csat_2": {
+      "value": "yes",
+      "timestamp": 1739836830000
+    },
+    "q_csat_3": {
+      "value": "Excellent service, the AI understood my issue immediately!",
+      "timestamp": 1739836850000
+    }
+  },
+  "status": "completed",
+  "deliveryMethod": "ivr",
+  "createdAt": 1739836800000,
+  "completedAt": 1739836850000,
+  "expiresAt": 1739923200000
+}
+```
+
+## Example Response - Pending Survey
+
+```json
+{
+  "surveyId": "survey_1739836900000_y8l3n0",
+  "callUuid": "call_def456ghi789",
+  "tenantId": "tenant_abc123",
+  "phoneNumber": "+14155559876",
+  "agentId": null,
+  "template": "nps",
+  "questions": [
+    {
+      "id": "q_nps_1",
+      "text": "On a scale of 0 to 10, how likely are you to recommend us to a friend or colleague?",
+      "type": "scale",
+      "min": 0,
+      "max": 10,
+      "required": true
+    }
+  ],
+  "responses": {},
+  "status": "pending",
+  "deliveryMethod": "sms",
+  "createdAt": 1739836900000,
+  "completedAt": null,
+  "expiresAt": 1739923300000
+}
+```
+
+## Error Response
+
+```json
+{
+  "error": "Survey not found"
+}
+```
+
+## Survey Statuses
+
+| Status | Description |
+|--------|-------------|
+| `pending` | Survey created, awaiting first response |
+| `in_progress` | Customer has started but not completed |
+| `completed` | All required questions answered |
+| `skipped` | Customer skipped the survey |
+| `expired` | 24 hours passed without completion |
+
+## Notes
+
+- Surveys are retained for 7 days after creation
+- After 7 days, survey data is archived and this endpoint returns 404
+- The `responses` object only contains answered questions
+- Check `expiresAt` to determine if a pending survey can still be completed

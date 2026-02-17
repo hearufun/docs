@@ -1,0 +1,136 @@
+---
+title: "Disable Inbound Handling"
+api: "DELETE https://api.talkos.io/api/inbound/config"
+description: "Permanently remove your tenant's inbound call configuration."
+---
+
+Permanently delete the inbound call configuration for your tenant. This action requires explicit confirmation and cannot be undone.
+
+<Warning>
+  This action permanently removes your inbound configuration including webhook URL and fallback settings. All incoming calls will be rejected until a new configuration is created.
+</Warning>
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+<ParamField header="X-Confirm-Disable" type="string" required>
+  Must be set to `true` to confirm deletion. This prevents accidental removal.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.talkos.io/api/inbound/config \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -H "X-Confirm-Disable: true"
+```
+
+```javascript Node.js
+const response = await fetch('https://api.talkos.io/api/inbound/config', {
+  method: 'DELETE',
+  headers: {
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id',
+    'X-Confirm-Disable': 'true'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.delete(
+    'https://api.talkos.io/api/inbound/config',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id',
+        'X-Confirm-Disable': 'true'
+    }
+)
+
+data = response.json()
+```
+</CodeGroup>
+
+## Response
+
+<CodeGroup>
+```json 200 OK
+{
+  "success": true,
+  "message": "Inbound configuration deleted successfully",
+  "data": {
+    "tenantId": "your-tenant-id",
+    "deletedAt": "2026-02-18T15:00:00.000Z",
+    "previousConfig": {
+      "webhookUrl": "https://your-domain.com/webhooks/talkos-inbound",
+      "enabled": true,
+      "createdAt": "2026-01-15T08:00:00.000Z"
+    }
+  }
+}
+```
+
+```json 400 Bad Request - Missing Confirmation
+{
+  "success": false,
+  "error": "Confirmation required",
+  "message": "Set header X-Confirm-Disable: true to confirm deletion of inbound configuration"
+}
+```
+
+```json 404 Not Found
+{
+  "success": false,
+  "error": "Configuration not found",
+  "message": "No inbound configuration exists for this tenant"
+}
+```
+
+```json 401 Unauthorized
+{
+  "success": false,
+  "error": "Unauthorized",
+  "message": "Invalid or missing API key"
+}
+```
+</CodeGroup>
+
+## Important Notes
+
+<CardGroup cols={2}>
+  <Card title="Confirmation Required" icon="triangle-exclamation">
+    The `X-Confirm-Disable: true` header must be included to prevent accidental deletion.
+  </Card>
+  <Card title="Immediate Effect" icon="bolt">
+    Once deleted, all incoming calls will be immediately rejected until a new configuration is created.
+  </Card>
+  <Card title="No Recovery" icon="trash">
+    Deleted configurations cannot be recovered. Export your settings before deletion if needed.
+  </Card>
+  <Card title="Alternative Option" icon="toggle-off">
+    Consider using `PUT /api/inbound/config` with `enabled: false` for temporary disabling.
+  </Card>
+</CardGroup>
+
+## Disable vs Delete
+
+| Action | Endpoint | Effect | Reversible |
+|--------|----------|--------|------------|
+| Disable | `PUT /api/inbound/config` with `enabled: false` | Temporarily stops handling | Yes - set `enabled: true` |
+| Delete | `DELETE /api/inbound/config` | Permanently removes config | No - must recreate |
+
+<Tip>
+  Use `PUT` with `enabled: false` for temporary maintenance. Use `DELETE` only when permanently removing inbound capability.
+</Tip>

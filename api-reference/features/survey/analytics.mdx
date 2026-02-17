@@ -1,0 +1,284 @@
+---
+title: "Survey Analytics"
+description: "Get survey analytics summary for your tenant"
+api: "GET https://api.talkos.io/api/features/survey/analytics/summary"
+---
+
+# Survey Analytics
+
+Retrieve aggregated survey analytics including response rates, average scores, and score distributions.
+
+## Endpoint
+
+```
+GET /api/features/survey/analytics/summary
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Response
+
+<ResponseField name="tenantId" type="string">
+  Your tenant identifier
+</ResponseField>
+
+<ResponseField name="totalSent" type="number">
+  Total number of surveys sent
+</ResponseField>
+
+<ResponseField name="totalCompleted" type="number">
+  Total number of surveys completed
+</ResponseField>
+
+<ResponseField name="totalSkipped" type="number">
+  Total number of surveys skipped by customers
+</ResponseField>
+
+<ResponseField name="responseRate" type="number">
+  Completion rate as a decimal (0.0 to 1.0)
+</ResponseField>
+
+<ResponseField name="csat" type="object">
+  CSAT (Customer Satisfaction) metrics
+</ResponseField>
+
+<ResponseField name="csat.average" type="number">
+  Average CSAT score (1-5 scale). Null if no responses.
+</ResponseField>
+
+<ResponseField name="csat.totalResponses" type="number">
+  Number of CSAT responses collected
+</ResponseField>
+
+<ResponseField name="csat.distribution" type="object">
+  Score distribution showing count for each score (1-5)
+</ResponseField>
+
+<ResponseField name="nps" type="object">
+  NPS (Net Promoter Score) metrics
+</ResponseField>
+
+<ResponseField name="nps.score" type="number">
+  NPS score (-100 to 100). Null if no responses.
+</ResponseField>
+
+<ResponseField name="nps.totalResponses" type="number">
+  Number of NPS responses collected
+</ResponseField>
+
+<ResponseField name="recentResponses" type="array">
+  Last 10 survey responses (most recent first)
+</ResponseField>
+
+<ResponseField name="recentResponses[].surveyId" type="string">
+  Survey identifier
+</ResponseField>
+
+<ResponseField name="recentResponses[].callUuid" type="string">
+  Associated call identifier
+</ResponseField>
+
+<ResponseField name="recentResponses[].responses" type="object">
+  Survey responses
+</ResponseField>
+
+<ResponseField name="recentResponses[].timestamp" type="number">
+  When the survey was completed
+</ResponseField>
+
+<ResponseField name="timestamp" type="number">
+  When this analytics snapshot was generated
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X GET https://api.talkos.io/api/features/survey/analytics/summary \
+  -H "x-api-key: tk_live_xxxxxxxxxxxxxxxxxxxx" \
+  -H "x-tenant-id: tenant_abc123"
+```
+
+## Example Response
+
+```json
+{
+  "tenantId": "tenant_abc123",
+  "totalSent": 1250,
+  "totalCompleted": 875,
+  "totalSkipped": 125,
+  "responseRate": 0.7,
+  "csat": {
+    "average": 4.32,
+    "totalResponses": 750,
+    "distribution": {
+      "1": 15,
+      "2": 30,
+      "3": 75,
+      "4": 280,
+      "5": 350
+    }
+  },
+  "nps": {
+    "score": 42,
+    "totalResponses": 125
+  },
+  "recentResponses": [
+    {
+      "surveyId": "survey_1739836900000_a1b2c3",
+      "callUuid": "call_xyz789",
+      "responses": {
+        "q_csat_1": { "value": 5, "timestamp": 1739836950000 },
+        "q_csat_2": { "value": "yes", "timestamp": 1739836960000 }
+      },
+      "timestamp": 1739836960000
+    },
+    {
+      "surveyId": "survey_1739836800000_d4e5f6",
+      "callUuid": "call_abc456",
+      "responses": {
+        "q_csat_1": { "value": 4, "timestamp": 1739836850000 },
+        "q_csat_2": { "value": "yes", "timestamp": 1739836860000 }
+      },
+      "timestamp": 1739836860000
+    }
+  ],
+  "timestamp": 1739837000000
+}
+```
+
+## Error Response
+
+```json
+{
+  "error": "No survey data"
+}
+```
+
+## Metrics Explained
+
+### Response Rate
+
+```
+responseRate = totalCompleted / totalSent
+```
+
+A response rate of 0.7 means 70% of sent surveys were completed.
+
+### CSAT Score
+
+Customer Satisfaction Score on a 1-5 scale:
+
+| Score | Meaning |
+|-------|---------|
+| 1 | Very Unsatisfied |
+| 2 | Unsatisfied |
+| 3 | Neutral |
+| 4 | Satisfied |
+| 5 | Very Satisfied |
+
+Industry benchmark: 4.0+ is considered good.
+
+### NPS Score
+
+Net Promoter Score calculated from 0-10 ratings:
+
+| Rating | Category |
+|--------|----------|
+| 0-6 | Detractors |
+| 7-8 | Passives |
+| 9-10 | Promoters |
+
+```
+NPS = (% Promoters) - (% Detractors)
+```
+
+| NPS Range | Interpretation |
+|-----------|----------------|
+| -100 to 0 | Needs improvement |
+| 0 to 30 | Good |
+| 30 to 70 | Great |
+| 70 to 100 | Excellent |
+
+## Dashboard Integration
+
+```javascript
+async function renderSurveyDashboard() {
+  const analytics = await fetch(
+    'https://api.talkos.io/api/features/survey/analytics/summary',
+    {
+      headers: {
+        'x-api-key': API_KEY,
+        'x-tenant-id': TENANT_ID
+      }
+    }
+  ).then(r => r.json());
+  
+  // Key metrics
+  const metrics = {
+    responseRate: `${(analytics.responseRate * 100).toFixed(1)}%`,
+    csatScore: analytics.csat.average?.toFixed(2) || 'N/A',
+    npsScore: analytics.nps.score ?? 'N/A',
+    totalSurveys: analytics.totalSent
+  };
+  
+  // CSAT distribution chart
+  const csatData = Object.entries(analytics.csat.distribution)
+    .map(([score, count]) => ({ score: parseInt(score), count }));
+  
+  // Render visualization
+  renderMetricCards(metrics);
+  renderCSATChart(csatData);
+  renderRecentResponses(analytics.recentResponses);
+}
+```
+
+## Trend Analysis
+
+For historical trends, call this endpoint periodically and store the results:
+
+```javascript
+// Store daily snapshots
+async function captureDailySnapshot() {
+  const analytics = await getSurveyAnalytics();
+  
+  await db.surveySnapshots.insert({
+    date: new Date().toISOString().split('T')[0],
+    tenantId: analytics.tenantId,
+    responseRate: analytics.responseRate,
+    csatAverage: analytics.csat.average,
+    npsScore: analytics.nps.score,
+    totalSent: analytics.totalSent,
+    totalCompleted: analytics.totalCompleted
+  });
+}
+
+// Analyze trends
+function calculateTrend(snapshots) {
+  const recent = snapshots.slice(-7); // Last 7 days
+  const previous = snapshots.slice(-14, -7); // Previous 7 days
+  
+  const recentAvg = average(recent.map(s => s.csatAverage));
+  const previousAvg = average(previous.map(s => s.csatAverage));
+  
+  return {
+    direction: recentAvg > previousAvg ? 'up' : 'down',
+    change: ((recentAvg - previousAvg) / previousAvg * 100).toFixed(1)
+  };
+}
+```
+
+## Notes
+
+- Analytics are calculated in real-time from the last 1,000 responses
+- CSAT and NPS metrics are tracked separately based on survey template
+- Response rate includes completed surveys only (skipped and expired are not counted)
+- Recent responses are limited to the last 10 for performance
+- For detailed response data, query individual surveys using the [Get Survey](./get) endpoint

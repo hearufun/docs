@@ -1,0 +1,100 @@
+---
+title: "Get Session Transcript"
+api: "GET https://api.talkos.io/api/web-sessions/{sessionId}/transcript"
+description: "Get the full conversation transcript for a web session"
+---
+
+Retrieve the complete conversation transcript for a specific web session.
+
+## Path Parameters
+
+<ParamField path="sessionId" type="string" required>
+  The unique session identifier.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X GET https://api.talkos.io/api/web-sessions/ws-42e299e5-6bbf-4503-af0a-f8218524f8cf/transcript \
+  -H "x-api-key: your-api-key"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "sessionId": "ws-42e299e5-6bbf-4503-af0a-f8218524f8cf",
+  "turns": 8,
+  "transcript": [
+    {
+      "turn": 1,
+      "role": "agent",
+      "content": "Hello! How can I help you today?",
+      "timestamp": "2026-02-17T14:30:02.000Z",
+      "duration": 1.8
+    },
+    {
+      "turn": 2,
+      "role": "user",
+      "content": "Hi, I'm having trouble with my account login.",
+      "timestamp": "2026-02-17T14:30:08.000Z",
+      "duration": 3.2
+    },
+    {
+      "turn": 3,
+      "role": "agent",
+      "content": "I'd be happy to help you with that. Can you tell me what error message you're seeing when you try to log in?",
+      "timestamp": "2026-02-17T14:30:12.000Z",
+      "duration": 4.5
+    },
+    {
+      "turn": 4,
+      "role": "user",
+      "content": "It says my password is incorrect, but I'm sure I'm using the right one.",
+      "timestamp": "2026-02-17T14:30:20.000Z",
+      "duration": 4.1
+    },
+    {
+      "turn": 5,
+      "role": "agent",
+      "content": "I understand how frustrating that can be. Let me help you reset your password. I'll send a reset link to your registered email address.",
+      "timestamp": "2026-02-17T14:30:25.000Z",
+      "duration": 5.8
+    },
+    {
+      "turn": 6,
+      "role": "user",
+      "content": "That would be great, thank you.",
+      "timestamp": "2026-02-17T14:30:35.000Z",
+      "duration": 1.9
+    },
+    {
+      "turn": 7,
+      "role": "agent",
+      "content": "I've sent the password reset link. Please check your inbox and follow the instructions. Is there anything else I can help you with?",
+      "timestamp": "2026-02-17T14:30:38.000Z",
+      "duration": 5.2
+    },
+    {
+      "turn": 8,
+      "role": "user",
+      "content": "No, that's all. Thanks for your help!",
+      "timestamp": "2026-02-17T14:30:48.000Z",
+      "duration": 2.1
+    }
+  ]
+}
+```
+
+```json 404
+{
+  "error": "No transcript found for this session"
+}
+```
+
+```json 500
+{
+  "error": "Failed to get transcript",
+  "message": "Internal server error"
+}
+```
+</ResponseExample>

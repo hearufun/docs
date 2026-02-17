@@ -1,0 +1,150 @@
+---
+title: "Get Inbound Configuration"
+api: "GET https://api.talkos.io/api/inbound/config"
+description: "Retrieve your tenant's current inbound call configuration and webhook settings."
+---
+
+Retrieve the current inbound call configuration for your tenant, including webhook URL, fallback settings, and enabled status.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Request
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.talkos.io/api/inbound/config \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript Node.js
+const response = await fetch('https://api.talkos.io/api/inbound/config', {
+  method: 'GET',
+  headers: {
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/inbound/config',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    }
+)
+
+data = response.json()
+```
+</CodeGroup>
+
+## Response
+
+<CodeGroup>
+```json 200 OK
+{
+  "success": true,
+  "data": {
+    "tenantId": "your-tenant-id",
+    "webhookUrl": "https://your-domain.com/webhooks/talkos-inbound",
+    "webhookTimeoutMs": 5000,
+    "fallbackConfig": {
+      "prompt": "You are a helpful customer service agent. Apologize that our systems are temporarily unavailable and offer to take a message.",
+      "greeting": "Hello, thank you for calling. How may I assist you today?",
+      "maxDuration": 300,
+      "language": "en-US",
+      "voiceId": "alloy"
+    },
+    "retryConfig": {
+      "maxRetries": 2,
+      "retryDelayMs": 500
+    },
+    "enabled": true,
+    "stats": {
+      "totalCalls": 1542,
+      "webhookSuccessRate": 99.2,
+      "fallbackUsageRate": 0.8,
+      "averageWebhookLatencyMs": 145
+    },
+    "createdAt": "2026-01-15T08:00:00.000Z",
+    "updatedAt": "2026-02-18T10:30:00.000Z"
+  }
+}
+```
+
+```json 404 Not Found
+{
+  "success": false,
+  "error": "Configuration not found",
+  "message": "No inbound configuration exists for this tenant. Use POST /api/inbound/config to create one."
+}
+```
+
+```json 401 Unauthorized
+{
+  "success": false,
+  "error": "Unauthorized",
+  "message": "Invalid or missing API key"
+}
+```
+</CodeGroup>
+
+## Response Fields
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request was successful.
+</ResponseField>
+
+<ResponseField name="data.tenantId" type="string">
+  Your tenant identifier.
+</ResponseField>
+
+<ResponseField name="data.webhookUrl" type="string">
+  The configured webhook URL for inbound calls.
+</ResponseField>
+
+<ResponseField name="data.webhookTimeoutMs" type="integer">
+  Timeout for webhook requests in milliseconds.
+</ResponseField>
+
+<ResponseField name="data.fallbackConfig" type="object">
+  Configuration used when webhook fails or times out.
+</ResponseField>
+
+<ResponseField name="data.enabled" type="boolean">
+  Whether inbound call handling is currently enabled.
+</ResponseField>
+
+<ResponseField name="data.stats" type="object">
+  Performance statistics for your inbound configuration.
+</ResponseField>
+
+<ResponseField name="data.stats.totalCalls" type="integer">
+  Total number of inbound calls processed.
+</ResponseField>
+
+<ResponseField name="data.stats.webhookSuccessRate" type="number">
+  Percentage of successful webhook responses.
+</ResponseField>
+
+<ResponseField name="data.stats.fallbackUsageRate" type="number">
+  Percentage of calls that used fallback configuration.
+</ResponseField>
+
+<ResponseField name="data.stats.averageWebhookLatencyMs" type="number">
+  Average webhook response time in milliseconds.
+</ResponseField>

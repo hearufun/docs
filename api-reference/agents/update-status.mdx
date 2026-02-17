@@ -1,0 +1,305 @@
+---
+title: 'Update Agent Status'
+api: 'PUT https://api.talkos.io/api/agents/{agentId}/status'
+description: 'Update the availability status of an agent'
+---
+
+## Overview
+
+Updates an agent's availability status to control whether they receive transferred calls. Agents can be set to available, busy, offline, or on break. Status changes are applied immediately and affect call routing in real-time.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="agentId" type="string" required>
+  The unique identifier of the agent to update
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="status" type="string" required>
+  The new status for the agent:
+  - `available` - Ready to receive transferred calls
+  - `busy` - Currently handling calls, won't receive new transfers
+  - `offline` - Not available, signed out
+  - `break` - Temporarily away (lunch, short break)
+</ParamField>
+
+<ParamField body="reason" type="string">
+  Reason for the status change (especially useful for offline/break)
+</ParamField>
+
+<ParamField body="duration" type="integer">
+  Expected duration in minutes for `break` status. Agent auto-returns to previous status after duration.
+</ParamField>
+
+<ParamField body="returnStatus" type="string" default="available">
+  Status to return to after break ends: `available` or `busy`
+</ParamField>
+
+<ParamField body="forceUpdate" type="boolean" default="false">
+  Force status change even if agent has active calls. Use with caution.
+</ParamField>
+
+<ParamField body="notifyAgent" type="boolean" default="true">
+  Send notification to agent about status change
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the status was updated successfully
+</ResponseField>
+
+<ResponseField name="agentId" type="string">
+  The agent's unique identifier
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The agent's display name
+</ResponseField>
+
+<ResponseField name="previousStatus" type="string">
+  The agent's status before the update
+</ResponseField>
+
+<ResponseField name="currentStatus" type="string">
+  The agent's new current status
+</ResponseField>
+
+<ResponseField name="activeCalls" type="integer">
+  Number of active calls the agent is handling
+</ResponseField>
+
+<ResponseField name="statusDetails" type="object">
+  Additional status information
+  <Expandable title="properties">
+    <ResponseField name="reason" type="string">
+      Reason for the status change
+    </ResponseField>
+    <ResponseField name="duration" type="integer">
+      Break duration in minutes
+    </ResponseField>
+    <ResponseField name="returnStatus" type="string">
+      Status to return to after break
+    </ResponseField>
+    <ResponseField name="expiresAt" type="string">
+      When the break status expires
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  ISO 8601 timestamp when the status was updated
+</ResponseField>
+
+<RequestExample>
+```bash cURL - Set Available
+curl -X PUT https://api.talkos.io/api/agents/agent_sarah_001/status \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "status": "available"
+  }'
+```
+
+```bash cURL - Set Busy
+curl -X PUT https://api.talkos.io/api/agents/agent_sarah_001/status \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "status": "busy",
+    "reason": "Handling complex escalation"
+  }'
+```
+
+```bash cURL - Take Break
+curl -X PUT https://api.talkos.io/api/agents/agent_sarah_001/status \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "status": "break",
+    "reason": "Lunch break",
+    "duration": 30,
+    "returnStatus": "available"
+  }'
+```
+
+```bash cURL - Go Offline
+curl -X PUT https://api.talkos.io/api/agents/agent_sarah_001/status \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "status": "offline",
+    "reason": "End of shift"
+  }'
+```
+
+```bash cURL - Force Offline
+curl -X PUT https://api.talkos.io/api/agents/agent_sarah_001/status \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "status": "offline",
+    "reason": "Emergency",
+    "forceUpdate": true,
+    "notifyAgent": true
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 - Set Available
+{
+  "success": true,
+  "agentId": "agent_sarah_001",
+  "name": "Sarah Johnson",
+  "previousStatus": "offline",
+  "currentStatus": "available",
+  "activeCalls": 0,
+  "updatedAt": "2026-02-18T09:00:00.000Z"
+}
+```
+
+```json 200 - Set Busy
+{
+  "success": true,
+  "agentId": "agent_sarah_001",
+  "name": "Sarah Johnson",
+  "previousStatus": "available",
+  "currentStatus": "busy",
+  "activeCalls": 2,
+  "statusDetails": {
+    "reason": "Handling complex escalation"
+  },
+  "updatedAt": "2026-02-18T14:30:00.000Z"
+}
+```
+
+```json 200 - Break Started
+{
+  "success": true,
+  "agentId": "agent_sarah_001",
+  "name": "Sarah Johnson",
+  "previousStatus": "available",
+  "currentStatus": "break",
+  "activeCalls": 0,
+  "statusDetails": {
+    "reason": "Lunch break",
+    "duration": 30,
+    "returnStatus": "available",
+    "expiresAt": "2026-02-18T13:30:00.000Z"
+  },
+  "updatedAt": "2026-02-18T13:00:00.000Z"
+}
+```
+
+```json 200 - Force Offline
+{
+  "success": true,
+  "agentId": "agent_sarah_001",
+  "name": "Sarah Johnson",
+  "previousStatus": "busy",
+  "currentStatus": "offline",
+  "activeCalls": 1,
+  "statusDetails": {
+    "reason": "Emergency",
+    "forcedUpdate": true,
+    "callsTransferred": 1
+  },
+  "updatedAt": "2026-02-18T14:45:00.000Z"
+}
+```
+
+```json 400 - Bad Request
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_STATUS",
+    "message": "Status must be one of: available, busy, offline, break"
+  }
+}
+```
+
+```json 404 - Not Found
+{
+  "success": false,
+  "error": {
+    "code": "AGENT_NOT_FOUND",
+    "message": "No agent found with the specified ID"
+  }
+}
+```
+
+```json 409 - Active Calls
+{
+  "success": false,
+  "error": {
+    "code": "AGENT_HAS_ACTIVE_CALLS",
+    "message": "Cannot set offline status while agent has active calls. Use forceUpdate=true to override."
+  }
+}
+```
+</ResponseExample>
+
+## Status Transitions
+
+```
+┌─────────────┐
+│   offline   │◄──────────────────────────────────┐
+└──────┬──────┘                                   │
+       │                                          │
+       ▼                                          │
+┌─────────────┐      ┌─────────────┐      ┌──────┴──────┐
+│  available  │◄────►│    busy     │◄────►│    break    │
+└─────────────┘      └─────────────┘      └─────────────┘
+       │                    │                     │
+       └────────────────────┴─────────────────────┘
+                           │
+                           ▼
+                    (all can go to offline)
+```
+
+## Agent Statuses
+
+| Status | Description | Receives Transfers |
+|--------|-------------|-------------------|
+| `available` | Ready and waiting for calls | Yes |
+| `busy` | Currently on call(s) at capacity | No |
+| `break` | Temporarily unavailable | No |
+| `offline` | Not working/signed out | No |
+
+## Auto-Status Features
+
+- **Break Timer**: When `duration` is set, agent automatically returns to `returnStatus` after the specified time
+- **Busy Detection**: System can auto-set `busy` when agent reaches `maxConcurrentCalls`
+- **Schedule Enforcement**: Agents outside work schedule hours are automatically set to `offline`
+
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| `AGENT_NOT_FOUND` | No agent exists with this ID |
+| `INVALID_STATUS` | Status value not recognized |
+| `AGENT_HAS_ACTIVE_CALLS` | Cannot go offline with active calls without force |
+| `INVALID_DURATION` | Break duration must be positive integer |
+| `INVALID_RETURN_STATUS` | Return status must be available or busy |
+| `STATUS_CHANGE_TOO_FREQUENT` | Rate limit on status changes exceeded |

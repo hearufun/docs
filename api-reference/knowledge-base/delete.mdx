@@ -1,0 +1,120 @@
+---
+title: "Delete Knowledge Base"
+api: "DELETE https://api.talkos.io/api/knowledge-base/:id"
+description: "Permanently delete a knowledge base and all its documents"
+---
+
+## Overview
+
+Permanently delete a knowledge base and all associated documents, chunks, and embeddings. This action cannot be undone. Any AI agents configured to use this knowledge base will no longer have access to its content.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the knowledge base to delete
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="confirm" type="boolean">
+  Set to `true` to confirm deletion. Required for knowledge bases with documents. Default: `false`.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the knowledge base was deleted successfully
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Confirmation message
+</ResponseField>
+
+<ResponseField name="deleted" type="object">
+  <Expandable title="properties">
+    <ResponseField name="knowledgeBaseId" type="string">
+      ID of the deleted knowledge base
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Name of the deleted knowledge base
+    </ResponseField>
+    <ResponseField name="documentsDeleted" type="number">
+      Number of documents deleted
+    </ResponseField>
+    <ResponseField name="chunksDeleted" type="number">
+      Number of chunks deleted
+    </ResponseField>
+    <ResponseField name="tokensFreed" type="number">
+      Number of tokens removed from index
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X DELETE "https://api.talkos.io/api/knowledge-base/kb_8f3d2a1b-4c5e-6f7a-8b9c-0d1e2f3a4b5c?confirm=true" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```bash cURL (Without Confirmation - Will Fail if Documents Exist)
+curl -X DELETE "https://api.talkos.io/api/knowledge-base/kb_8f3d2a1b-4c5e-6f7a-8b9c-0d1e2f3a4b5c" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "message": "Knowledge base deleted successfully",
+  "deleted": {
+    "knowledgeBaseId": "kb_8f3d2a1b-4c5e-6f7a-8b9c-0d1e2f3a4b5c",
+    "name": "Product Documentation",
+    "documentsDeleted": 15,
+    "chunksDeleted": 842,
+    "tokensFreed": 125430
+  }
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": "Knowledge base contains 15 documents. Set confirm=true to proceed with deletion."
+}
+```
+
+```json 404
+{
+  "success": false,
+  "error": "Knowledge base not found"
+}
+```
+
+```json 409
+{
+  "success": false,
+  "error": "Knowledge base is currently in use by active agents. Disconnect agents before deleting."
+}
+```
+</ResponseExample>
+
+<Warning>
+This operation is **irreversible**. All documents, embeddings, and search history will be permanently deleted. Make sure to backup any important data before deletion.
+</Warning>
+
+<Note>
+If the knowledge base is currently assigned to any AI agents, you must first remove it from those agents before deletion. Use the [Agent Configuration](/api-reference/agents/update) endpoint to update agent settings.
+</Note>

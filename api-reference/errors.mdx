@@ -1,0 +1,475 @@
+---
+title: 'Error Codes'
+description: 'Complete reference for TalkOS API error codes and handling'
+---
+
+# Error Handling
+
+The TalkOS API uses conventional HTTP response codes to indicate the success or failure of an API request. In general:
+
+- `2xx` - Success
+- `4xx` - Client errors (invalid request, authentication issues)
+- `5xx` - Server errors (something went wrong on our end)
+
+## Error Response Structure
+
+All error responses follow a consistent format:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human-readable error description",
+    "details": {
+      // Additional context about the error
+    }
+  },
+  "meta": {
+    "requestId": "req_abc123def456",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+
+<Tip>
+  Always include the `requestId` when contacting support - it helps us quickly locate and debug issues.
+</Tip>
+
+## HTTP Status Codes
+
+### 400 Bad Request
+
+The request was malformed or contained invalid parameters.
+
+<CodeGroup>
+```json Validation Error
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Request validation failed",
+    "details": {
+      "errors": [
+        {
+          "field": "phoneNumber",
+          "message": "Phone number must be in E.164 format",
+          "received": "9876543210"
+        },
+        {
+          "field": "agentId",
+          "message": "agentId is required",
+          "received": null
+        }
+      ]
+    }
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+
+```json Invalid JSON
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_JSON",
+    "message": "Request body contains invalid JSON",
+    "details": {
+      "parseError": "Unexpected token } at position 45"
+    }
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+
+```json Missing Required Field
+{
+  "success": false,
+  "error": {
+    "code": "MISSING_REQUIRED_FIELD",
+    "message": "Required field 'name' is missing",
+    "details": {
+      "field": "name",
+      "type": "string"
+    }
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+</CodeGroup>
+
+**Common Causes:**
+- Missing required fields in the request body
+- Invalid field types (string instead of number)
+- Invalid phone number format
+- Invalid enum values
+
+### 401 Unauthorized
+
+Authentication failed or credentials are missing.
+
+<CodeGroup>
+```json Missing API Key
+{
+  "success": false,
+  "error": {
+    "code": "MISSING_API_KEY",
+    "message": "API key is required. Please include x-api-key header.",
+    "details": {}
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+
+```json Invalid API Key
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_API_KEY",
+    "message": "The provided API key is invalid or has been revoked",
+    "details": {}
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+
+```json Missing Tenant ID
+{
+  "success": false,
+  "error": {
+    "code": "MISSING_TENANT_ID",
+    "message": "Tenant ID is required. Please include x-tenant-id header.",
+    "details": {}
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+</CodeGroup>
+
+**Common Causes:**
+- Missing `x-api-key` header
+- Missing `x-tenant-id` header
+- Expired or revoked API key
+- API key doesn't match tenant ID
+
+### 403 Forbidden
+
+The API key doesn't have permission to perform the requested action.
+
+<CodeGroup>
+```json Insufficient Permissions
+{
+  "success": false,
+  "error": {
+    "code": "INSUFFICIENT_PERMISSIONS",
+    "message": "Your API key does not have permission to access this resource",
+    "details": {
+      "requiredPermission": "calls:write",
+      "currentPermissions": ["calls:read"]
+    }
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+
+```json Plan Limit Exceeded
+{
+  "success": false,
+  "error": {
+    "code": "PLAN_LIMIT_EXCEEDED",
+    "message": "This feature is not available on your current plan",
+    "details": {
+      "feature": "voice_biometrics",
+      "currentPlan": "starter",
+      "requiredPlan": "enterprise"
+    }
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+
+```json Resource Access Denied
+{
+  "success": false,
+  "error": {
+    "code": "RESOURCE_ACCESS_DENIED",
+    "message": "You do not have access to this resource",
+    "details": {
+      "resourceType": "call",
+      "resourceId": "call_xyz789"
+    }
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+</CodeGroup>
+
+**Common Causes:**
+- API key has restricted permissions
+- Trying to access another tenant's resources
+- Feature not available on current plan
+- Account is suspended
+
+### 404 Not Found
+
+The requested resource doesn't exist.
+
+<CodeGroup>
+```json Resource Not Found
+{
+  "success": false,
+  "error": {
+    "code": "RESOURCE_NOT_FOUND",
+    "message": "Call not found",
+    "details": {
+      "resourceType": "call",
+      "resourceId": "call_nonexistent123"
+    }
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+
+```json Endpoint Not Found
+{
+  "success": false,
+  "error": {
+    "code": "ENDPOINT_NOT_FOUND",
+    "message": "The requested endpoint does not exist",
+    "details": {
+      "path": "/api/v1/invalid-endpoint",
+      "method": "GET"
+    }
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+</CodeGroup>
+
+**Common Causes:**
+- Resource was deleted
+- Incorrect resource ID
+- Typo in endpoint URL
+- Using wrong API version
+
+### 429 Too Many Requests
+
+You've exceeded the rate limit.
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Too many requests. Please slow down.",
+    "details": {
+      "limit": 100,
+      "window": "60s",
+      "retryAfter": 32
+    }
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+
+**Response Headers:**
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Maximum requests per window |
+| `X-RateLimit-Remaining` | Requests remaining in current window |
+| `X-RateLimit-Reset` | Unix timestamp when the limit resets |
+| `Retry-After` | Seconds to wait before retrying |
+
+**Solutions:**
+- Implement exponential backoff
+- Cache responses where possible
+- Upgrade to a higher plan for increased limits
+- Use bulk endpoints for batch operations
+
+### 500 Internal Server Error
+
+Something went wrong on our servers.
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INTERNAL_ERROR",
+    "message": "An unexpected error occurred. Our team has been notified.",
+    "details": {}
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+
+**What to do:**
+1. Retry the request with exponential backoff
+2. If the error persists, contact support with the `requestId`
+3. Check [status.talkos.io](https://status.talkos.io) for any ongoing incidents
+
+### 502 Bad Gateway
+
+The server received an invalid response from an upstream service.
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "BAD_GATEWAY",
+    "message": "Unable to reach telephony provider",
+    "details": {
+      "provider": "plivo"
+    }
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+
+### 503 Service Unavailable
+
+The service is temporarily unavailable.
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "SERVICE_UNAVAILABLE",
+    "message": "Service temporarily unavailable. Please try again later.",
+    "details": {
+      "maintenanceWindow": "2026-02-18T02:00:00Z to 2026-02-18T04:00:00Z"
+    }
+  },
+  "meta": {
+    "requestId": "req_abc123",
+    "timestamp": "2026-02-18T10:30:00Z"
+  }
+}
+```
+
+## Error Code Reference
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `VALIDATION_ERROR` | 400 | Request validation failed |
+| `INVALID_JSON` | 400 | Malformed JSON in request body |
+| `MISSING_REQUIRED_FIELD` | 400 | Required field not provided |
+| `INVALID_FIELD_TYPE` | 400 | Field has wrong type |
+| `INVALID_PHONE_NUMBER` | 400 | Phone number format invalid |
+| `MISSING_API_KEY` | 401 | x-api-key header missing |
+| `INVALID_API_KEY` | 401 | API key invalid or revoked |
+| `MISSING_TENANT_ID` | 401 | x-tenant-id header missing |
+| `INVALID_TENANT_ID` | 401 | Tenant ID not found |
+| `INSUFFICIENT_PERMISSIONS` | 403 | API key lacks required permissions |
+| `PLAN_LIMIT_EXCEEDED` | 403 | Feature not in current plan |
+| `RESOURCE_ACCESS_DENIED` | 403 | Cannot access this resource |
+| `ACCOUNT_SUSPENDED` | 403 | Account has been suspended |
+| `RESOURCE_NOT_FOUND` | 404 | Requested resource not found |
+| `ENDPOINT_NOT_FOUND` | 404 | API endpoint doesn't exist |
+| `RATE_LIMIT_EXCEEDED` | 429 | Too many requests |
+| `INTERNAL_ERROR` | 500 | Server error |
+| `BAD_GATEWAY` | 502 | Upstream service error |
+| `SERVICE_UNAVAILABLE` | 503 | Temporary service outage |
+
+## Best Practices for Error Handling
+
+<AccordionGroup>
+  <Accordion title="Implement Retry Logic">
+    For `5xx` errors and `429`, implement exponential backoff:
+    
+    ```javascript
+    async function makeRequestWithRetry(fn, maxRetries = 3) {
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          return await fn();
+        } catch (error) {
+          if (error.status >= 500 || error.status === 429) {
+            const delay = Math.pow(2, i) * 1000;
+            await sleep(delay);
+            continue;
+          }
+          throw error;
+        }
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Log Request IDs">
+    Always log the `requestId` from error responses for debugging:
+    
+    ```javascript
+    try {
+      const response = await talkos.calls.create({...});
+    } catch (error) {
+      console.error('TalkOS API Error:', {
+        code: error.code,
+        message: error.message,
+        requestId: error.meta?.requestId
+      });
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Handle Specific Error Codes">
+    Handle errors based on their code, not just HTTP status:
+    
+    ```javascript
+    switch (error.code) {
+      case 'INVALID_PHONE_NUMBER':
+        // Show user-friendly message about phone format
+        break;
+      case 'RATE_LIMIT_EXCEEDED':
+        // Queue the request for later
+        break;
+      case 'PLAN_LIMIT_EXCEEDED':
+        // Prompt user to upgrade
+        break;
+      default:
+        // Generic error handling
+    }
+    ```
+  </Accordion>
+</AccordionGroup>

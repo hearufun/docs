@@ -1,0 +1,168 @@
+---
+title: "List Escalation Rules"
+description: "Retrieve all escalation rules for your tenant"
+api: "GET https://api.talkos.io/api/features/escalation/rules"
+---
+
+# List Escalation Rules
+
+Retrieve all configured escalation rules for your tenant, including both built-in and custom rules.
+
+## Endpoint
+
+```
+GET /api/features/escalation/rules
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Response
+
+<ResponseField name="rules" type="array">
+  Array of all escalation rules
+</ResponseField>
+
+<ResponseField name="rules[].id" type="string">
+  Unique identifier for the rule
+</ResponseField>
+
+<ResponseField name="rules[].name" type="string">
+  Human-readable name of the rule
+</ResponseField>
+
+<ResponseField name="rules[].description" type="string">
+  Description of what the rule does
+</ResponseField>
+
+<ResponseField name="rules[].conditions" type="array">
+  Array of conditions that trigger the rule
+</ResponseField>
+
+<ResponseField name="rules[].logic" type="string">
+  Logic operator for multiple conditions: `AND` or `OR`
+</ResponseField>
+
+<ResponseField name="rules[].priority" type="string">
+  Priority level: `low`, `medium`, `high`, or `critical`
+</ResponseField>
+
+<ResponseField name="rules[].action" type="object">
+  Action to take when rule triggers
+</ResponseField>
+
+<ResponseField name="rules[].cooldownSeconds" type="number">
+  Cooldown period before rule can re-trigger
+</ResponseField>
+
+<ResponseField name="rules[].enabled" type="boolean">
+  Whether the rule is currently active
+</ResponseField>
+
+<ResponseField name="rules[].builtIn" type="boolean">
+  Whether this is a built-in system rule
+</ResponseField>
+
+<ResponseField name="count" type="number">
+  Total number of rules
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET https://api.talkos.io/api/features/escalation/rules \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/escalation/rules', {
+  method: 'GET',
+  headers: {
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/features/escalation/rules',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "rules": [
+    {
+      "id": "rule_negative_sentiment_3x",
+      "name": "3+ Negative Turns",
+      "description": "Escalate if customer is negative for 3+ consecutive turns",
+      "conditions": [
+        { "field": "consecutiveNegativeTurns", "operator": "gte", "value": 3 }
+      ],
+      "logic": "AND",
+      "priority": "high",
+      "action": { "type": "transfer", "target": "senior_agent" },
+      "cooldownSeconds": 120,
+      "enabled": true,
+      "builtIn": true
+    },
+    {
+      "id": "rule_anger_detected",
+      "name": "Anger Detection",
+      "description": "Immediate escalation on detected anger",
+      "conditions": [
+        { "field": "emotion", "operator": "eq", "value": "anger" },
+        { "field": "emotionConfidence", "operator": "gte", "value": 0.8 }
+      ],
+      "logic": "AND",
+      "priority": "critical",
+      "action": { "type": "transfer", "target": "supervisor" },
+      "cooldownSeconds": 60,
+      "enabled": true,
+      "builtIn": true
+    },
+    {
+      "id": "rule_long_call",
+      "name": "Long Call Duration",
+      "description": "Flag calls exceeding 10 minutes",
+      "conditions": [
+        { "field": "callDurationSeconds", "operator": "gte", "value": 600 }
+      ],
+      "logic": "AND",
+      "priority": "medium",
+      "action": { "type": "notify", "target": "supervisor" },
+      "cooldownSeconds": 300,
+      "enabled": true,
+      "builtIn": true
+    }
+  ],
+  "count": 3
+}
+```
+
+```json 500
+{
+  "error": "Failed to retrieve escalation rules"
+}
+```
+</ResponseExample>

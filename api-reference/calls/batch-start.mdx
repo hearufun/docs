@@ -1,0 +1,454 @@
+---
+title: "Batch Start Calls"
+description: "Initiate multiple AI-powered calls in a single batch request for campaigns"
+api: "POST https://api.talkos.io/api/calls/batch/start"
+---
+
+# Batch Start Calls
+
+Initiate multiple AI-powered outbound calls in a single request. Ideal for marketing campaigns, appointment reminders, surveys, and bulk notifications. Calls are queued and executed based on concurrency limits.
+
+## Endpoint
+
+```
+POST /api/calls/batch/start
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Request Body
+
+### Required Fields
+
+<ParamField body="calls" type="array" required>
+  Array of call objects to initiate. Each call object supports all fields from the Start Call endpoint:
+
+  <Expandable title="call object properties">
+    <ParamField body="to" type="string" required>
+      Phone number to call in E.164 format (e.g., `+14155551234`)
+    </ParamField>
+
+    <ParamField body="from" type="string" required>
+      Your caller ID number in E.164 format
+    </ParamField>
+
+    <ParamField body="prompt" type="string" required>
+      AI system prompt defining the agent's behavior
+    </ParamField>
+
+    <ParamField body="greeting" type="string">
+      First message the AI speaks when call connects
+    </ParamField>
+
+    <ParamField body="webhookUrl" type="string">
+      URL for individual call completion callback
+    </ParamField>
+
+    <ParamField body="maxDuration" type="number" default="600">
+      Maximum call duration in seconds
+    </ParamField>
+
+    <ParamField body="language" type="string" default="en-US">
+      Language code for the call
+    </ParamField>
+
+    <ParamField body="voiceId" type="string">
+      ElevenLabs voice ID for text-to-speech
+    </ParamField>
+
+    <ParamField body="metadata" type="object">
+      Custom metadata for the individual call
+    </ParamField>
+
+    <ParamField body="variables" type="object">
+      Dynamic variables to inject into prompt (e.g., `{customerName}`, `{appointmentDate}`)
+    </ParamField>
+  </Expandable>
+
+  Maximum 1000 calls per batch request.
+</ParamField>
+
+### Optional Fields
+
+<ParamField body="campaignId" type="string">
+  Unique campaign identifier for grouping and tracking batch calls. If not provided, a UUID will be automatically generated.
+</ParamField>
+
+<ParamField body="campaignName" type="string">
+  Human-readable name for the campaign
+</ParamField>
+
+<ParamField body="priority" type="number" default="5">
+  Queue priority for the batch (1-10). Higher priority batches are processed first. Default is 5.
+</ParamField>
+
+<ParamField body="maxConcurrent" type="number">
+  Maximum number of concurrent calls from this batch. Must not exceed your plan's concurrency limit. If not specified, uses account default.
+</ParamField>
+
+<ParamField body="scheduleAt" type="string">
+  ISO 8601 timestamp to schedule the batch for future execution. If not provided, batch starts immediately.
+</ParamField>
+
+<ParamField body="timezone" type="string" default="UTC">
+  Timezone for scheduling (e.g., `America/New_York`, `Asia/Kolkata`). Used with `scheduleAt`.
+</ParamField>
+
+<ParamField body="callWindow" type="object">
+  Time window restrictions for calling:
+  - `startTime` (string): Earliest time to call in HH:MM format (e.g., `09:00`)
+  - `endTime` (string): Latest time to call in HH:MM format (e.g., `18:00`)
+  - `timezone` (string): Timezone for the window
+  - `skipWeekends` (boolean): Skip Saturday and Sunday
+</ParamField>
+
+<ParamField body="retryPolicy" type="object">
+  Automatic retry configuration for failed calls:
+  - `enabled` (boolean): Enable automatic retries
+  - `maxAttempts` (number): Maximum retry attempts (1-5)
+  - `retryOn` (array): Conditions to retry on: `no-answer`, `busy`, `failed`
+  - `delayMinutes` (number): Minutes to wait between retries
+</ParamField>
+
+<ParamField body="batchWebhookUrl" type="string">
+  URL to receive batch completion callback when all calls finish
+</ParamField>
+
+<ParamField body="globalMetadata" type="object">
+  Metadata applied to all calls in the batch
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the batch was successfully queued
+</ResponseField>
+
+<ResponseField name="batchId" type="string">
+  Unique identifier for the batch. Use this to track batch status.
+</ResponseField>
+
+<ResponseField name="campaignId" type="string">
+  Campaign identifier (provided or auto-generated)
+</ResponseField>
+
+<ResponseField name="totalCalls" type="number">
+  Total number of calls in the batch
+</ResponseField>
+
+<ResponseField name="acceptedCalls" type="number">
+  Number of calls accepted for processing
+</ResponseField>
+
+<ResponseField name="rejectedCalls" type="number">
+  Number of calls rejected due to validation errors
+</ResponseField>
+
+<ResponseField name="rejections" type="array">
+  Details of rejected calls:
+  - `index` (number): Array index of rejected call
+  - `to` (string): Phone number that was rejected
+  - `reason` (string): Rejection reason
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Batch status: `queued`, `scheduled`, `processing`, or `completed`
+</ResponseField>
+
+<ResponseField name="scheduledAt" type="string">
+  ISO 8601 timestamp of scheduled execution (if scheduled)
+</ResponseField>
+
+<ResponseField name="estimatedCompletionTime" type="string">
+  Estimated ISO 8601 timestamp when batch will complete
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp of batch creation
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.talkos.io/api/calls/batch/start \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "campaignId": "appointment_reminders_feb_2026",
+    "campaignName": "February Appointment Reminders",
+    "priority": 7,
+    "maxConcurrent": 10,
+    "calls": [
+      {
+        "to": "+14155551234",
+        "from": "+14155550000",
+        "prompt": "You are a friendly appointment reminder assistant for Dr. Smith'\''s Dental Office. Remind the patient of their upcoming appointment and confirm attendance. Be polite and professional.",
+        "greeting": "Hi {{customerName}}, this is a courtesy call from Dr. Smith'\''s Dental Office.",
+        "variables": {
+          "customerName": "John",
+          "appointmentDate": "February 20, 2026",
+          "appointmentTime": "2:30 PM"
+        },
+        "metadata": {
+          "patientId": "pat_001",
+          "appointmentId": "apt_123"
+        }
+      },
+      {
+        "to": "+14155555678",
+        "from": "+14155550000",
+        "prompt": "You are a friendly appointment reminder assistant for Dr. Smith'\''s Dental Office. Remind the patient of their upcoming appointment and confirm attendance.",
+        "greeting": "Hi {{customerName}}, this is a courtesy call from Dr. Smith'\''s Dental Office.",
+        "variables": {
+          "customerName": "Sarah",
+          "appointmentDate": "February 21, 2026",
+          "appointmentTime": "10:00 AM"
+        },
+        "metadata": {
+          "patientId": "pat_002",
+          "appointmentId": "apt_124"
+        }
+      }
+    ],
+    "callWindow": {
+      "startTime": "09:00",
+      "endTime": "18:00",
+      "timezone": "America/New_York",
+      "skipWeekends": true
+    },
+    "retryPolicy": {
+      "enabled": true,
+      "maxAttempts": 2,
+      "retryOn": ["no-answer", "busy"],
+      "delayMinutes": 30
+    },
+    "batchWebhookUrl": "https://yourapp.com/webhooks/batch-complete",
+    "globalMetadata": {
+      "source": "appointment_system",
+      "campaign": "feb_reminders"
+    }
+  }'
+```
+
+```javascript Node.js
+const response = await fetch('https://api.talkos.io/api/calls/batch/start', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  },
+  body: JSON.stringify({
+    campaignId: 'appointment_reminders_feb_2026',
+    campaignName: 'February Appointment Reminders',
+    priority: 7,
+    maxConcurrent: 10,
+    calls: [
+      {
+        to: '+14155551234',
+        from: '+14155550000',
+        prompt: 'You are a friendly appointment reminder assistant...',
+        greeting: 'Hi {{customerName}}, this is a courtesy call...',
+        variables: {
+          customerName: 'John',
+          appointmentDate: 'February 20, 2026',
+          appointmentTime: '2:30 PM'
+        }
+      },
+      // ... more calls
+    ],
+    retryPolicy: {
+      enabled: true,
+      maxAttempts: 2,
+      retryOn: ['no-answer', 'busy'],
+      delayMinutes: 30
+    }
+  })
+});
+
+const data = await response.json();
+console.log(`Batch ${data.batchId} created with ${data.acceptedCalls} calls`);
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/calls/batch/start',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    json={
+        'campaignId': 'appointment_reminders_feb_2026',
+        'campaignName': 'February Appointment Reminders',
+        'priority': 7,
+        'maxConcurrent': 10,
+        'calls': [
+            {
+                'to': '+14155551234',
+                'from': '+14155550000',
+                'prompt': 'You are a friendly appointment reminder assistant...',
+                'greeting': 'Hi {{customerName}}, this is a courtesy call...',
+                'variables': {
+                    'customerName': 'John',
+                    'appointmentDate': 'February 20, 2026',
+                    'appointmentTime': '2:30 PM'
+                }
+            }
+        ],
+        'retryPolicy': {
+            'enabled': True,
+            'maxAttempts': 2,
+            'retryOn': ['no-answer', 'busy'],
+            'delayMinutes': 30
+        }
+    }
+)
+
+data = response.json()
+print(f"Batch {data['batchId']} created")
+```
+</CodeGroup>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "batchId": "batch_x7y8z9-a1b2c3d4e5f6",
+  "campaignId": "appointment_reminders_feb_2026",
+  "totalCalls": 100,
+  "acceptedCalls": 98,
+  "rejectedCalls": 2,
+  "rejections": [
+    {
+      "index": 45,
+      "to": "+1415555invalid",
+      "reason": "Invalid phone number format"
+    },
+    {
+      "index": 72,
+      "to": "+14155551111",
+      "reason": "Number is in DNC list"
+    }
+  ],
+  "status": "queued",
+  "scheduledAt": null,
+  "estimatedCompletionTime": "2026-02-18T12:45:00.000Z",
+  "createdAt": "2026-02-18T10:30:00.000Z"
+}
+```
+
+## Error Responses
+
+<ResponseField name="400 Bad Request">
+```json
+{
+  "success": false,
+  "error": "Invalid request body",
+  "code": "VALIDATION_ERROR",
+  "details": {
+    "field": "calls",
+    "message": "calls array is required and must not be empty"
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="400 Bad Request - Too Many Calls">
+```json
+{
+  "success": false,
+  "error": "Batch size exceeds limit",
+  "code": "BATCH_SIZE_EXCEEDED",
+  "details": {
+    "maxAllowed": 1000,
+    "provided": 1500
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="401 Unauthorized">
+```json
+{
+  "success": false,
+  "error": "Invalid API key",
+  "code": "UNAUTHORIZED"
+}
+```
+</ResponseField>
+
+<ResponseField name="402 Payment Required">
+```json
+{
+  "success": false,
+  "error": "Insufficient credits for batch",
+  "code": "INSUFFICIENT_CREDITS",
+  "details": {
+    "estimatedCost": 5000,
+    "available": 2500
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="403 Forbidden">
+```json
+{
+  "success": false,
+  "error": "Batch calling not enabled for this plan",
+  "code": "FEATURE_NOT_AVAILABLE"
+}
+```
+</ResponseField>
+
+<ResponseField name="429 Too Many Requests">
+```json
+{
+  "success": false,
+  "error": "Too many batch requests",
+  "code": "RATE_LIMITED",
+  "details": {
+    "retryAfter": 60,
+    "message": "Maximum 10 batch requests per minute"
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="500 Internal Server Error">
+```json
+{
+  "success": false,
+  "error": "Internal server error",
+  "code": "INTERNAL_ERROR"
+}
+```
+</ResponseField>
+
+## Notes
+
+- Maximum 1000 calls per batch request
+- Calls are deduplicated by phone number within a batch
+- DNC (Do Not Call) list is automatically checked before calling
+- Variable substitution uses `{{variableName}}` syntax in prompts and greetings
+- Batch execution respects rate limits and concurrency settings
+- Use Get Batch Status endpoint to monitor progress
+- Batch webhooks include aggregate statistics and individual call results

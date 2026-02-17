@@ -1,0 +1,374 @@
+---
+title: "Start Call"
+description: "Initiate an AI-powered outbound voice call"
+api: "POST https://api.talkos.io/api/calls/start"
+---
+
+# Start Call
+
+Initiate an AI-powered outbound voice call with customizable AI behavior, voice settings, and advanced features like function calling, knowledge base integration, and real-time analytics.
+
+## Endpoint
+
+```
+POST /api/calls/start
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Request Body
+
+### Required Fields
+
+<ParamField body="to" type="string" required>
+  Phone number to call in E.164 format (e.g., `+14155551234`). Must include country code with `+` prefix.
+</ParamField>
+
+<ParamField body="from" type="string" required>
+  Your caller ID number in E.164 format. This number must be verified and registered with your account.
+</ParamField>
+
+<ParamField body="prompt" type="string" required>
+  AI system prompt defining the agent's behavior, personality, and conversation guidelines. This is the core instruction set that shapes how the AI conducts the call.
+</ParamField>
+
+### Optional Fields
+
+<ParamField body="greeting" type="string">
+  The first message the AI speaks when the call connects. If not provided, the AI will generate an appropriate greeting based on the prompt.
+</ParamField>
+
+<ParamField body="webhookUrl" type="string">
+  URL to receive call completion callback with full call details, transcript, and analytics. Must be a valid HTTPS URL.
+</ParamField>
+
+<ParamField body="maxDuration" type="number" default="600">
+  Maximum call duration in seconds. The call will automatically end when this limit is reached. Range: 60-3600 seconds.
+</ParamField>
+
+<ParamField body="language" type="string" default="en-US">
+  Language code for speech recognition and synthesis. Supported values:
+  - `en-US` - English (United States)
+  - `en-GB` - English (United Kingdom)
+  - `en-IN` - English (India)
+  - `en-AU` - English (Australia)
+  - `hi-IN` - Hindi (India)
+  - `es-ES` - Spanish (Spain)
+  - `es-MX` - Spanish (Mexico)
+  - `fr-FR` - French (France)
+  - `de-DE` - German (Germany)
+  - `pt-BR` - Portuguese (Brazil)
+</ParamField>
+
+<ParamField body="voiceId" type="string">
+  ElevenLabs voice ID for text-to-speech. Use the Voices API to list available voices. If not specified, the default tenant voice is used.
+</ParamField>
+
+<ParamField body="speed" type="number" default="1.0">
+  Voice playback speed multiplier. Range: 0.5 (half speed) to 2.0 (double speed).
+</ParamField>
+
+<ParamField body="pitch" type="number" default="1.0">
+  Voice pitch adjustment. Range: 0.5 (lower pitch) to 2.0 (higher pitch).
+</ParamField>
+
+<ParamField body="tools" type="array">
+  Array of function calling tools the AI can invoke during the conversation. Each tool object contains:
+  - `name` (string): Unique tool identifier
+  - `description` (string): Description of what the tool does (used by AI to decide when to call it)
+  - `parameters` (object): JSON Schema defining the tool's parameters
+  - `webhookUrl` (string): URL to call when the tool is invoked
+</ParamField>
+
+<ParamField body="knowledgeBaseId" type="string">
+  ID of a knowledge base to enable RAG (Retrieval-Augmented Generation). The AI will search this knowledge base to provide accurate, contextual responses.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Custom key-value metadata to attach to the call. This data is returned in webhooks and can be used for tracking, analytics, or CRM integration.
+</ParamField>
+
+<ParamField body="dialerProvider" type="string" default="plivo">
+  Telephony provider for call routing. Options:
+  - `plivo` - Plivo telephony
+  - `exotel` - Exotel telephony (India-focused)
+</ParamField>
+
+<ParamField body="analyticsPrompt" type="string">
+  Custom prompt for post-call analytics extraction. Define specific data points to extract from the conversation (e.g., customer sentiment, key topics discussed, action items).
+</ParamField>
+
+<ParamField body="guardrails" type="object">
+  Content filtering and safety rules:
+  - `blockedTopics` (array): Topics the AI should avoid discussing
+  - `requiredDisclosures` (array): Statements the AI must make during the call
+  - `maxResponseLength` (number): Maximum words per AI response
+  - `allowProfanity` (boolean): Whether to allow profanity in responses
+</ParamField>
+
+<ParamField body="recording" type="object">
+  Call recording configuration:
+  - `enabled` (boolean): Whether to record the call (default: true)
+  - `format` (string): Recording format - `mp3`, `wav`, or `ogg` (default: `mp3`)
+  - `stereo` (boolean): Record in stereo with separate channels per speaker (default: false)
+</ParamField>
+
+<ParamField body="reengagement" type="object">
+  Silence handling and re-engagement settings:
+  - `enabled` (boolean): Enable automatic re-engagement on silence
+  - `maxSilenceSeconds` (number): Seconds of silence before re-engagement (default: 5)
+  - `promptOnSilence` (string): What the AI says to re-engage the caller
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the call was successfully initiated
+</ResponseField>
+
+<ResponseField name="callUuid" type="string">
+  Unique identifier for the call. Use this to track status and retrieve recordings.
+</ResponseField>
+
+<ResponseField name="sessionId" type="string">
+  WebSocket session ID for real-time call events
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Initial call status: `queued`, `dialing`, or `in-progress`
+</ResponseField>
+
+<ResponseField name="estimatedWaitTime" type="number">
+  Estimated seconds until call connects (if queued)
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp of call creation
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.talkos.io/api/calls/start \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "to": "+14155551234",
+    "from": "+14155550000",
+    "prompt": "You are Sarah, a friendly customer service representative for TechCorp. Your goal is to help customers with their technical issues. Be patient, empathetic, and solution-oriented. If you cannot resolve an issue, offer to escalate to a human agent.",
+    "greeting": "Hi! This is Sarah from TechCorp. How can I help you today?",
+    "webhookUrl": "https://yourapp.com/webhooks/call-complete",
+    "maxDuration": 900,
+    "language": "en-US",
+    "voiceId": "21m00Tcm4TlvDq8ikWAM",
+    "speed": 1.0,
+    "pitch": 1.0,
+    "tools": [
+      {
+        "name": "create_ticket",
+        "description": "Create a support ticket for issues that need follow-up",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "issue": {"type": "string", "description": "Description of the issue"},
+            "priority": {"type": "string", "enum": ["low", "medium", "high"]}
+          },
+          "required": ["issue"]
+        },
+        "webhookUrl": "https://yourapp.com/webhooks/create-ticket"
+      }
+    ],
+    "knowledgeBaseId": "kb_abc123",
+    "metadata": {
+      "customerId": "cust_12345",
+      "campaignId": "summer_2026"
+    },
+    "recording": {
+      "enabled": true,
+      "format": "mp3"
+    },
+    "reengagement": {
+      "enabled": true,
+      "maxSilenceSeconds": 5,
+      "promptOnSilence": "Are you still there? Is there anything else I can help you with?"
+    }
+  }'
+```
+
+```javascript Node.js
+const response = await fetch('https://api.talkos.io/api/calls/start', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  },
+  body: JSON.stringify({
+    to: '+14155551234',
+    from: '+14155550000',
+    prompt: 'You are Sarah, a friendly customer service representative...',
+    greeting: 'Hi! This is Sarah from TechCorp. How can I help you today?',
+    webhookUrl: 'https://yourapp.com/webhooks/call-complete',
+    maxDuration: 900,
+    language: 'en-US',
+    voiceId: '21m00Tcm4TlvDq8ikWAM',
+    metadata: {
+      customerId: 'cust_12345'
+    }
+  })
+});
+
+const data = await response.json();
+console.log(data.callUuid);
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/calls/start',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    json={
+        'to': '+14155551234',
+        'from': '+14155550000',
+        'prompt': 'You are Sarah, a friendly customer service representative...',
+        'greeting': 'Hi! This is Sarah from TechCorp. How can I help you today?',
+        'webhookUrl': 'https://yourapp.com/webhooks/call-complete',
+        'maxDuration': 900,
+        'language': 'en-US',
+        'metadata': {
+            'customerId': 'cust_12345'
+        }
+    }
+)
+
+data = response.json()
+print(data['callUuid'])
+```
+</CodeGroup>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "callUuid": "call_a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "sessionId": "ws_session_xyz789",
+  "status": "dialing",
+  "estimatedWaitTime": 0,
+  "createdAt": "2026-02-18T10:30:00.000Z"
+}
+```
+
+## Error Responses
+
+<ResponseField name="400 Bad Request">
+```json
+{
+  "success": false,
+  "error": "Invalid phone number format",
+  "code": "INVALID_PHONE_NUMBER",
+  "details": {
+    "field": "to",
+    "message": "Phone number must be in E.164 format (e.g., +14155551234)"
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="401 Unauthorized">
+```json
+{
+  "success": false,
+  "error": "Invalid API key",
+  "code": "UNAUTHORIZED"
+}
+```
+</ResponseField>
+
+<ResponseField name="402 Payment Required">
+```json
+{
+  "success": false,
+  "error": "Insufficient credits",
+  "code": "INSUFFICIENT_CREDITS",
+  "details": {
+    "required": 100,
+    "available": 25
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="403 Forbidden">
+```json
+{
+  "success": false,
+  "error": "Tenant is suspended",
+  "code": "TENANT_SUSPENDED"
+}
+```
+</ResponseField>
+
+<ResponseField name="422 Unprocessable Entity">
+```json
+{
+  "success": false,
+  "error": "Caller ID not verified",
+  "code": "UNVERIFIED_CALLER_ID",
+  "details": {
+    "from": "+14155550000",
+    "message": "This number must be verified before use"
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="429 Too Many Requests">
+```json
+{
+  "success": false,
+  "error": "Rate limit exceeded",
+  "code": "RATE_LIMITED",
+  "details": {
+    "retryAfter": 30
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="500 Internal Server Error">
+```json
+{
+  "success": false,
+  "error": "Internal server error",
+  "code": "INTERNAL_ERROR"
+}
+```
+</ResponseField>
+
+## Notes
+
+- Calls are billed per minute, rounded up to the nearest minute
+- The `from` number must be a verified number in your account
+- WebSocket events are available for real-time call monitoring
+- Call recordings are available after the call ends via the Recordings API
+- Maximum concurrent calls depend on your plan limits

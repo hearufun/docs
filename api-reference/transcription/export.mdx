@@ -1,0 +1,210 @@
+---
+title: "Export Transcript"
+description: "Export a call transcript in various formats (JSON, TXT, SRT, VTT)"
+api: "GET https://api.talkos.io/api/transcripts/:callUuid/export"
+---
+
+# Export Transcript
+
+Download a call transcript in your preferred format. Supports JSON for programmatic use, plain text for readability, and SRT/VTT for video subtitle applications.
+
+## Endpoint
+
+```
+GET /api/transcripts/:callUuid/export
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="callUuid" type="string" required>
+  Unique identifier of the call whose transcript you want to export
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="format" type="string" default="txt">
+  Export format. Supported values:
+  - `json` - Structured JSON with timestamps and metadata
+  - `txt` - Plain text transcript
+  - `srt` - SubRip subtitle format
+  - `vtt` - WebVTT subtitle format
+</ParamField>
+
+## Response
+
+The response content type and format varies based on the requested format:
+
+### JSON Format
+Returns `application/json` with structured transcript data.
+
+### TXT Format  
+Returns `text/plain` with speaker-labeled conversation.
+
+### SRT Format
+Returns `text/srt` with numbered subtitle entries and timestamps.
+
+### VTT Format
+Returns `text/vtt` WebVTT formatted subtitles.
+
+<Note>
+  All export responses include a `Content-Disposition` header for file download with filename `transcript-{callUuid}.{format}`.
+</Note>
+
+## Example Request
+
+<CodeGroup>
+```bash cURL - JSON
+curl -X GET "https://api.talkos.io/api/transcripts/call_abc123-def456-789/export?format=json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -o transcript.json
+```
+
+```bash cURL - TXT
+curl -X GET "https://api.talkos.io/api/transcripts/call_abc123-def456-789/export?format=txt" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -o transcript.txt
+```
+
+```bash cURL - SRT
+curl -X GET "https://api.talkos.io/api/transcripts/call_abc123-def456-789/export?format=srt" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -o transcript.srt
+```
+
+```bash cURL - VTT
+curl -X GET "https://api.talkos.io/api/transcripts/call_abc123-def456-789/export?format=vtt" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -o transcript.vtt
+```
+
+```javascript Node.js
+const callUuid = 'call_abc123-def456-789';
+const format = 'json';
+
+const response = await fetch(
+  `https://api.talkos.io/api/transcripts/${callUuid}/export?format=${format}`,
+  {
+    method: 'GET',
+    headers: {
+      'x-api-key': 'your-api-key',
+      'x-tenant-id': 'your-tenant-id'
+    }
+  }
+);
+
+if (format === 'json') {
+  const data = await response.json();
+  console.log(data);
+} else {
+  const text = await response.text();
+  console.log(text);
+}
+```
+
+```python Python
+import requests
+
+call_uuid = 'call_abc123-def456-789'
+format = 'srt'
+
+response = requests.get(
+    f'https://api.talkos.io/api/transcripts/{call_uuid}/export',
+    params={'format': format},
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    }
+)
+
+# Save to file
+with open(f'transcript.{format}', 'w') as f:
+    f.write(response.text)
+```
+</CodeGroup>
+
+## Example Responses
+
+### JSON Format
+
+```json
+{
+  "callUuid": "call_abc123-def456-789",
+  "duration": 245,
+  "language": "en",
+  "segments": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling TalkOS support. How can I help you today?",
+      "startTime": 0.5,
+      "endTime": 4.2,
+      "confidence": 0.96
+    },
+    {
+      "speaker": "customer", 
+      "text": "Hi, I'm having trouble with my account.",
+      "startTime": 4.8,
+      "endTime": 7.1,
+      "confidence": 0.94
+    }
+  ],
+  "metadata": {
+    "exportedAt": "2026-02-18T10:30:00Z",
+    "totalSegments": 2
+  }
+}
+```
+
+### TXT Format
+
+```
+[00:00:00] Agent: Thank you for calling TalkOS support. How can I help you today?
+
+[00:00:04] Customer: Hi, I'm having trouble with my account.
+```
+
+### SRT Format
+
+```
+1
+00:00:00,500 --> 00:00:04,200
+[Agent] Thank you for calling TalkOS support. How can I help you today?
+
+2
+00:00:04,800 --> 00:00:07,100
+[Customer] Hi, I'm having trouble with my account.
+```
+
+### VTT Format
+
+```
+WEBVTT
+
+00:00:00.500 --> 00:00:04.200
+<v Agent>Thank you for calling TalkOS support. How can I help you today?
+
+00:00:04.800 --> 00:00:07.100
+<v Customer>Hi, I'm having trouble with my account.
+```
+
+## Error Responses
+
+| Status | Error | Description |
+|--------|-------|-------------|
+| 400 | Invalid format | Unsupported export format requested |
+| 401 | Unauthorized | Invalid or missing API key |
+| 404 | Transcript not found | No transcript exists for the given callUuid |
+| 500 | Internal server error | Server-side error occurred |

@@ -1,0 +1,195 @@
+---
+title: "Update Escalation Rule"
+description: "Update an existing escalation rule"
+api: "PUT https://api.talkos.io/api/features/escalation/rules/:ruleId"
+---
+
+# Update Escalation Rule
+
+Update an existing custom escalation rule. Built-in rules cannot be modified.
+
+## Endpoint
+
+```
+PUT /api/features/escalation/rules/:ruleId
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="ruleId" type="string" required>
+  Unique identifier of the rule to update
+</ParamField>
+
+## Request Body
+
+<ParamField body="name" type="string">
+  Updated name for the rule
+</ParamField>
+
+<ParamField body="description" type="string">
+  Updated description
+</ParamField>
+
+<ParamField body="conditions" type="array">
+  Updated array of condition objects
+</ParamField>
+
+<ParamField body="conditions[].field" type="string">
+  The field to evaluate
+</ParamField>
+
+<ParamField body="conditions[].operator" type="string">
+  Comparison operator: `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `in`, `contains`
+</ParamField>
+
+<ParamField body="conditions[].value" type="any">
+  Value to compare against
+</ParamField>
+
+<ParamField body="logic" type="string">
+  Logic for multiple conditions: `AND` or `OR`
+</ParamField>
+
+<ParamField body="action" type="object">
+  Updated action configuration
+</ParamField>
+
+<ParamField body="action.type" type="string">
+  Action type: `transfer`, `notify`, or `flag`
+</ParamField>
+
+<ParamField body="action.target" type="string">
+  Target for the action
+</ParamField>
+
+<ParamField body="priority" type="string">
+  Updated priority: `low`, `medium`, `high`, or `critical`
+</ParamField>
+
+<ParamField body="cooldownSeconds" type="number">
+  Updated cooldown period in seconds
+</ParamField>
+
+<ParamField body="enabled" type="boolean">
+  Whether the rule is active
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the update was successful
+</ResponseField>
+
+<ResponseField name="rule" type="object">
+  The updated escalation rule
+</ResponseField>
+
+<ResponseField name="rule.id" type="string">
+  Unique identifier for the rule
+</ResponseField>
+
+<ResponseField name="rule.name" type="string">
+  Name of the rule
+</ResponseField>
+
+<ResponseField name="rule.updatedAt" type="string">
+  ISO 8601 timestamp when the rule was last updated
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X PUT https://api.talkos.io/api/features/escalation/rules/rule_custom_abc123 \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "name": "Updated Refund Escalation",
+    "priority": "critical",
+    "cooldownSeconds": 60
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/escalation/rules/rule_custom_abc123', {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  },
+  body: JSON.stringify({
+    name: 'Updated Refund Escalation',
+    priority: 'critical',
+    cooldownSeconds: 60
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.put(
+    'https://api.talkos.io/api/features/escalation/rules/rule_custom_abc123',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    json={
+        'name': 'Updated Refund Escalation',
+        'priority': 'critical',
+        'cooldownSeconds': 60
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "rule": {
+    "id": "rule_custom_abc123",
+    "name": "Updated Refund Escalation",
+    "description": "Escalate calls mentioning refunds over $500",
+    "conditions": [
+      { "field": "keyword", "operator": "contains", "value": "refund" },
+      { "field": "mentionedAmount", "operator": "gte", "value": 500 }
+    ],
+    "logic": "AND",
+    "priority": "critical",
+    "action": { "type": "transfer", "target": "supervisor" },
+    "cooldownSeconds": 60,
+    "enabled": true,
+    "builtIn": false,
+    "updatedAt": "2026-02-18T11:00:00.000Z"
+  }
+}
+```
+
+```json 404
+{
+  "error": "Rule not found"
+}
+```
+
+```json 500
+{
+  "error": "Failed to update escalation rule"
+}
+```
+</ResponseExample>

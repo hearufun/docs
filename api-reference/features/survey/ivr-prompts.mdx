@@ -1,0 +1,191 @@
+---
+title: "Get IVR Prompts"
+description: "Get text-to-speech prompts for IVR survey delivery"
+api: "GET https://api.talkos.io/api/features/survey/:surveyId/ivr-prompts"
+---
+
+# Get IVR Prompts
+
+Retrieve text-to-speech (TTS) prompts for delivering a survey via IVR. These prompts are designed to be played to the customer with instructions for DTMF input.
+
+## Endpoint
+
+```
+GET /api/features/survey/:surveyId/ivr-prompts
+```
+
+## Path Parameters
+
+<ParamField path="surveyId" type="string" required>
+  The unique identifier of the survey
+</ParamField>
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Response
+
+<ResponseField name="prompts" type="array">
+  Array of prompts to play in sequence
+</ResponseField>
+
+<ResponseField name="prompts[].type" type="string">
+  Prompt type: `intro`, `question`, or `outro`
+</ResponseField>
+
+<ResponseField name="prompts[].text" type="string">
+  Text to convert to speech and play to customer
+</ResponseField>
+
+<ResponseField name="prompts[].questionId" type="string">
+  Question ID (for question prompts only)
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X GET https://api.talkos.io/api/features/survey/survey_1739836800000_x7k2m9/ivr-prompts \
+  -H "x-api-key: tk_live_xxxxxxxxxxxxxxxxxxxx" \
+  -H "x-tenant-id: tenant_abc123"
+```
+
+## Example Response
+
+```json
+{
+  "prompts": [
+    {
+      "type": "intro",
+      "text": "We value your feedback. Please stay on the line for a brief survey. You can press star at any time to skip."
+    },
+    {
+      "questionId": "q_csat_1",
+      "text": "On a scale of 1 to 5, how satisfied are you with the service you received today? Press 1 through 5.",
+      "type": "scale"
+    },
+    {
+      "questionId": "q_csat_2",
+      "text": "Was your issue resolved during this call? Press 1 for Yes, 2 for No.",
+      "type": "yes_no"
+    },
+    {
+      "questionId": "q_csat_3",
+      "text": "Any additional feedback?",
+      "type": "open_text"
+    },
+    {
+      "type": "outro",
+      "text": "Thank you for your feedback. Have a great day!"
+    }
+  ]
+}
+```
+
+## Error Response
+
+```json
+{
+  "error": "Survey not found"
+}
+```
+
+## IVR Flow Implementation
+
+### Basic Flow
+
+```javascript
+const prompts = await getSurveyPrompts(surveyId);
+
+for (const prompt of prompts) {
+  // Play TTS prompt
+  await playTTS(prompt.text);
+  
+  if (prompt.questionId) {
+    // Collect DTMF response
+    const digit = await collectDTMF({ timeout: 10000 });
+    
+    if (digit === '*') {
+      // Customer wants to skip
+      break;
+    }
+    
+    // Record the response
+    await recordDTMFResponse(surveyId, prompt.questionId, digit);
+  }
+}
+```
+
+### DTMF Input Mapping
+
+| Question Type | Valid Input | Meaning |
+|---------------|-------------|---------|
+| `scale` (1-5) | 1, 2, 3, 4, 5 | Rating value |
+| `scale` (0-10) | 0-9 | Rating value (use # for 10) |
+| `yes_no` | 1, 2 | 1 = Yes, 2 = No |
+| `*` | Any time | Skip entire survey |
+
+### Handling Open Text Questions
+
+Open text questions cannot be collected via DTMF. Options:
+
+1. **Skip in IVR**: Don't play open text questions during IVR
+2. **Follow-up SMS**: Send SMS with link to provide text feedback
+3. **Voice recording**: Record audio response for transcription
+
+## Integration Example
+
+```javascript
+// Telephony integration (Plivo/Exotel)
+async function runIVRSurvey(call, surveyId) {
+  const { prompts } = await fetch(
+    `https://api.talkos.io/api/features/survey/${surveyId}/ivr-prompts`,
+    {
+      headers: {
+        'x-api-key': API_KEY,
+        'x-tenant-id': TENANT_ID
+      }
+    }
+  ).then(r => r.json());
+  
+  // Play intro
+  await call.speak(prompts[0].text);
+  
+  // Process questions
+  for (const prompt of prompts.slice(1, -1)) {
+    if (prompt.type === 'open_text') continue; // Skip open text
+    
+    await call.speak(prompt.text);
+    
+    const response = await call.getDigits({
+      maxDigits: 1,
+      timeout: 10,
+      terminators: '*#'
+    });
+    
+    if (response.digits === '*') {
+      await call.speak('Survey skipped. Thank you.');
+      return;
+    }
+    
+    await recordResponse(surveyId, prompt.questionId, response.digits);
+  }
+  
+  // Play outro
+  await call.speak(prompts[prompts.length - 1].text);
+}
+```
+
+## Notes
+
+- Prompts are returned in the order they should be played
+- The intro prompt always comes first, outro always last
+- Open text questions are included but cannot be answered via DTMF
+- Press `*` at any time allows the customer to skip the survey
+- Each question prompt includes instructions for valid input

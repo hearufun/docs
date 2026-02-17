@@ -1,0 +1,214 @@
+---
+title: 'Accept Transfer'
+api: 'POST https://api.talkos.io/api/transfer/{callUuid}/accept'
+description: 'Accept an incoming call transfer request'
+---
+
+## Overview
+
+Accepts a pending call transfer, connecting the agent to the caller. This endpoint is typically called by the agent's client application when they choose to accept an incoming transferred call.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="callUuid" type="string" required>
+  The unique identifier of the call being transferred
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="agentId" type="string" required>
+  The ID of the agent accepting the transfer
+</ParamField>
+
+<ParamField body="acknowledgeContext" type="boolean" default="false">
+  Indicates if the agent has reviewed the transfer context
+</ParamField>
+
+<ParamField body="notes" type="string">
+  Optional notes from the agent upon accepting
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the transfer was accepted successfully
+</ResponseField>
+
+<ResponseField name="transferId" type="string">
+  Unique identifier for this transfer
+</ResponseField>
+
+<ResponseField name="callUuid" type="string">
+  The call UUID that was transferred
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Updated transfer status: `accepted`, `connected`
+</ResponseField>
+
+<ResponseField name="agent" type="object">
+  Information about the accepting agent
+  <Expandable title="properties">
+    <ResponseField name="agentId" type="string">
+      The agent's unique identifier
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      The agent's display name
+    </ResponseField>
+    <ResponseField name="acceptedAt" type="string">
+      ISO 8601 timestamp when accepted
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="caller" type="object">
+  Information about the caller being connected
+  <Expandable title="properties">
+    <ResponseField name="number" type="string">
+      Caller's phone number
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Caller's name if available
+    </ResponseField>
+    <ResponseField name="holdDuration" type="integer">
+      Seconds the caller was on hold
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="context" type="object">
+  Transfer context provided by the AI
+  <Expandable title="properties">
+    <ResponseField name="summary" type="string">
+      Conversation summary from AI
+    </ResponseField>
+    <ResponseField name="customerIntent" type="string">
+      Detected customer intent
+    </ResponseField>
+    <ResponseField name="sentiment" type="string">
+      Customer sentiment assessment
+    </ResponseField>
+    <ResponseField name="reason" type="string">
+      Reason for the transfer
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="connectedAt" type="string">
+  ISO 8601 timestamp when the connection was established
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/transfer/call_abc123def456/accept \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "agentId": "agent_789xyz",
+    "acknowledgeContext": true,
+    "notes": "Ready to assist with billing inquiry"
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 - Success
+{
+  "success": true,
+  "transferId": "xfer_a1b2c3d4e5f6",
+  "callUuid": "call_abc123def456",
+  "status": "connected",
+  "agent": {
+    "agentId": "agent_789xyz",
+    "name": "Sarah Johnson",
+    "acceptedAt": "2026-02-18T14:30:15.000Z"
+  },
+  "caller": {
+    "number": "+14155559876",
+    "name": "John Smith",
+    "holdDuration": 12
+  },
+  "context": {
+    "summary": "Customer inquiring about incorrect charge of $49.99 on February statement. Has been a customer for 3 years. Previous call about similar issue in January was resolved with credit.",
+    "customerIntent": "billing_dispute",
+    "sentiment": "negative",
+    "reason": "Customer requested billing specialist"
+  },
+  "connectedAt": "2026-02-18T14:30:15.500Z"
+}
+```
+
+```json 400 - Bad Request
+{
+  "success": false,
+  "error": {
+    "code": "AGENT_MISMATCH",
+    "message": "This transfer was not assigned to the specified agent"
+  }
+}
+```
+
+```json 404 - Not Found
+{
+  "success": false,
+  "error": {
+    "code": "TRANSFER_NOT_FOUND",
+    "message": "No pending transfer found for this call"
+  }
+}
+```
+
+```json 410 - Expired
+{
+  "success": false,
+  "error": {
+    "code": "TRANSFER_EXPIRED",
+    "message": "The transfer request has expired"
+  }
+}
+```
+
+```json 409 - Already Processed
+{
+  "success": false,
+  "error": {
+    "code": "TRANSFER_ALREADY_PROCESSED",
+    "message": "This transfer has already been accepted or rejected"
+  }
+}
+```
+</ResponseExample>
+
+## Workflow
+
+1. Agent receives transfer notification via WebSocket or webhook
+2. Agent reviews transfer context and caller information
+3. Agent calls this endpoint to accept the transfer
+4. System connects the agent to the caller
+5. AI assistant disconnects from the call
+
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| `TRANSFER_NOT_FOUND` | No pending transfer exists for this call UUID |
+| `TRANSFER_EXPIRED` | Transfer request timed out before acceptance |
+| `TRANSFER_ALREADY_PROCESSED` | Transfer was already accepted or rejected |
+| `AGENT_MISMATCH` | Agent ID doesn't match the transfer target |
+| `AGENT_NOT_FOUND` | Agent ID does not exist |
+| `CALL_ENDED` | The call has ended during the transfer process |

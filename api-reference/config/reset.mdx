@@ -1,0 +1,43 @@
+---
+title: "Reset Config"
+api: "POST https://api.talkos.io/api/config/reset"
+description: "Reset configuration to .env defaults"
+---
+
+Delete the current database configuration and re-seed from environment variables. This resets all configuration to the original `.env` defaults.
+
+<Warning>
+This action will delete all custom configuration changes and reset to the values defined in your `.env` file. This cannot be undone.
+</Warning>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/config/reset \
+  -H "x-api-key: your-api-key"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "message": "Config reset to .env defaults",
+  "version": 1,
+  "resetAt": "2026-02-17T15:00:00.000Z"
+}
+```
+
+```json 500
+{
+  "error": "Config reset failed: Failed to seed from environment"
+}
+```
+</ResponseExample>
+
+## Notes
+
+- This deletes the existing config document from the database
+- A new config is seeded from the server's `.env` file
+- The config version resets to 1
+- This affects the current worker immediately; other workers sync on their next interval
+- Use with caution in production environments

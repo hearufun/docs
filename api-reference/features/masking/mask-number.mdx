@@ -1,0 +1,91 @@
+---
+title: 'Mask Phone Number'
+api: 'POST https://api.talkos.io/api/features/masking/mask'
+description: 'Mask a phone number according to configured settings'
+---
+
+Apply masking to a phone number based on your tenant's masking configuration. Returns the masked representation of the number.
+
+## Request Body
+
+<ParamField body="phoneNumber" type="string" required>
+  The phone number to mask. Accepts various formats including E.164, national, and international formats.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the masking operation was successful.
+</ResponseField>
+
+<ResponseField name="original" type="string">
+  The original phone number (only included in response if caller has admin privileges).
+</ResponseField>
+
+<ResponseField name="masked" type="string">
+  The masked phone number representation.
+</ResponseField>
+
+<ResponseField name="pattern" type="string">
+  The masking pattern that was applied.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/features/masking/mask \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phoneNumber": "+1-555-123-4567"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/masking/mask', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    phoneNumber: '+1-555-123-4567'
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/features/masking/mask',
+    headers={
+        'Authorization': 'Bearer YOUR_API_KEY',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'phoneNumber': '+1-555-123-4567'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "masked": "***-***-4567",
+  "pattern": "last4"
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": "Invalid phone number format"
+}
+```
+</ResponseExample>

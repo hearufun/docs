@@ -1,0 +1,195 @@
+---
+title: "Tag Analytics"
+description: "Get tag usage analytics and insights"
+api: "GET https://api.talkos.io/api/features/tags/analytics/summary"
+---
+
+# Tag Analytics
+
+Retrieve comprehensive analytics about tag usage across your calls, including most common tags, trends, and distribution.
+
+## Endpoint
+
+```
+GET /api/features/tags/analytics/summary
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+## Response
+
+<ResponseField name="totalTagsApplied" type="number">
+  Total number of tag applications across all calls
+</ResponseField>
+
+<ResponseField name="uniqueTags" type="number">
+  Number of unique tags in use
+</ResponseField>
+
+<ResponseField name="callsWithTags" type="number">
+  Number of calls that have at least one tag
+</ResponseField>
+
+<ResponseField name="averageTagsPerCall" type="number">
+  Average number of tags per call
+</ResponseField>
+
+<ResponseField name="topTags" type="array">
+  Most frequently used tags
+</ResponseField>
+
+<ResponseField name="topTags[].tag" type="string">
+  Tag name
+</ResponseField>
+
+<ResponseField name="topTags[].count" type="number">
+  Number of times this tag has been applied
+</ResponseField>
+
+<ResponseField name="topTags[].percentage" type="number">
+  Percentage of tagged calls that have this tag
+</ResponseField>
+
+<ResponseField name="tagsByCategory" type="object">
+  Tag distribution by category
+</ResponseField>
+
+<ResponseField name="tagsByCategory.system" type="number">
+  Count of system tag applications
+</ResponseField>
+
+<ResponseField name="tagsByCategory.custom" type="number">
+  Count of custom tag applications
+</ResponseField>
+
+<ResponseField name="tagsByCategory.ai-generated" type="number">
+  Count of AI-generated tag applications
+</ResponseField>
+
+<ResponseField name="tagsBySource" type="object">
+  Tag distribution by source
+</ResponseField>
+
+<ResponseField name="tagsBySource.auto" type="number">
+  Tags applied automatically
+</ResponseField>
+
+<ResponseField name="tagsBySource.manual" type="number">
+  Tags applied manually by agents
+</ResponseField>
+
+<ResponseField name="tagsBySource.api" type="number">
+  Tags applied via API
+</ResponseField>
+
+<ResponseField name="recentTrends" type="array">
+  Recently trending tags
+</ResponseField>
+
+<ResponseField name="recentTrends[].tag" type="string">
+  Tag name
+</ResponseField>
+
+<ResponseField name="recentTrends[].trend" type="string">
+  Trend direction: `up`, `down`, or `stable`
+</ResponseField>
+
+<ResponseField name="recentTrends[].change" type="number">
+  Percentage change from previous period
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET https://api.talkos.io/api/features/tags/analytics/summary \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/tags/analytics/summary', {
+  method: 'GET',
+  headers: {
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/features/tags/analytics/summary',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "totalTagsApplied": 15847,
+  "uniqueTags": 32,
+  "callsWithTags": 4521,
+  "averageTagsPerCall": 3.5,
+  "topTags": [
+    { "tag": "billing", "count": 2341, "percentage": 51.8 },
+    { "tag": "technical-issue", "count": 1876, "percentage": 41.5 },
+    { "tag": "complaint", "count": 1243, "percentage": 27.5 },
+    { "tag": "positive-feedback", "count": 987, "percentage": 21.8 },
+    { "tag": "escalated", "count": 654, "percentage": 14.5 },
+    { "tag": "new-customer", "count": 521, "percentage": 11.5 },
+    { "tag": "cancellation", "count": 432, "percentage": 9.6 },
+    { "tag": "vip-customer", "count": 298, "percentage": 6.6 },
+    { "tag": "follow-up-required", "count": 276, "percentage": 6.1 },
+    { "tag": "urgent", "count": 198, "percentage": 4.4 }
+  ],
+  "tagsByCategory": {
+    "system": 12543,
+    "custom": 2876,
+    "ai-generated": 428
+  },
+  "tagsBySource": {
+    "auto": 11234,
+    "manual": 3987,
+    "api": 626
+  },
+  "recentTrends": [
+    { "tag": "cancellation", "trend": "up", "change": 23.5 },
+    { "tag": "complaint", "trend": "up", "change": 12.1 },
+    { "tag": "positive-feedback", "trend": "down", "change": -8.3 },
+    { "tag": "technical-issue", "trend": "stable", "change": 2.1 },
+    { "tag": "billing", "trend": "stable", "change": -1.5 }
+  ]
+}
+```
+
+```json 500
+{
+  "error": "Failed to retrieve tag analytics"
+}
+```
+</ResponseExample>
+
+## Use Cases
+
+- **Identify common issues**: Track which problems customers face most frequently
+- **Monitor trends**: Detect increases in complaints or cancellation requests
+- **Measure tagging adoption**: Track manual vs. automatic tagging ratios
+- **Optimize auto-tagging**: Identify opportunities to add new auto-tag rules
+- **Quality insights**: Analyze positive feedback trends

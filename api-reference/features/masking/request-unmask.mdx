@@ -1,0 +1,126 @@
+---
+title: 'Request Unmask'
+api: 'POST https://api.talkos.io/api/features/masking/{callUuid}/unmask'
+description: 'Request to unmask a phone number for a specific call'
+---
+
+Submit a request to unmask a phone number. If `unmaskRequiresApproval` is enabled, this creates a pending approval request. Otherwise, the number is unmasked immediately.
+
+## Path Parameters
+
+<ParamField path="callUuid" type="string" required>
+  The unique identifier of the call.
+</ParamField>
+
+## Request Body
+
+<ParamField body="agentId" type="string" required>
+  The identifier of the agent requesting the unmask.
+</ParamField>
+
+<ParamField body="reason" type="string" required>
+  The business reason for requesting access to the full phone number. This is logged for audit purposes.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request was submitted successfully.
+</ResponseField>
+
+<ResponseField name="requestId" type="string">
+  Unique identifier for the unmask request.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Status of the request: `pending`, `approved`, `auto_approved`.
+</ResponseField>
+
+<ResponseField name="phoneNumber" type="string">
+  The unmasked phone number (only included if immediately approved).
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable status message.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/features/masking/call_abc123/unmask \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agentId": "agent_xyz789",
+    "reason": "Customer requested callback and needs to verify number"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/masking/call_abc123/unmask', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    agentId: 'agent_xyz789',
+    reason: 'Customer requested callback and needs to verify number'
+  })
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/features/masking/call_abc123/unmask',
+    headers={
+        'Authorization': 'Bearer YOUR_API_KEY',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'agentId': 'agent_xyz789',
+        'reason': 'Customer requested callback and needs to verify number'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 (Pending Approval)
+{
+  "success": true,
+  "requestId": "unmask_req_456",
+  "status": "pending",
+  "message": "Unmask request submitted. Awaiting supervisor approval."
+}
+```
+
+```json 200 (Auto Approved)
+{
+  "success": true,
+  "requestId": "unmask_req_456",
+  "status": "auto_approved",
+  "phoneNumber": "+1-555-123-4567",
+  "message": "Phone number unmasked successfully"
+}
+```
+
+```json 403
+{
+  "success": false,
+  "error": "Unmasking is not allowed for this tenant"
+}
+```
+
+```json 404
+{
+  "success": false,
+  "error": "Call not found"
+}
+```
+</ResponseExample>

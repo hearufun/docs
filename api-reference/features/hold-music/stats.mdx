@@ -1,0 +1,178 @@
+---
+title: 'Get Hold Music Statistics'
+api: 'GET https://api.talkos.io/api/features/hold-music/stats'
+description: 'Get statistics about hold music usage'
+---
+
+Retrieve aggregated statistics about hold music usage, including average hold times, most played tracks, and abandonment rates.
+
+## Query Parameters
+
+<ParamField query="startDate" type="string">
+  ISO 8601 date to start the statistics period. Defaults to 30 days ago.
+</ParamField>
+
+<ParamField query="endDate" type="string">
+  ISO 8601 date to end the statistics period. Defaults to now.
+</ParamField>
+
+<ParamField query="groupBy" type="string">
+  Group statistics by: `hour`, `day`, `week`, `month`. Defaults to `day`.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request was successful.
+</ResponseField>
+
+<ResponseField name="period" type="object">
+  <Expandable title="period properties">
+    <ResponseField name="startDate" type="string">
+      Start of the statistics period.
+    </ResponseField>
+    <ResponseField name="endDate" type="string">
+      End of the statistics period.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="stats" type="object">
+  <Expandable title="stats properties">
+    <ResponseField name="totalHolds" type="number">
+      Total number of hold sessions.
+    </ResponseField>
+    <ResponseField name="totalHoldTime" type="number">
+      Total hold time across all sessions in seconds.
+    </ResponseField>
+    <ResponseField name="averageHoldTime" type="number">
+      Average hold duration in seconds.
+    </ResponseField>
+    <ResponseField name="maxHoldTime" type="number">
+      Longest hold duration in seconds.
+    </ResponseField>
+    <ResponseField name="abandonmentRate" type="number">
+      Percentage of callers who hung up while on hold.
+    </ResponseField>
+    <ResponseField name="abandonedCalls" type="number">
+      Number of calls abandoned during hold.
+    </ResponseField>
+    <ResponseField name="topTracks" type="array">
+      Most frequently played tracks.
+    </ResponseField>
+    <ResponseField name="holdsByHour" type="object">
+      Distribution of holds by hour of day.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="timeline" type="array">
+  Time-series data grouped by the specified interval.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/features/hold-music/stats?startDate=2026-01-01&endDate=2026-02-18&groupBy=week" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/hold-music/stats?startDate=2026-01-01&endDate=2026-02-18&groupBy=week', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/features/hold-music/stats',
+    headers={
+        'Authorization': 'Bearer YOUR_API_KEY'
+    },
+    params={
+        'startDate': '2026-01-01',
+        'endDate': '2026-02-18',
+        'groupBy': 'week'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "period": {
+    "startDate": "2026-01-01T00:00:00.000Z",
+    "endDate": "2026-02-18T23:59:59.999Z"
+  },
+  "stats": {
+    "totalHolds": 8542,
+    "totalHoldTime": 1537560,
+    "averageHoldTime": 180,
+    "maxHoldTime": 1845,
+    "abandonmentRate": 4.2,
+    "abandonedCalls": 359,
+    "topTracks": [
+      {
+        "id": "track_jazz_003",
+        "name": "Smooth Jazz Lounge",
+        "playCount": 3215,
+        "percentage": 37.6
+      },
+      {
+        "id": "track_classical_001",
+        "name": "Gentle Piano Suite",
+        "playCount": 2890,
+        "percentage": 33.8
+      },
+      {
+        "id": "track_ambient_002",
+        "name": "Calm Waves",
+        "playCount": 1542,
+        "percentage": 18.1
+      }
+    ],
+    "holdsByHour": {
+      "0": 124,
+      "1": 89,
+      "9": 892,
+      "10": 1045,
+      "11": 1123,
+      "12": 876,
+      "14": 1234,
+      "15": 1156,
+      "16": 987
+    }
+  },
+  "timeline": [
+    {
+      "period": "2026-01-06",
+      "holds": 1245,
+      "averageHoldTime": 165,
+      "abandonmentRate": 3.8
+    },
+    {
+      "period": "2026-01-13",
+      "holds": 1312,
+      "averageHoldTime": 178,
+      "abandonmentRate": 4.1
+    },
+    {
+      "period": "2026-01-20",
+      "holds": 1189,
+      "averageHoldTime": 192,
+      "abandonmentRate": 4.5
+    }
+  ]
+}
+```
+</ResponseExample>

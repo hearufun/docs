@@ -1,0 +1,413 @@
+---
+title: "Health Check"
+description: "Check the health status of the TalkOS API and its services"
+api: "GET https://api.talkos.io/api/health"
+---
+
+# Health Check
+
+Check the operational status of the TalkOS API and its dependent services. Use this endpoint for monitoring, alerting, and ensuring service availability before making critical API calls.
+
+## Endpoint
+
+```
+GET /api/health
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string">
+  Your TalkOS API key (optional for basic health check, required for detailed status)
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string">
+  Your tenant identifier (optional, provides tenant-specific status when provided)
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="detailed" type="boolean" default="false">
+  Return detailed health information for each service component. Requires authentication.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the API is operational
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Overall system status:
+  - `healthy` - All systems operational
+  - `degraded` - Some non-critical services experiencing issues
+  - `unhealthy` - Critical services are down
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  ISO 8601 timestamp of the health check
+</ResponseField>
+
+<ResponseField name="version" type="string">
+  Current API version
+</ResponseField>
+
+<ResponseField name="uptime" type="number">
+  API server uptime in seconds
+</ResponseField>
+
+<ResponseField name="services" type="object">
+  Status of individual services (when `detailed=true`):
+
+  <Expandable title="services properties">
+    <ResponseField name="api" type="object">
+      API server status:
+      - `status` (string): `healthy`, `degraded`, or `unhealthy`
+      - `responseTime` (number): Response time in milliseconds
+      - `version` (string): API version
+    </ResponseField>
+
+    <ResponseField name="database" type="object">
+      Database connectivity status:
+      - `status` (string): `healthy`, `degraded`, or `unhealthy`
+      - `responseTime` (number): Connection response time in ms
+      - `connections` (number): Active database connections
+    </ResponseField>
+
+    <ResponseField name="redis" type="object">
+      Redis cache status:
+      - `status` (string): `healthy`, `degraded`, or `unhealthy`
+      - `responseTime` (number): Response time in ms
+      - `memoryUsage` (string): Memory utilization percentage
+    </ResponseField>
+
+    <ResponseField name="telephony" type="object">
+      Telephony provider status:
+      - `status` (string): `healthy`, `degraded`, or `unhealthy`
+      - `providers` (object): Individual provider status
+        - `plivo` (object): Plivo service status
+        - `exotel` (object): Exotel service status
+    </ResponseField>
+
+    <ResponseField name="ai" type="object">
+      AI services status:
+      - `status` (string): `healthy`, `degraded`, or `unhealthy`
+      - `openai` (object): OpenAI API status
+      - `elevenlabs` (object): ElevenLabs TTS status
+      - `deepgram` (object): Deepgram STT status
+    </ResponseField>
+
+    <ResponseField name="websocket" type="object">
+      WebSocket server status:
+      - `status` (string): `healthy`, `degraded`, or `unhealthy`
+      - `activeConnections` (number): Current WebSocket connections
+      - `maxConnections` (number): Maximum allowed connections
+    </ResponseField>
+
+    <ResponseField name="queue" type="object">
+      Call queue status:
+      - `status` (string): `healthy`, `degraded`, or `unhealthy`
+      - `pendingJobs` (number): Jobs waiting in queue
+      - `activeWorkers` (number): Active worker processes
+    </ResponseField>
+
+    <ResponseField name="storage" type="object">
+      File storage status:
+      - `status` (string): `healthy`, `degraded`, or `unhealthy`
+      - `available` (boolean): Storage service availability
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="tenant" type="object">
+  Tenant-specific status (when authenticated with `x-tenant-id`):
+
+  <Expandable title="tenant properties">
+    <ResponseField name="status" type="string">
+      Tenant account status: `active`, `suspended`, or `inactive`
+    </ResponseField>
+
+    <ResponseField name="credits" type="object">
+      Credit balance information:
+      - `available` (number): Available credits
+      - `lowBalance` (boolean): Whether balance is below threshold
+    </ResponseField>
+
+    <ResponseField name="usage" type="object">
+      Current usage statistics:
+      - `activeCalls` (number): Currently active calls
+      - `callsToday` (number): Calls made today
+      - `callsThisMonth` (number): Calls made this month
+    </ResponseField>
+
+    <ResponseField name="limits" type="object">
+      Account limits:
+      - `maxConcurrentCalls` (number): Maximum concurrent calls
+      - `callsPerMinute` (number): Rate limit per minute
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+```bash cURL (Basic)
+curl -X GET "https://api.talkos.io/api/health"
+```
+
+```bash cURL (Detailed)
+curl -X GET "https://api.talkos.io/api/health?detailed=true" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript Node.js
+// Basic health check
+const basicHealth = await fetch('https://api.talkos.io/api/health');
+const basicData = await basicHealth.json();
+console.log(`Status: ${basicData.status}`);
+
+// Detailed health check
+const detailedHealth = await fetch(
+  'https://api.talkos.io/api/health?detailed=true',
+  {
+    headers: {
+      'x-api-key': 'your-api-key',
+      'x-tenant-id': 'your-tenant-id'
+    }
+  }
+);
+const detailedData = await detailedHealth.json();
+console.log('Services:', detailedData.services);
+```
+
+```python Python
+import requests
+
+# Basic health check
+basic_response = requests.get('https://api.talkos.io/api/health')
+print(f"Status: {basic_response.json()['status']}")
+
+# Detailed health check
+detailed_response = requests.get(
+    'https://api.talkos.io/api/health',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    },
+    params={'detailed': True}
+)
+print(detailed_response.json())
+```
+</CodeGroup>
+
+## Example Response (Basic)
+
+```json
+{
+  "success": true,
+  "status": "healthy",
+  "timestamp": "2026-02-18T10:30:00.000Z",
+  "version": "2.5.0",
+  "uptime": 864000
+}
+```
+
+## Example Response (Detailed)
+
+```json
+{
+  "success": true,
+  "status": "healthy",
+  "timestamp": "2026-02-18T10:30:00.000Z",
+  "version": "2.5.0",
+  "uptime": 864000,
+  "services": {
+    "api": {
+      "status": "healthy",
+      "responseTime": 2,
+      "version": "2.5.0"
+    },
+    "database": {
+      "status": "healthy",
+      "responseTime": 5,
+      "connections": 25
+    },
+    "redis": {
+      "status": "healthy",
+      "responseTime": 1,
+      "memoryUsage": "45%"
+    },
+    "telephony": {
+      "status": "healthy",
+      "providers": {
+        "plivo": {
+          "status": "healthy",
+          "responseTime": 120
+        },
+        "exotel": {
+          "status": "healthy",
+          "responseTime": 150
+        }
+      }
+    },
+    "ai": {
+      "status": "healthy",
+      "openai": {
+        "status": "healthy",
+        "responseTime": 250
+      },
+      "elevenlabs": {
+        "status": "healthy",
+        "responseTime": 180
+      },
+      "deepgram": {
+        "status": "healthy",
+        "responseTime": 100
+      }
+    },
+    "websocket": {
+      "status": "healthy",
+      "activeConnections": 150,
+      "maxConnections": 10000
+    },
+    "queue": {
+      "status": "healthy",
+      "pendingJobs": 45,
+      "activeWorkers": 8
+    },
+    "storage": {
+      "status": "healthy",
+      "available": true
+    }
+  },
+  "tenant": {
+    "status": "active",
+    "credits": {
+      "available": 25000,
+      "lowBalance": false
+    },
+    "usage": {
+      "activeCalls": 5,
+      "callsToday": 150,
+      "callsThisMonth": 3500
+    },
+    "limits": {
+      "maxConcurrentCalls": 20,
+      "callsPerMinute": 60
+    }
+  }
+}
+```
+
+## Example Response (Degraded)
+
+```json
+{
+  "success": true,
+  "status": "degraded",
+  "timestamp": "2026-02-18T10:30:00.000Z",
+  "version": "2.5.0",
+  "uptime": 864000,
+  "services": {
+    "api": {
+      "status": "healthy",
+      "responseTime": 5
+    },
+    "database": {
+      "status": "healthy",
+      "responseTime": 8
+    },
+    "redis": {
+      "status": "healthy",
+      "responseTime": 2
+    },
+    "telephony": {
+      "status": "degraded",
+      "providers": {
+        "plivo": {
+          "status": "healthy",
+          "responseTime": 150
+        },
+        "exotel": {
+          "status": "degraded",
+          "responseTime": 2500,
+          "message": "Elevated latency detected"
+        }
+      }
+    },
+    "ai": {
+      "status": "healthy"
+    },
+    "websocket": {
+      "status": "healthy"
+    },
+    "queue": {
+      "status": "healthy"
+    },
+    "storage": {
+      "status": "healthy"
+    }
+  },
+  "issues": [
+    {
+      "service": "telephony.exotel",
+      "severity": "warning",
+      "message": "Elevated latency detected - calls may experience slight delays"
+    }
+  ]
+}
+```
+
+## HTTP Status Codes
+
+| Status Code | Meaning |
+|------------|---------|
+| 200 | System is healthy or degraded |
+| 503 | System is unhealthy - critical services down |
+
+## Error Responses
+
+<ResponseField name="401 Unauthorized">
+```json
+{
+  "success": false,
+  "error": "Invalid API key",
+  "code": "UNAUTHORIZED"
+}
+```
+Only returned when `detailed=true` is requested without valid authentication.
+</ResponseField>
+
+<ResponseField name="503 Service Unavailable">
+```json
+{
+  "success": false,
+  "status": "unhealthy",
+  "timestamp": "2026-02-18T10:30:00.000Z",
+  "services": {
+    "database": {
+      "status": "unhealthy",
+      "error": "Connection timeout"
+    }
+  },
+  "issues": [
+    {
+      "service": "database",
+      "severity": "critical",
+      "message": "Database connection unavailable"
+    }
+  ]
+}
+```
+</ResponseField>
+
+## Notes
+
+- Basic health check (without authentication) returns only overall status
+- Use detailed health check for monitoring dashboards and alerting
+- Health endpoint bypasses rate limiting
+- Response time should typically be under 100ms for basic checks
+- Recommended monitoring interval: every 30 seconds
+- Consider this endpoint for load balancer health checks
+- A `degraded` status means the system is operational but some features may be affected
+- An `unhealthy` status (503) means critical functionality is impaired

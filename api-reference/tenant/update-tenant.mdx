@@ -1,0 +1,480 @@
+---
+title: 'Update Tenant'
+api: 'PUT https://api.talkos.io/api/tenants/:tenantId'
+description: 'Update an existing tenant configuration and settings'
+---
+
+# Update Tenant
+
+Updates the configuration and settings of an existing tenant. You can update the tenant name, email, provider configuration, webhooks, and metadata.
+
+## Endpoint
+
+```
+PUT https://api.talkos.io/api/tenants/:tenantId
+```
+
+## Headers
+
+<ParamField header="Content-Type" type="string" required default="application/json">
+  Must be `application/json`
+</ParamField>
+
+<ParamField header="x-api-key" type="string" required>
+  Your tenant API key.
+  
+  **Example:** `tk_live_abc123xyz789`
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  The tenant identifier.
+  
+  **Example:** `tenant_01HXYZ123456`
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="tenantId" type="string" required>
+  The unique identifier of the tenant to update.
+  
+  **Example:** `tenant_01HXYZ123456`
+</ParamField>
+
+## Request Body
+
+All fields are optional. Only include the fields you want to update.
+
+<ParamField body="name" type="string">
+  The updated display name for the tenant organization.
+  
+  - Minimum length: 2 characters
+  - Maximum length: 100 characters
+  
+  **Example:** `"Acme Corp International"`
+</ParamField>
+
+<ParamField body="email" type="string">
+  Updated primary contact email. Will trigger a verification email.
+  
+  **Example:** `"newemail@acme.com"`
+</ParamField>
+
+<ParamField body="config" type="object">
+  Updated telephony provider configuration.
+</ParamField>
+
+<Expandable title="config properties">
+  <ParamField body="config.defaultProvider" type="string">
+    Change the default telephony provider.
+    
+    **Allowed values:** `plivo`, `exotel`
+  </ParamField>
+
+  <ParamField body="config.plivo" type="object">
+    Update Plivo configuration.
+  </ParamField>
+
+  <Expandable title="config.plivo properties">
+    <ParamField body="config.plivo.authId" type="string">
+      Updated Plivo Auth ID.
+      
+      **Example:** `"MAXXXXXXXXXXXXXXXXXX"`
+    </ParamField>
+
+    <ParamField body="config.plivo.authToken" type="string">
+      Updated Plivo Auth Token.
+      
+      **Example:** `"new_auth_token_xyz"`
+    </ParamField>
+  </Expandable>
+
+  <ParamField body="config.exotel" type="object">
+    Update Exotel configuration.
+  </ParamField>
+
+  <Expandable title="config.exotel properties">
+    <ParamField body="config.exotel.apiKey" type="string">
+      Updated Exotel API Key.
+    </ParamField>
+
+    <ParamField body="config.exotel.apiToken" type="string">
+      Updated Exotel API Token.
+    </ParamField>
+
+    <ParamField body="config.exotel.accountSid" type="string">
+      Updated Exotel Account SID.
+    </ParamField>
+
+    <ParamField body="config.exotel.subdomain" type="string">
+      Updated Exotel subdomain.
+      
+      **Allowed values:** `api.exotel.com`, `api.in.exotel.com`
+    </ParamField>
+  </Expandable>
+</Expandable>
+
+<ParamField body="webhookUrl" type="string">
+  Updated webhook URL. Set to `null` to remove the webhook.
+  
+  **Example:** `"https://api.acme.com/webhooks/talkos-v2"`
+</ParamField>
+
+<ParamField body="webhookSecret" type="string">
+  Secret for webhook signature verification. We'll include this in the `X-Webhook-Signature` header.
+  
+  **Example:** `"whsec_abc123xyz789"`
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Updated custom metadata. This completely replaces existing metadata.
+  
+  **Example:** `{"internalId": "cust_12345", "tier": "premium"}`
+</ParamField>
+
+<ParamField body="settings" type="object">
+  Tenant-level settings.
+</ParamField>
+
+<Expandable title="settings properties">
+  <ParamField body="settings.callRecordingEnabled" type="boolean">
+    Enable or disable call recording for all calls.
+    
+    **Default:** `true`
+  </ParamField>
+
+  <ParamField body="settings.transcriptionEnabled" type="boolean">
+    Enable or disable automatic transcription.
+    
+    **Default:** `true`
+  </ParamField>
+
+  <ParamField body="settings.defaultLanguage" type="string">
+    Default language for AI agents and transcription.
+    
+    **Example:** `"en-US"`
+  </ParamField>
+
+  <ParamField body="settings.timezone" type="string">
+    Default timezone for reports and scheduling.
+    
+    **Example:** `"America/New_York"`
+  </ParamField>
+
+  <ParamField body="settings.dailyReportEmail" type="boolean">
+    Whether to send daily usage reports via email.
+    
+    **Default:** `false`
+  </ParamField>
+</Expandable>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the update was successful.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The updated tenant object with all current values.
+</ResponseField>
+
+<Expandable title="data properties">
+  <ResponseField name="data.id" type="string">
+    The tenant's unique identifier.
+  </ResponseField>
+
+  <ResponseField name="data.name" type="string">
+    The updated display name.
+  </ResponseField>
+
+  <ResponseField name="data.email" type="string">
+    The current email address.
+  </ResponseField>
+
+  <ResponseField name="data.plan" type="string">
+    The subscription plan (cannot be changed via this endpoint).
+  </ResponseField>
+
+  <ResponseField name="data.status" type="string">
+    The current account status.
+  </ResponseField>
+
+  <ResponseField name="data.config" type="object">
+    The current provider configuration (sensitive values masked).
+  </ResponseField>
+
+  <ResponseField name="data.webhookUrl" type="string">
+    The current webhook URL.
+  </ResponseField>
+
+  <ResponseField name="data.metadata" type="object">
+    The current metadata object.
+  </ResponseField>
+
+  <ResponseField name="data.settings" type="object">
+    The current settings object.
+  </ResponseField>
+
+  <ResponseField name="data.updatedAt" type="string">
+    ISO 8601 timestamp of this update.
+  </ResponseField>
+
+  <ResponseField name="data.updatedFields" type="array">
+    List of fields that were modified in this update.
+    
+    **Example:** `["name", "webhookUrl", "config.plivo.authToken"]`
+  </ResponseField>
+</Expandable>
+
+<ResponseField name="message" type="string">
+  A human-readable success message.
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+
+```bash cURL
+curl -X PUT https://api.talkos.io/api/tenants/tenant_01HXYZ123456 \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: tk_live_abc123xyz789" \
+  -H "x-tenant-id: tenant_01HXYZ123456" \
+  -d '{
+    "name": "Acme Corp International",
+    "webhookUrl": "https://api.acme.com/webhooks/talkos-v2",
+    "config": {
+      "defaultProvider": "plivo",
+      "plivo": {
+        "authId": "MAXXXXXXXXXXXXXXXXXX",
+        "authToken": "new_auth_token_value"
+      }
+    },
+    "settings": {
+      "callRecordingEnabled": true,
+      "transcriptionEnabled": true,
+      "defaultLanguage": "en-US",
+      "timezone": "America/New_York"
+    },
+    "metadata": {
+      "internalId": "cust_12345",
+      "tier": "premium",
+      "accountManager": "jane@internal.com"
+    }
+  }'
+```
+
+```javascript Node.js
+const response = await fetch('https://api.talkos.io/api/tenants/tenant_01HXYZ123456', {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'tk_live_abc123xyz789',
+    'x-tenant-id': 'tenant_01HXYZ123456'
+  },
+  body: JSON.stringify({
+    name: 'Acme Corp International',
+    webhookUrl: 'https://api.acme.com/webhooks/talkos-v2',
+    config: {
+      defaultProvider: 'plivo',
+      plivo: {
+        authId: 'MAXXXXXXXXXXXXXXXXXX',
+        authToken: 'new_auth_token_value'
+      }
+    },
+    settings: {
+      callRecordingEnabled: true,
+      transcriptionEnabled: true,
+      defaultLanguage: 'en-US',
+      timezone: 'America/New_York'
+    },
+    metadata: {
+      internalId: 'cust_12345',
+      tier: 'premium',
+      accountManager: 'jane@internal.com'
+    }
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import requests
+
+response = requests.put(
+    'https://api.talkos.io/api/tenants/tenant_01HXYZ123456',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'tk_live_abc123xyz789',
+        'x-tenant-id': 'tenant_01HXYZ123456'
+    },
+    json={
+        'name': 'Acme Corp International',
+        'webhookUrl': 'https://api.acme.com/webhooks/talkos-v2',
+        'config': {
+            'defaultProvider': 'plivo',
+            'plivo': {
+                'authId': 'MAXXXXXXXXXXXXXXXXXX',
+                'authToken': 'new_auth_token_value'
+            }
+        },
+        'settings': {
+            'callRecordingEnabled': True,
+            'transcriptionEnabled': True,
+            'defaultLanguage': 'en-US',
+            'timezone': 'America/New_York'
+        },
+        'metadata': {
+            'internalId': 'cust_12345',
+            'tier': 'premium',
+            'accountManager': 'jane@internal.com'
+        }
+    }
+)
+
+print(response.json())
+```
+
+</CodeGroup>
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "tenant_01HXYZ123456",
+    "name": "Acme Corp International",
+    "email": "admin@acme.com",
+    "plan": "growth",
+    "status": "active",
+    "config": {
+      "defaultProvider": "plivo",
+      "plivo": {
+        "authId": "MAXXXXXXXXXXXXXXXXXX",
+        "authToken": "••••••••••••••••••••",
+        "isValid": true
+      }
+    },
+    "webhookUrl": "https://api.acme.com/webhooks/talkos-v2",
+    "metadata": {
+      "internalId": "cust_12345",
+      "tier": "premium",
+      "accountManager": "jane@internal.com"
+    },
+    "settings": {
+      "callRecordingEnabled": true,
+      "transcriptionEnabled": true,
+      "defaultLanguage": "en-US",
+      "timezone": "America/New_York",
+      "dailyReportEmail": false
+    },
+    "createdAt": "2026-01-15T10:30:00.000Z",
+    "updatedAt": "2026-02-18T15:45:00.000Z",
+    "updatedFields": [
+      "name",
+      "webhookUrl",
+      "config.plivo.authToken",
+      "settings",
+      "metadata"
+    ]
+  },
+  "message": "Tenant updated successfully"
+}
+```
+
+## Error Responses
+
+<CodeGroup>
+
+```json 400 - Validation Error
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Validation failed",
+    "details": {
+      "errors": [
+        {
+          "field": "webhookUrl",
+          "message": "Webhook URL must be HTTPS"
+        }
+      ]
+    }
+  },
+  "requestId": "req_abc123xyz789"
+}
+```
+
+```json 400 - Invalid Provider Credentials
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_PROVIDER_CREDENTIALS",
+    "message": "Failed to validate Plivo credentials",
+    "details": {
+      "provider": "plivo",
+      "reason": "Authentication failed with provided credentials"
+    }
+  },
+  "requestId": "req_def456uvw012"
+}
+```
+
+```json 401 - Unauthorized
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_API_KEY",
+    "message": "Invalid or missing API key",
+    "details": {}
+  },
+  "requestId": "req_ghi789rst345"
+}
+```
+
+```json 403 - Forbidden
+{
+  "success": false,
+  "error": {
+    "code": "ACCESS_DENIED",
+    "message": "You do not have permission to update this tenant",
+    "details": {}
+  },
+  "requestId": "req_jkl012mno678"
+}
+```
+
+```json 404 - Not Found
+{
+  "success": false,
+  "error": {
+    "code": "TENANT_NOT_FOUND",
+    "message": "Tenant not found",
+    "details": {
+      "tenantId": "tenant_nonexistent"
+    }
+  },
+  "requestId": "req_mno345pqr901"
+}
+```
+
+</CodeGroup>
+
+## Notes
+
+<Warning>
+  **Credential Validation**: When updating provider credentials, TalkOS will attempt to validate them before saving. If validation fails, the update will be rejected.
+</Warning>
+
+<Info>
+  **Plan Changes**: To change your subscription plan, use the billing portal or contact sales. Plan changes cannot be made via this endpoint.
+</Info>
+
+<Tip>
+  **Metadata Replacement**: The `metadata` field is completely replaced on update. If you want to add a new field while keeping existing ones, first fetch the current metadata, merge your changes, and then update.
+</Tip>
+
+<Note>
+  **Email Changes**: Changing the email address will trigger a verification email. The new email won't be active until verified.
+</Note>

@@ -1,0 +1,116 @@
+---
+title: "Admin Login"
+api: "POST https://api.talkos.io/api/auth/admin/login"
+description: "Authenticate admin user and receive JWT token"
+---
+
+Authenticate an admin user and receive a JWT token for subsequent API requests. The token should be included in the `Authorization` header as a Bearer token.
+
+## Request Body
+
+<ParamField body="username" type="string" required>
+  The admin's username.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  The admin's password.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if login was successful.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Status message describing the result.
+</ResponseField>
+
+<ResponseField name="token" type="string">
+  JWT token for authentication. Valid for 7 days by default.
+</ResponseField>
+
+<ResponseField name="user" type="object">
+  The authenticated admin user object.
+  <Expandable title="properties">
+    <ResponseField name="id" type="string">
+      Unique identifier for the admin user.
+    </ResponseField>
+    <ResponseField name="username" type="string">
+      The admin's username.
+    </ResponseField>
+    <ResponseField name="email" type="string">
+      The admin's email address.
+    </ResponseField>
+    <ResponseField name="role" type="string">
+      The admin's role.
+    </ResponseField>
+    <ResponseField name="permissions" type="object">
+      The admin's permissions.
+      <Expandable title="properties">
+        <ResponseField name="canViewConfig" type="boolean">
+          Permission to view configuration.
+        </ResponseField>
+        <ResponseField name="canEditConfig" type="boolean">
+          Permission to edit configuration.
+        </ResponseField>
+        <ResponseField name="canViewLogs" type="boolean">
+          Permission to view logs.
+        </ResponseField>
+        <ResponseField name="canManagePM2" type="boolean">
+          Permission to manage PM2 processes.
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/auth/admin/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "password": "securePassword123"
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "507f1f77bcf86cd799439011",
+    "username": "admin",
+    "email": "admin@example.com",
+    "role": "admin",
+    "permissions": {
+      "canViewConfig": true,
+      "canEditConfig": true,
+      "canViewLogs": true,
+      "canManagePM2": true
+    }
+  }
+}
+```
+
+```json 401
+{
+  "error": "Invalid credentials"
+}
+```
+
+```json 403
+{
+  "error": "Account locked. Try again in 15 minutes",
+  "lockedUntil": "2026-02-18T10:30:00.000Z"
+}
+```
+</ResponseExample>
+
+## Account Lockout
+
+After multiple failed login attempts, the account will be temporarily locked for 15 minutes as a security measure. The response will include the `lockedUntil` timestamp.

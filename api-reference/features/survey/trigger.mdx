@@ -1,0 +1,207 @@
+---
+title: "Trigger Survey"
+description: "Trigger a post-call survey for a completed call"
+api: "POST https://api.talkos.io/api/features/survey/trigger"
+---
+
+# Trigger Survey
+
+Trigger a post-call survey for a completed call. This creates a survey instance and initiates delivery based on the configured method (IVR, SMS, or webhook).
+
+## Endpoint
+
+```
+POST /api/features/survey/trigger
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Request Body
+
+<ParamField body="callUuid" type="string" required>
+  The unique identifier of the completed call
+</ParamField>
+
+<ParamField body="phoneNumber" type="string" required>
+  Customer's phone number in E.164 format (e.g., `+14155551234`)
+</ParamField>
+
+<ParamField body="agentId" type="string">
+  AI agent identifier that handled the call (for analytics)
+</ParamField>
+
+## Response
+
+<ResponseField name="surveyId" type="string">
+  Unique identifier for the created survey instance
+</ResponseField>
+
+<ResponseField name="deliveryMethod" type="string">
+  How the survey will be delivered: `ivr`, `sms`, or `webhook`
+</ResponseField>
+
+<ResponseField name="questions" type="array">
+  Array of questions in the survey (template + custom questions)
+</ResponseField>
+
+<ResponseField name="survey" type="object">
+  Full survey object with all details
+</ResponseField>
+
+<ResponseField name="survey.surveyId" type="string">
+  Unique survey identifier
+</ResponseField>
+
+<ResponseField name="survey.callUuid" type="string">
+  Associated call identifier
+</ResponseField>
+
+<ResponseField name="survey.tenantId" type="string">
+  Tenant identifier
+</ResponseField>
+
+<ResponseField name="survey.phoneNumber" type="string">
+  Customer phone number
+</ResponseField>
+
+<ResponseField name="survey.template" type="string">
+  Survey template used
+</ResponseField>
+
+<ResponseField name="survey.status" type="string">
+  Survey status: `pending`
+</ResponseField>
+
+<ResponseField name="survey.createdAt" type="number">
+  Unix timestamp when survey was created
+</ResponseField>
+
+<ResponseField name="survey.expiresAt" type="number">
+  Unix timestamp when survey expires (24 hours from creation)
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST https://api.talkos.io/api/features/survey/trigger \
+  -H "x-api-key: tk_live_xxxxxxxxxxxxxxxxxxxx" \
+  -H "x-tenant-id: tenant_abc123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "callUuid": "call_abc123def456",
+    "phoneNumber": "+14155551234",
+    "agentId": "agent_support_001"
+  }'
+```
+
+## Example Response
+
+```json
+{
+  "surveyId": "survey_1739836800000_x7k2m9",
+  "deliveryMethod": "ivr",
+  "questions": [
+    {
+      "id": "q_csat_1",
+      "text": "On a scale of 1 to 5, how satisfied are you with the service you received today?",
+      "type": "scale",
+      "min": 1,
+      "max": 5,
+      "labels": {
+        "1": "Very Unsatisfied",
+        "3": "Neutral",
+        "5": "Very Satisfied"
+      },
+      "required": true
+    },
+    {
+      "id": "q_csat_2",
+      "text": "Was your issue resolved during this call?",
+      "type": "yes_no",
+      "required": true
+    },
+    {
+      "id": "q_csat_3",
+      "text": "Any additional feedback?",
+      "type": "open_text",
+      "required": false,
+      "maxLength": 500
+    }
+  ],
+  "survey": {
+    "surveyId": "survey_1739836800000_x7k2m9",
+    "callUuid": "call_abc123def456",
+    "tenantId": "tenant_abc123",
+    "phoneNumber": "+14155551234",
+    "agentId": "agent_support_001",
+    "template": "csat",
+    "questions": [...],
+    "responses": {},
+    "status": "pending",
+    "deliveryMethod": "ivr",
+    "createdAt": 1739836800000,
+    "completedAt": null,
+    "expiresAt": 1739923200000
+  }
+}
+```
+
+## Error Response
+
+```json
+{
+  "error": "Survey not configured"
+}
+```
+
+## Survey Workflow
+
+### IVR Delivery
+
+1. Survey is triggered
+2. Use [Get IVR Prompts](./ivr-prompts) to get TTS prompts
+3. Play prompts to customer and collect DTMF responses
+4. Submit responses via [DTMF Response](./dtmf-response) endpoint
+
+### SMS Delivery
+
+1. Survey is triggered
+2. SMS is sent with survey link
+3. Customer completes survey via web form
+4. Responses are submitted via [Submit Survey](./submit) endpoint
+
+### Webhook Delivery
+
+1. Survey is triggered
+2. Webhook is called with survey details
+3. External system handles survey delivery
+4. Responses are submitted via [Submit Survey](./submit) endpoint
+
+## Survey Statuses
+
+| Status | Description |
+|--------|-------------|
+| `pending` | Survey created, awaiting customer response |
+| `in_progress` | Customer has started responding |
+| `completed` | All required questions answered |
+| `skipped` | Customer skipped the survey (pressed *) |
+| `expired` | Survey expired (24 hours without completion) |
+
+## Notes
+
+- Rate limiting is automatically applied when triggering a survey
+- The same phone number won't be surveyed again within the cooldown period
+- Survey expires after 24 hours if not completed
+- Triggering returns an error if surveys are not configured for the tenant

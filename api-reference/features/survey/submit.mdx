@@ -1,0 +1,217 @@
+---
+title: "Submit Survey"
+description: "Submit survey responses via API or webhook"
+api: "POST https://api.talkos.io/api/features/survey/:surveyId/submit"
+---
+
+# Submit Survey
+
+Submit survey responses for SMS, webhook, or API-based survey delivery methods.
+
+## Endpoint
+
+```
+POST /api/features/survey/:surveyId/submit
+```
+
+## Path Parameters
+
+<ParamField path="surveyId" type="string" required>
+  The unique identifier of the survey
+</ParamField>
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Request Body
+
+<ParamField body="responses" type="object" required>
+  Object mapping question IDs to response values. The format of each value depends on the question type:
+  - `scale`: Number within the question's min/max range
+  - `yes_no`: `"yes"` or `"no"`
+  - `open_text`: String (max length per question config)
+  - `multiple_choice`: Selected option value
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the responses were submitted successfully
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Survey status after submission: `in_progress` or `completed`
+</ResponseField>
+
+<ResponseField name="reason" type="string">
+  Error reason if submission failed:
+  - `survey_not_found` - Invalid survey ID
+  - `already_completed` - Survey was already submitted
+  - `survey_expired` - Survey has expired (24 hours)
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST https://api.talkos.io/api/features/survey/survey_1739836800000_x7k2m9/submit \
+  -H "x-api-key: tk_live_xxxxxxxxxxxxxxxxxxxx" \
+  -H "x-tenant-id: tenant_abc123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "responses": {
+      "q_csat_1": 5,
+      "q_csat_2": "yes",
+      "q_csat_3": "The agent was very helpful and resolved my issue quickly. Great experience!"
+    }
+  }'
+```
+
+## Example Response - Completed
+
+```json
+{
+  "success": true,
+  "status": "completed"
+}
+```
+
+## Example Response - In Progress
+
+When not all required questions are answered:
+
+```json
+{
+  "success": true,
+  "status": "in_progress"
+}
+```
+
+## Error Responses
+
+### Survey Not Found
+
+```json
+{
+  "success": false,
+  "reason": "survey_not_found"
+}
+```
+
+### Already Completed
+
+```json
+{
+  "success": false,
+  "reason": "already_completed"
+}
+```
+
+### Survey Expired
+
+```json
+{
+  "success": false,
+  "reason": "survey_expired"
+}
+```
+
+## Partial Submission
+
+You can submit responses incrementally. Only all required questions need to be answered for the survey to be marked as `completed`.
+
+```bash
+# First submission - partial
+curl -X POST https://api.talkos.io/api/features/survey/survey_123/submit \
+  -H "..." \
+  -d '{"responses": {"q_csat_1": 4}}'
+# Response: {"success": true, "status": "in_progress"}
+
+# Second submission - completes required questions
+curl -X POST https://api.talkos.io/api/features/survey/survey_123/submit \
+  -H "..." \
+  -d '{"responses": {"q_csat_2": "yes"}}'
+# Response: {"success": true, "status": "completed"}
+```
+
+## Web Form Integration
+
+```html
+<form id="survey-form">
+  <div class="question">
+    <label>How satisfied are you? (1-5)</label>
+    <input type="range" name="q_csat_1" min="1" max="5" value="3">
+  </div>
+  
+  <div class="question">
+    <label>Was your issue resolved?</label>
+    <select name="q_csat_2">
+      <option value="yes">Yes</option>
+      <option value="no">No</option>
+    </select>
+  </div>
+  
+  <div class="question">
+    <label>Additional feedback</label>
+    <textarea name="q_csat_3" maxlength="500"></textarea>
+  </div>
+  
+  <button type="submit">Submit</button>
+</form>
+
+<script>
+document.getElementById('survey-form').onsubmit = async (e) => {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+  const responses = Object.fromEntries(formData);
+  
+  // Convert numeric fields
+  responses.q_csat_1 = parseInt(responses.q_csat_1);
+  
+  const result = await fetch(
+    `https://api.talkos.io/api/features/survey/${surveyId}/submit`,
+    {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'x-tenant-id': tenantId,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ responses })
+    }
+  ).then(r => r.json());
+  
+  if (result.success) {
+    alert('Thank you for your feedback!');
+  }
+};
+</script>
+```
+
+## Low Score Follow-Up
+
+When a survey is completed with a low score (at or below the configured threshold), TalkOS automatically triggers follow-up actions:
+
+1. **Flag**: Survey is flagged for review in analytics
+2. **Ticket**: Webhook is called to create a support ticket
+3. **Callback**: Customer is scheduled for a follow-up call
+
+Configure these actions using the [Configure Survey](./configure) endpoint.
+
+## Notes
+
+- Surveys expire 24 hours after creation
+- Multiple submissions are allowed until all required questions are answered
+- Once completed, additional submissions are rejected
+- Responses are timestamped for analytics
+- Low score follow-ups are triggered automatically on completion

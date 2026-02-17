@@ -1,0 +1,62 @@
+---
+title: "Enforce Data Retention"
+api: "POST https://api.talkos.io/api/compliance/retention/enforce"
+description: "Enforce data retention policy by removing data older than specified days"
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="retentionDays" type="integer" required>
+  Number of days to retain data. Records older than this will be deleted.
+  
+  **Minimum:** 1
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/compliance/retention/enforce \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -d '{
+    "retentionDays": 90
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "retention": {
+    "retentionDays": 90,
+    "cutoffDate": "2025-11-20T00:00:00Z",
+    "deletedRecords": {
+      "callSessions": 245,
+      "transcripts": 245,
+      "recordings": 180,
+      "conversationLogs": 1250
+    },
+    "totalDeleted": 1920,
+    "enforcedAt": "2026-02-18T10:30:00Z"
+  }
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": "retentionDays must be a positive integer"
+}
+```
+</ResponseExample>

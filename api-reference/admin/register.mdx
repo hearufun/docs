@@ -1,0 +1,87 @@
+---
+title: "Register Admin"
+api: "POST https://api.talkos.io/api/auth/admin/register"
+description: "Register a new admin user account"
+---
+
+Register a new admin user for the TalkOS platform. The first registered user automatically gets full admin permissions.
+
+## Request Body
+
+<ParamField body="username" type="string" required>
+  Unique username for the admin account. Must be alphanumeric.
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  Valid email address for the admin account.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Password for the account. Must be at least 6 characters.
+</ParamField>
+
+<ParamField body="confirmPassword" type="string" required>
+  Password confirmation. Must match the password field.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if registration was successful.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Status message describing the result.
+</ResponseField>
+
+<ResponseField name="user" type="object">
+  The created admin user object.
+  <Expandable title="properties">
+    <ResponseField name="id" type="string">
+      Unique identifier for the admin user.
+    </ResponseField>
+    <ResponseField name="username" type="string">
+      The admin's username.
+    </ResponseField>
+    <ResponseField name="email" type="string">
+      The admin's email address.
+    </ResponseField>
+    <ResponseField name="role" type="string">
+      The admin's role (e.g., "admin").
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/auth/admin/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "email": "admin@example.com",
+    "password": "securePassword123",
+    "confirmPassword": "securePassword123"
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201
+{
+  "success": true,
+  "message": "Admin user registered successfully",
+  "user": {
+    "id": "507f1f77bcf86cd799439011",
+    "username": "admin",
+    "email": "admin@example.com",
+    "role": "admin"
+  }
+}
+```
+
+```json 400
+{
+  "error": "User already exists"
+}
+```
+</ResponseExample>

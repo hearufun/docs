@@ -1,0 +1,472 @@
+---
+title: 'Exotel Setup Guide'
+description: 'Configure Exotel as your voice provider for India-based calling'
+---
+
+Exotel is India's leading cloud telephony provider, offering reliable voice services with excellent coverage across India. This guide walks you through setting up Exotel with TalkOS for both outbound and inbound calling.
+
+## Why Exotel for India?
+
+<CardGroup cols={2}>
+  <Card title="Local Presence" icon="flag">
+    Indian phone numbers with high answer rates
+  </Card>
+  <Card title="DND Compliance" icon="shield-check">
+    Built-in Do Not Disturb (DND) registry compliance
+  </Card>
+  <Card title="Low Latency" icon="bolt">
+    India-based infrastructure for minimal audio delay
+  </Card>
+  <Card title="TRAI Compliant" icon="certificate">
+    Meets all regulatory requirements for India
+  </Card>
+</CardGroup>
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- A TalkOS tenant with API credentials
+- A valid Indian business registration (for Exotel signup)
+- KYC documents for number allocation
+- Business PAN card and GST registration
+
+<Steps>
+  <Step title="Create an Exotel Account">
+    Sign up for an Exotel account at [exotel.com](https://exotel.com/):
+
+    1. Visit [exotel.com/get-started](https://exotel.com/get-started/)
+    2. Fill in your business details
+    3. Select your use case (outbound campaigns, IVR, etc.)
+    4. Complete KYC verification:
+       - Upload business PAN card
+       - Upload GST certificate
+       - Provide authorized signatory details
+    5. Wait for account approval (typically 24-48 hours)
+
+    <Warning>
+    Exotel requires KYC verification due to TRAI regulations. Ensure all documents are clear and match your business registration.
+    </Warning>
+  </Step>
+
+  <Step title="Get Your API Credentials">
+    Once your account is approved, retrieve your API credentials:
+
+    1. Log in to [my.exotel.com](https://my.exotel.com/)
+    2. Navigate to **Settings** → **API Settings**
+    3. Note down the following credentials:
+       - **API Key**: Your API authentication key
+       - **API Token**: Your API authentication token
+       - **Account SID**: Your unique account identifier
+       - **Subdomain**: Your Exotel subdomain (e.g., `api.exotel.com`)
+
+    Your credentials will look like:
+    ```
+    API Key:     your_api_key_here
+    API Token:   your_api_token_here
+    Account SID: yourcompany
+    Subdomain:   api.exotel.com (or api.in.exotel.com)
+    ```
+
+    <Note>
+    Exotel has different subdomains for different regions:
+    - **api.exotel.com** - Singapore cluster (recommended for Indian numbers)
+    - **api.in.exotel.com** - India cluster
+    </Note>
+  </Step>
+
+  <Step title="Get Your ExoPhone (Caller ID)">
+    Request an ExoPhone number for making and receiving calls:
+
+    1. Go to **Phone Numbers** in your Exotel dashboard
+    2. Click **Request Number**
+    3. Choose number type:
+       - **Mobile Numbers**: 10-digit mobile format
+       - **Landline Numbers**: STD code + number
+       - **Toll-Free Numbers**: 1800/1860 prefixes
+    4. Submit documentation if required
+    5. Wait for number activation (1-3 business days)
+
+    <Tip>
+    For outbound AI calling, landline numbers often have higher answer rates as they appear more legitimate to recipients.
+    </Tip>
+  </Step>
+
+  <Step title="Configure TalkOS Tenant">
+    Add your Exotel credentials to your TalkOS tenant configuration:
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X PUT https://api.talkos.io/api/tenants/{tenantId} \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "config": {
+          "defaultProvider": "exotel",
+          "exotel": {
+            "apiKey": "your_api_key_here",
+            "apiToken": "your_api_token_here",
+            "accountSid": "yourcompany",
+            "subdomain": "api.exotel.com",
+            "callerId": "+911234567890",
+            "record": true,
+            "timeLimit": 1800,
+            "timeout": 30
+          }
+        }
+      }'
+    ```
+
+    ```javascript Node.js
+    const response = await fetch(`https://api.talkos.io/api/tenants/${tenantId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        config: {
+          defaultProvider: 'exotel',
+          exotel: {
+            apiKey: 'your_api_key_here',
+            apiToken: 'your_api_token_here',
+            accountSid: 'yourcompany',
+            subdomain: 'api.exotel.com',
+            callerId: '+911234567890',
+            record: true,
+            timeLimit: 1800,
+            timeout: 30
+          }
+        }
+      })
+    });
+    ```
+
+    ```python Python
+    import requests
+
+    response = requests.put(
+        f'https://api.talkos.io/api/tenants/{tenant_id}',
+        headers={
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        },
+        json={
+            'config': {
+                'defaultProvider': 'exotel',
+                'exotel': {
+                    'apiKey': 'your_api_key_here',
+                    'apiToken': 'your_api_token_here',
+                    'accountSid': 'yourcompany',
+                    'subdomain': 'api.exotel.com',
+                    'callerId': '+911234567890',
+                    'record': True,
+                    'timeLimit': 1800,
+                    'timeout': 30
+                }
+            }
+        }
+    )
+    ```
+
+    </CodeGroup>
+
+    ### Configuration Options
+
+    | Parameter | Type | Description |
+    |-----------|------|-------------|
+    | `apiKey` | string | Exotel API key |
+    | `apiToken` | string | Exotel API token |
+    | `accountSid` | string | Your Exotel account SID |
+    | `subdomain` | string | API subdomain (`api.exotel.com` or `api.in.exotel.com`) |
+    | `callerId` | string | Your ExoPhone number (E.164 format) |
+    | `record` | boolean | Enable call recording (default: false) |
+    | `timeLimit` | number | Max call duration in seconds |
+    | `timeout` | number | Ring timeout in seconds (default: 30) |
+  </Step>
+
+  <Step title="Register ExoPhone with TalkOS">
+    Register your ExoPhone number for use with TalkOS:
+
+    ```bash
+    curl -X POST https://api.talkos.io/api/numbers/register \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "number": "+911234567890",
+        "provider": "exotel",
+        "direction": "both",
+        "friendlyName": "Support Line"
+      }'
+    ```
+
+    <Note>
+    Indian phone numbers should be in E.164 format: `+91` followed by the 10-digit number.
+    </Note>
+  </Step>
+
+  <Step title="Configure Status Callbacks">
+    For inbound calling and call status updates, configure Exotel to send webhooks to TalkOS:
+
+    ### In Exotel Dashboard
+
+    1. Go to **App Bazaar** → **Your Connected Apps**
+    2. If using an Exotel App (ExoML):
+       - Set the **Answer URL** to: `https://api.talkos.io/api/exotel/inbound/answer`
+       - Set the **Status Callback URL** to: `https://api.talkos.io/api/exotel/status`
+
+    ### For Direct API Calls
+
+    When TalkOS initiates calls via Exotel API, it automatically sets:
+    - **StatusCallback**: `https://api.talkos.io/api/exotel/status`
+    - **StatusCallbackEvents**: `terminal` (call completion events)
+
+    ### Manual Configuration (if needed)
+
+    ```bash
+    # Configure via Exotel API
+    curl -X POST "https://{api_key}:{api_token}@{subdomain}/v1/Accounts/{account_sid}/NumberManagement/Numbers" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "VirtualNumber": "+911234567890",
+        "FallbackUrl": "https://api.talkos.io/api/exotel/inbound/answer",
+        "IncomingUrl": "https://api.talkos.io/api/exotel/inbound/answer"
+      }'
+    ```
+  </Step>
+
+  <Step title="Configure Inbound Webhook (Optional)">
+    Configure TalkOS to consult your server for incoming call handling:
+
+    ```bash
+    curl -X POST https://api.talkos.io/api/inbound/config \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "webhookUrl": "https://your-server.com/api/talkos/inbound-config",
+        "webhookTimeoutMs": 5000,
+        "fallbackConfig": {
+          "prompt": "You are a helpful customer support agent for our company. Speak in Hindi or English based on customer preference.",
+          "greeting": "नमस्ते! आपका कॉल करने के लिए धन्यवाद। मैं आपकी कैसे मदद कर सकता हूँ?",
+          "maxDuration": 600,
+          "language": "hi-IN"
+        }
+      }'
+    ```
+
+    <Tip>
+    For Indian customers, consider supporting both Hindi and English. TalkOS can auto-detect language preference and switch accordingly.
+    </Tip>
+  </Step>
+
+  <Step title="Test Your Integration">
+    Make a test outbound call to verify the integration:
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X POST https://api.talkos.io/api/calls/outbound \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "to": "+919876543210",
+        "from": "+911234567890",
+        "provider": "exotel",
+        "prompt": "You are a friendly assistant. Greet the user in Hindi and ask how you can help.",
+        "greeting": "नमस्ते! यह TalkOS से एक टेस्ट कॉल है। मैं आपकी कैसे मदद कर सकता हूँ?",
+        "maxDuration": 120
+      }'
+    ```
+
+    ```javascript Node.js
+    const response = await fetch('https://api.talkos.io/api/calls/outbound', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: '+919876543210',
+        from: '+911234567890',
+        provider: 'exotel',
+        prompt: 'You are a friendly assistant. Greet the user in Hindi and ask how you can help.',
+        greeting: 'नमस्ते! यह TalkOS से एक टेस्ट कॉल है।',
+        maxDuration: 120
+      })
+    });
+
+    const data = await response.json();
+    console.log('Call ID:', data.callId);
+    ```
+
+    </CodeGroup>
+
+    <Check>
+    If the call connects and you hear the AI greeting, your Exotel integration is working!
+    </Check>
+  </Step>
+</Steps>
+
+## India-Specific Considerations
+
+### DND (Do Not Disturb) Registry
+
+India's TRAI maintains a DND registry for numbers that have opted out of promotional calls:
+
+<Warning>
+Calling DND-registered numbers for promotional purposes is illegal and can result in heavy fines. Exotel automatically checks the DND registry for promotional calls.
+</Warning>
+
+```bash
+# Check DND status before calling (TalkOS handles this automatically)
+curl -X GET "https://api.talkos.io/api/numbers/dnd-check/+919876543210" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+Response:
+```json
+{
+  "number": "+919876543210",
+  "dndStatus": "registered",
+  "category": "fully_blocked",
+  "canCall": false,
+  "reason": "Number registered on DND for all categories"
+}
+```
+
+### Call Categories
+
+| Category | Description | DND Impact |
+|----------|-------------|------------|
+| **Transactional** | Order updates, OTPs, alerts | Allowed even for DND numbers |
+| **Service** | Customer support, feedback | Usually allowed |
+| **Promotional** | Sales, marketing | Blocked for DND numbers |
+
+<Tip>
+To bypass DND restrictions legally, ensure your calls are transactional or service-related, and configure your Exotel account accordingly.
+</Tip>
+
+### Timing Restrictions
+
+TRAI mandates calling time restrictions:
+
+| Call Type | Allowed Hours |
+|-----------|---------------|
+| Promotional | 9:00 AM - 9:00 PM IST |
+| Transactional | 24/7 (with restrictions) |
+| Emergency | 24/7 |
+
+TalkOS automatically respects these timings when scheduling calls.
+
+### Regional Languages
+
+Support for Indian languages in TalkOS:
+
+| Language | Code | TTS Support | STT Support |
+|----------|------|-------------|-------------|
+| Hindi | `hi-IN` | ✅ | ✅ |
+| English (India) | `en-IN` | ✅ | ✅ |
+| Tamil | `ta-IN` | ✅ | ✅ |
+| Telugu | `te-IN` | ✅ | ✅ |
+| Marathi | `mr-IN` | ✅ | ✅ |
+| Bengali | `bn-IN` | ✅ | ✅ |
+| Gujarati | `gu-IN` | ✅ | ✅ |
+| Kannada | `kn-IN` | ✅ | ✅ |
+
+## Status Callback Reference
+
+### Call Status Events
+
+| Status | Description |
+|--------|-------------|
+| `queued` | Call is queued |
+| `ringing` | Call is ringing |
+| `in-progress` | Call was answered |
+| `completed` | Call ended normally |
+| `busy` | Callee was busy |
+| `no-answer` | No answer within timeout |
+| `failed` | Call failed |
+| `canceled` | Call was canceled |
+
+### Callback Payload
+
+```json
+{
+  "CallSid": "exotel_call_id",
+  "CallFrom": "+919876543210",
+  "CallTo": "+911234567890",
+  "Status": "completed",
+  "Direction": "outbound",
+  "StartTime": "2025-02-18T10:00:00+05:30",
+  "EndTime": "2025-02-18T10:05:30+05:30",
+  "Duration": 330,
+  "RecordingUrl": "https://s3.exotel.com/recordings/..."
+}
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Calls failing with 'Authentication Error'">
+    - Verify API Key and API Token are correct
+    - Check that Account SID matches your Exotel account
+    - Ensure you're using the correct subdomain
+    - Verify your Exotel account is active
+  </Accordion>
+
+  <Accordion title="'Number not found' error">
+    - Confirm the ExoPhone is activated in your Exotel account
+    - Verify the number format (should be E.164: +91XXXXXXXXXX)
+    - Check that the number is configured for voice (not just SMS)
+  </Accordion>
+
+  <Accordion title="Calls blocked due to DND">
+    - Verify your call category in Exotel settings
+    - For transactional calls, ensure proper headers are sent
+    - Consider using verified templates for regulated communications
+  </Accordion>
+
+  <Accordion title="Audio quality issues">
+    - Check network latency between your server and Exotel
+    - Consider using the `api.in.exotel.com` subdomain for India-based servers
+    - Verify your audio encoding settings (Exotel uses 8kHz PCM)
+  </Accordion>
+
+  <Accordion title="Inbound calls not reaching TalkOS">
+    - Verify webhook URLs are correctly configured in Exotel
+    - Ensure TalkOS is accessible from the internet
+    - Check Exotel's webhook delivery logs for errors
+    - Verify SSL certificate is valid and not self-signed
+  </Accordion>
+</AccordionGroup>
+
+## Pricing Considerations
+
+Exotel charges for:
+
+- **ExoPhone rental**: ₹600-2000/month depending on number type
+- **Outbound calls**: ₹0.50-1.50/minute based on destination
+- **Inbound calls**: ₹0.40-1.00/minute
+- **Call recording storage**: ₹10/GB/month
+
+<Tip>
+Exotel offers volume discounts. Contact their sales team for enterprise pricing if you expect high call volumes.
+</Tip>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Make Your First Call" icon="phone" href="/quickstart">
+    Follow the quickstart to make an AI-powered call
+  </Card>
+  <Card title="Multi-Language Setup" icon="language" href="/guides/multilingual">
+    Configure support for Indian regional languages
+  </Card>
+  <Card title="DND Compliance" icon="shield-check" href="/guides/india-compliance">
+    Learn about TRAI compliance requirements
+  </Card>
+  <Card title="Call Analytics" icon="chart-line" href="/api-reference/analytics/overview">
+    Monitor call performance and costs
+  </Card>
+</CardGroup>

@@ -1,0 +1,224 @@
+---
+title: "Get Phone Number"
+api: "GET https://api.talkos.io/api/numbers/{identifier}"
+description: "Retrieve detailed information about a specific phone number"
+---
+
+Get complete details about a specific phone number including configuration, usage statistics, and billing information.
+
+## Authentication
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="identifier" type="string" required>
+  The phone number ID or E.164 formatted number (e.g., `num_abc123xyz` or `+14155551234`)
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="id" type="string">
+      Unique identifier for the number
+    </ResponseField>
+    <ResponseField name="number" type="string">
+      Phone number in E.164 format
+    </ResponseField>
+    <ResponseField name="country" type="string">
+      ISO country code
+    </ResponseField>
+    <ResponseField name="region" type="string">
+      State or region
+    </ResponseField>
+    <ResponseField name="city" type="string">
+      City name
+    </ResponseField>
+    <ResponseField name="type" type="string">
+      Number type (local, toll-free, mobile)
+    </ResponseField>
+    <ResponseField name="direction" type="string">
+      Call direction configuration
+    </ResponseField>
+    <ResponseField name="friendlyName" type="string">
+      Friendly name or label
+    </ResponseField>
+    <ResponseField name="dialerProvider" type="string">
+      Dialer provider name
+    </ResponseField>
+    <ResponseField name="providerNumberId" type="string">
+      Provider's internal number ID
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Current status (active, pending, suspended)
+    </ResponseField>
+    <ResponseField name="capabilities" type="object">
+      <Expandable title="capabilities">
+        <ResponseField name="voice" type="boolean">Voice calling enabled</ResponseField>
+        <ResponseField name="sms" type="boolean">SMS enabled</ResponseField>
+        <ResponseField name="mms" type="boolean">MMS enabled</ResponseField>
+        <ResponseField name="fax" type="boolean">Fax enabled</ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="webhookUrl" type="string">
+      Inbound call webhook URL
+    </ResponseField>
+    <ResponseField name="fallbackUrl" type="string">
+      Fallback webhook URL
+    </ResponseField>
+    <ResponseField name="voicemailEnabled" type="boolean">
+      Whether voicemail is enabled
+    </ResponseField>
+    <ResponseField name="recordingEnabled" type="boolean">
+      Whether call recording is enabled
+    </ResponseField>
+    <ResponseField name="tags" type="object">
+      Custom tags
+    </ResponseField>
+    <ResponseField name="billing" type="object">
+      <Expandable title="billing">
+        <ResponseField name="monthlyPrice" type="number">Monthly cost</ResponseField>
+        <ResponseField name="currency" type="string">Billing currency</ResponseField>
+        <ResponseField name="nextBillingDate" type="string">Next billing date</ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="usage" type="object">
+      <Expandable title="usage">
+        <ResponseField name="totalCalls" type="integer">Total calls</ResponseField>
+        <ResponseField name="inboundCalls" type="integer">Inbound calls</ResponseField>
+        <ResponseField name="outboundCalls" type="integer">Outbound calls</ResponseField>
+        <ResponseField name="totalMinutes" type="number">Total minutes used</ResponseField>
+        <ResponseField name="lastCallAt" type="string">Last call timestamp</ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="createdAt" type="string">
+      Creation timestamp
+    </ResponseField>
+    <ResponseField name="updatedAt" type="string">
+      Last update timestamp
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.talkos.io/api/numbers/num_abc123xyz" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```bash cURL (by number)
+curl -X GET "https://api.talkos.io/api/numbers/+14155551234" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id"
+```
+
+```javascript Node.js
+const response = await fetch(
+  'https://api.talkos.io/api/numbers/num_abc123xyz',
+  {
+    method: 'GET',
+    headers: {
+      'x-api-key': 'your-api-key',
+      'x-tenant-id': 'your-tenant-id'
+    }
+  }
+);
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/numbers/num_abc123xyz',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "data": {
+    "id": "num_abc123xyz",
+    "number": "+14155551234",
+    "country": "US",
+    "region": "California",
+    "city": "San Francisco",
+    "type": "local",
+    "direction": "both",
+    "friendlyName": "Sales Hotline",
+    "dialerProvider": "plivo",
+    "providerNumberId": "17778889999",
+    "status": "active",
+    "capabilities": {
+      "voice": true,
+      "sms": true,
+      "mms": true,
+      "fax": false
+    },
+    "webhookUrl": "https://your-server.com/webhooks/inbound",
+    "fallbackUrl": "https://your-server.com/webhooks/fallback",
+    "voicemailEnabled": true,
+    "recordingEnabled": true,
+    "tags": {
+      "department": "sales",
+      "campaign": "q1-2026"
+    },
+    "billing": {
+      "monthlyPrice": 1.00,
+      "currency": "USD",
+      "nextBillingDate": "2026-03-18T00:00:00Z"
+    },
+    "usage": {
+      "totalCalls": 1547,
+      "inboundCalls": 892,
+      "outboundCalls": 655,
+      "totalMinutes": 4521.5,
+      "lastCallAt": "2026-02-18T09:45:00Z"
+    },
+    "createdAt": "2026-01-15T10:30:00Z",
+    "updatedAt": "2026-02-18T08:00:00Z"
+  }
+}
+```
+
+```json 404
+{
+  "success": false,
+  "error": {
+    "code": "NUMBER_NOT_FOUND",
+    "message": "Phone number not found"
+  }
+}
+```
+
+```json 401
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Invalid or missing API key"
+  }
+}
+```
+</ResponseExample>

@@ -1,0 +1,188 @@
+---
+title: "Search Knowledge Base"
+api: "POST https://api.talkos.io/api/knowledge-base/search"
+description: "Perform semantic search across documents in a knowledge base"
+---
+
+## Overview
+
+Search for relevant content within a knowledge base using semantic search. This endpoint uses vector similarity to find the most relevant document chunks based on your query, enabling AI agents to retrieve accurate context during conversations.
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="query" type="string" required>
+  The search query. Can be a question, phrase, or keywords. Semantic search will find conceptually related content even if exact words don't match.
+</ParamField>
+
+<ParamField body="knowledgeBaseId" type="string" required>
+  The ID of the knowledge base to search within.
+</ParamField>
+
+<ParamField body="topK" type="number">
+  Number of results to return. Default: `5`. Maximum: `20`.
+</ParamField>
+
+<ParamField body="threshold" type="number">
+  Minimum similarity score (0-1) for results. Default: `0.7`. Higher values return more relevant but fewer results.
+</ParamField>
+
+<ParamField body="includeMetadata" type="boolean">
+  Include document metadata in results. Default: `true`.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the search completed successfully
+</ResponseField>
+
+<ResponseField name="results" type="array">
+  Array of search results, ordered by relevance
+  <Expandable title="result object">
+    <ResponseField name="id" type="string">
+      Unique identifier for the chunk
+    </ResponseField>
+    <ResponseField name="content" type="string">
+      The text content of the matched chunk
+    </ResponseField>
+    <ResponseField name="score" type="number">
+      Similarity score (0-1), higher is more relevant
+    </ResponseField>
+    <ResponseField name="documentId" type="string">
+      ID of the source document
+    </ResponseField>
+    <ResponseField name="documentName" type="string">
+      Filename of the source document
+    </ResponseField>
+    <ResponseField name="chunkIndex" type="number">
+      Position of this chunk within the document
+    </ResponseField>
+    <ResponseField name="metadata" type="object">
+      Additional metadata if `includeMetadata` is true
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="query" type="string">
+  The original search query
+</ResponseField>
+
+<ResponseField name="searchTime" type="number">
+  Search execution time in milliseconds
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/knowledge-base/search \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "How do I reset my password?",
+    "knowledgeBaseId": "kb_8f3d2a1b-4c5e-6f7a-8b9c-0d1e2f3a4b5c",
+    "topK": 5
+  }'
+```
+
+```bash cURL (With Threshold)
+curl -X POST https://api.talkos.io/api/knowledge-base/search \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "billing and payment methods",
+    "knowledgeBaseId": "kb_8f3d2a1b-4c5e-6f7a-8b9c-0d1e2f3a4b5c",
+    "topK": 10,
+    "threshold": 0.8
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "results": [
+    {
+      "id": "chunk_a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "content": "To reset your password, navigate to Settings > Security > Password Reset. Click 'Reset Password' and follow the email verification steps. Your new password must be at least 12 characters and include uppercase, lowercase, and a number.",
+      "score": 0.94,
+      "documentId": "doc_1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+      "documentName": "user-guide.pdf",
+      "chunkIndex": 23,
+      "metadata": {
+        "section": "Account Security",
+        "pageNumber": 15
+      }
+    },
+    {
+      "id": "chunk_b2c3d4e5-f6a7-8901-bcde-f23456789012",
+      "content": "If you've forgotten your password, use the 'Forgot Password' link on the login page. Enter your registered email address and we'll send you a secure reset link valid for 24 hours.",
+      "score": 0.89,
+      "documentId": "doc_1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+      "documentName": "user-guide.pdf",
+      "chunkIndex": 24,
+      "metadata": {
+        "section": "Account Security",
+        "pageNumber": 15
+      }
+    },
+    {
+      "id": "chunk_c3d4e5f6-a7b8-9012-cdef-345678901234",
+      "content": "Password requirements: minimum 12 characters, at least one uppercase letter, one lowercase letter, one number, and one special character. Passwords expire every 90 days for security compliance.",
+      "score": 0.82,
+      "documentId": "doc_2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e",
+      "documentName": "security-policy.md",
+      "chunkIndex": 8,
+      "metadata": {
+        "section": "Password Policy",
+        "pageNumber": null
+      }
+    }
+  ],
+  "query": "How do I reset my password?",
+  "searchTime": 45
+}
+```
+
+```json 404
+{
+  "success": false,
+  "error": "Knowledge base not found"
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": "Query is required"
+}
+```
+</ResponseExample>
+
+## Best Practices
+
+<Tip>
+For best search results:
+- Use natural language queries
+- Be specific about what you're looking for
+- Start with a lower `threshold` (0.6-0.7) and increase if you get too many irrelevant results
+</Tip>
+
+<Note>
+Search results are cached for 60 seconds. Repeated identical queries will return faster.
+</Note>

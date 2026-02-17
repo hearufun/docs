@@ -1,0 +1,109 @@
+---
+title: "Export Transcript"
+api: "GET https://api.talkos.io/api/web-sessions/{sessionId}/transcript/export"
+description: "Export the session transcript as a downloadable file"
+---
+
+Export the conversation transcript for a web session in various formats (JSON, text, or CSV).
+
+## Path Parameters
+
+<ParamField path="sessionId" type="string" required>
+  The unique session identifier.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="format" type="string" default="json">
+  Export format. Supported values: `json`, `text`, `csv`.
+</ParamField>
+
+<RequestExample>
+```bash cURL (JSON)
+curl -X GET "https://api.talkos.io/api/web-sessions/ws-42e299e5-6bbf-4503-af0a-f8218524f8cf/transcript/export?format=json" \
+  -H "x-api-key: your-api-key" \
+  -o transcript.json
+```
+
+```bash cURL (Text)
+curl -X GET "https://api.talkos.io/api/web-sessions/ws-42e299e5-6bbf-4503-af0a-f8218524f8cf/transcript/export?format=text" \
+  -H "x-api-key: your-api-key" \
+  -o transcript.txt
+```
+
+```bash cURL (CSV)
+curl -X GET "https://api.talkos.io/api/web-sessions/ws-42e299e5-6bbf-4503-af0a-f8218524f8cf/transcript/export?format=csv" \
+  -H "x-api-key: your-api-key" \
+  -o transcript.csv
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 (JSON format)
+{
+  "sessionId": "ws-42e299e5-6bbf-4503-af0a-f8218524f8cf",
+  "exportedAt": "2026-02-17T15:00:00.000Z",
+  "turns": 8,
+  "transcript": [
+    {
+      "turn": 1,
+      "role": "agent",
+      "content": "Hello! How can I help you today?",
+      "timestamp": "2026-02-17T14:30:02.000Z"
+    },
+    {
+      "turn": 2,
+      "role": "user",
+      "content": "Hi, I'm having trouble with my account login.",
+      "timestamp": "2026-02-17T14:30:08.000Z"
+    }
+  ]
+}
+```
+
+```text 200 (Text format)
+Session: ws-42e299e5-6bbf-4503-af0a-f8218524f8cf
+Exported: 2026-02-17T15:00:00.000Z
+
+[14:30:02] Agent: Hello! How can I help you today?
+[14:30:08] User: Hi, I'm having trouble with my account login.
+[14:30:12] Agent: I'd be happy to help you with that. Can you tell me what error message you're seeing?
+[14:30:20] User: It says my password is incorrect, but I'm sure I'm using the right one.
+```
+
+```csv 200 (CSV format)
+turn,role,content,timestamp
+1,agent,"Hello! How can I help you today?","2026-02-17T14:30:02.000Z"
+2,user,"Hi, I'm having trouble with my account login.","2026-02-17T14:30:08.000Z"
+3,agent,"I'd be happy to help you with that. Can you tell me what error message you're seeing?","2026-02-17T14:30:12.000Z"
+4,user,"It says my password is incorrect, but I'm sure I'm using the right one.","2026-02-17T14:30:20.000Z"
+```
+
+```json 400
+{
+  "error": "Invalid format. Use: json, text, csv"
+}
+```
+
+```json 404
+{
+  "error": "No transcript found for this session"
+}
+```
+
+```json 500
+{
+  "error": "Export failed",
+  "message": "Internal server error"
+}
+```
+</ResponseExample>
+
+## Response Headers
+
+The response includes headers for file download:
+
+| Header | Value |
+|--------|-------|
+| `Content-Type` | `application/json`, `text/plain`, or `text/csv` |
+| `Content-Disposition` | `attachment; filename="transcript-{sessionId}.{ext}"` |

@@ -1,0 +1,115 @@
+---
+title: "List Admin Users"
+api: "GET https://api.talkos.io/api/auth/admin/users"
+description: "List all admin users in the system"
+---
+
+Retrieve a list of all admin users. This endpoint is restricted to users with the "admin" role.
+
+## Authentication
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token from login. Format: `Bearer {token}`
+</ParamField>
+
+## Authorization
+
+This endpoint requires the `admin` role. Regular users will receive a 403 Forbidden response.
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request was successful.
+</ResponseField>
+
+<ResponseField name="count" type="number">
+  Total number of admin users.
+</ResponseField>
+
+<ResponseField name="users" type="array">
+  Array of admin user objects.
+  <Expandable title="properties">
+    <ResponseField name="id" type="string">
+      Unique identifier for the admin user.
+    </ResponseField>
+    <ResponseField name="username" type="string">
+      The admin's username.
+    </ResponseField>
+    <ResponseField name="email" type="string">
+      The admin's email address.
+    </ResponseField>
+    <ResponseField name="role" type="string">
+      The admin's role.
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Account status (e.g., "active", "inactive").
+    </ResponseField>
+    <ResponseField name="permissions" type="object">
+      The admin's permissions.
+    </ResponseField>
+    <ResponseField name="lastLogin" type="string">
+      ISO 8601 timestamp of last login.
+    </ResponseField>
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp when account was created.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET https://api.talkos.io/api/auth/admin/users \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "count": 2,
+  "users": [
+    {
+      "id": "507f1f77bcf86cd799439011",
+      "username": "admin",
+      "email": "admin@example.com",
+      "role": "admin",
+      "status": "active",
+      "permissions": {
+        "canViewConfig": true,
+        "canEditConfig": true,
+        "canViewLogs": true,
+        "canManagePM2": true
+      },
+      "lastLogin": "2026-02-18T09:15:00.000Z",
+      "createdAt": "2026-02-01T00:00:00.000Z"
+    },
+    {
+      "id": "507f1f77bcf86cd799439012",
+      "username": "support_admin",
+      "email": "support@example.com",
+      "role": "admin",
+      "status": "active",
+      "permissions": {
+        "canViewConfig": true,
+        "canEditConfig": false,
+        "canViewLogs": true,
+        "canManagePM2": false
+      },
+      "lastLogin": "2026-02-17T14:30:00.000Z",
+      "createdAt": "2026-02-10T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+```json 403
+{
+  "error": "Not authorized"
+}
+```
+</ResponseExample>
+
+<Note>
+Password fields are never returned in the response for security reasons.
+</Note>

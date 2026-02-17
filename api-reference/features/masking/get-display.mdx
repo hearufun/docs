@@ -1,0 +1,101 @@
+---
+title: 'Get Masked Display'
+api: 'GET https://api.talkos.io/api/features/masking/{callUuid}/display'
+description: 'Get the masked phone number display for a specific call'
+---
+
+Retrieve the masked phone number representation for a specific call, respecting the current masking configuration and any unmask approvals.
+
+## Path Parameters
+
+<ParamField path="callUuid" type="string" required>
+  The unique identifier of the call.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request was successful.
+</ResponseField>
+
+<ResponseField name="callUuid" type="string">
+  The call's unique identifier.
+</ResponseField>
+
+<ResponseField name="display" type="string">
+  The phone number to display (masked or unmasked based on permissions).
+</ResponseField>
+
+<ResponseField name="isMasked" type="boolean">
+  Whether the displayed number is currently masked.
+</ResponseField>
+
+<ResponseField name="canUnmask" type="boolean">
+  Whether the current user can request unmasking.
+</ResponseField>
+
+<ResponseField name="unmaskStatus" type="string">
+  Status of any unmask request: `none`, `pending`, `approved`, `denied`.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET https://api.talkos.io/api/features/masking/call_abc123/display \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.talkos.io/api/features/masking/call_abc123/display', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY'
+  }
+});
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.talkos.io/api/features/masking/call_abc123/display',
+    headers={
+        'Authorization': 'Bearer YOUR_API_KEY'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "callUuid": "call_abc123",
+  "display": "***-***-4567",
+  "isMasked": true,
+  "canUnmask": true,
+  "unmaskStatus": "none"
+}
+```
+
+```json 200 (Unmasked)
+{
+  "success": true,
+  "callUuid": "call_abc123",
+  "display": "+1-555-123-4567",
+  "isMasked": false,
+  "canUnmask": false,
+  "unmaskStatus": "approved"
+}
+```
+
+```json 404
+{
+  "success": false,
+  "error": "Call not found"
+}
+```
+</ResponseExample>

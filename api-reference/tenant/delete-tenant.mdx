@@ -1,0 +1,433 @@
+---
+title: "Delete Tenant"
+description: "Permanently delete a tenant account and associated data"
+api: "DELETE https://api.talkos.io/api/tenants/:tenantId"
+---
+
+# Delete Tenant
+
+Permanently delete a tenant account and all associated data. This action is irreversible and should be used with extreme caution.
+
+<Warning>
+This action is **permanent and irreversible**. All tenant data including call recordings, transcripts, analytics, and configuration will be permanently deleted. Consider using Suspend Tenant instead if you may need to restore access later.
+</Warning>
+
+## Endpoint
+
+```
+DELETE /api/tenants/:tenantId
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Admin API key with tenant deletion permissions
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="tenantId" type="string" required>
+  Unique identifier of the tenant to delete
+</ParamField>
+
+## Request Body
+
+<ParamField body="confirmation" type="string" required>
+  Must be the exact string `DELETE_PERMANENTLY` to confirm the deletion. This prevents accidental deletions.
+</ParamField>
+
+<ParamField body="reason" type="string" required>
+  Reason for deletion. Logged for audit purposes and compliance records.
+  
+  Common reasons:
+  - `customer_request` - Tenant requested account deletion
+  - `gdpr_request` - GDPR right to erasure request
+  - `account_closure` - Business account closure
+  - `data_retention_policy` - Automatic deletion per retention policy
+  - `duplicate_account` - Removing duplicate tenant
+  - `test_account` - Removing test/development account
+</ParamField>
+
+<ParamField body="deleteRecordings" type="boolean" default="true">
+  Whether to delete all call recordings. If `false`, recordings will be anonymized but retained.
+</ParamField>
+
+<ParamField body="deleteAnalytics" type="boolean" default="true">
+  Whether to delete analytics data. If `false`, analytics will be anonymized and retained for aggregate statistics.
+</ParamField>
+
+<ParamField body="exportDataFirst" type="boolean" default="false">
+  Whether to export all tenant data before deletion. If `true`, an export will be generated and sent to the tenant's registered email before final deletion.
+</ParamField>
+
+<ParamField body="notifyTenant" type="boolean" default="true">
+  Whether to send a deletion confirmation email to the tenant's registered email addresses.
+</ParamField>
+
+<ParamField body="deletionNote" type="string">
+  Internal note about the deletion. Used for administrative tracking and compliance documentation.
+</ParamField>
+
+<ParamField body="scheduledDeletion" type="string">
+  ISO 8601 timestamp to schedule deletion for a future date. If provided, deletion will be scheduled rather than immediate, allowing time for the tenant to be notified and potentially cancel.
+</ParamField>
+
+<ParamField body="gracePeriodDays" type="number" default="0">
+  Number of days before final deletion. During this period, the tenant is marked for deletion but can be restored. Range: 0-30 days.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the deletion was initiated successfully
+</ResponseField>
+
+<ResponseField name="deletionStatus" type="string">
+  Status of deletion:
+  - `completed` - Deletion completed immediately
+  - `scheduled` - Deletion scheduled for future date
+  - `pending` - Deletion pending during grace period
+  - `in_progress` - Large-scale deletion in progress
+</ResponseField>
+
+<ResponseField name="tenant" type="object">
+  Deleted or scheduled tenant information:
+
+  <Expandable title="tenant properties">
+    <ResponseField name="tenantId" type="string">
+      Tenant identifier
+    </ResponseField>
+
+    <ResponseField name="name" type="string">
+      Tenant name
+    </ResponseField>
+
+    <ResponseField name="status" type="string">
+      Final status: `deleted` or `pending_deletion`
+    </ResponseField>
+
+    <ResponseField name="deletedAt" type="string">
+      ISO 8601 timestamp of deletion (or scheduled deletion)
+    </ResponseField>
+
+    <ResponseField name="deletionReason" type="string">
+      Reason for deletion
+    </ResponseField>
+
+    <ResponseField name="gracePeriodEnds" type="string">
+      ISO 8601 timestamp when grace period ends (if applicable)
+    </ResponseField>
+
+    <ResponseField name="canRestore" type="boolean">
+      Whether the tenant can still be restored (during grace period)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="deletedResources" type="object">
+  Summary of deleted resources:
+
+  <Expandable title="deletedResources properties">
+    <ResponseField name="calls" type="number">
+      Number of call records deleted
+    </ResponseField>
+
+    <ResponseField name="recordings" type="number">
+      Number of recordings deleted
+    </ResponseField>
+
+    <ResponseField name="transcripts" type="number">
+      Number of transcripts deleted
+    </ResponseField>
+
+    <ResponseField name="analyticsRecords" type="number">
+      Number of analytics records deleted
+    </ResponseField>
+
+    <ResponseField name="knowledgeBases" type="number">
+      Number of knowledge bases deleted
+    </ResponseField>
+
+    <ResponseField name="phoneNumbers" type="number">
+      Number of phone numbers released
+    </ResponseField>
+
+    <ResponseField name="apiKeys" type="number">
+      Number of API keys revoked
+    </ResponseField>
+
+    <ResponseField name="webhooks" type="number">
+      Number of webhooks deleted
+    </ResponseField>
+
+    <ResponseField name="storageMb" type="number">
+      Total storage freed in megabytes
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="exportUrl" type="string">
+  URL to download data export (only if `exportDataFirst: true`). Valid for 24 hours.
+</ResponseField>
+
+<ResponseField name="auditId" type="string">
+  Audit log entry ID for this action
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE "https://api.talkos.io/api/tenants/tenant_abc123" \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: admin-api-key" \
+  -d '{
+    "confirmation": "DELETE_PERMANENTLY",
+    "reason": "customer_request",
+    "deleteRecordings": true,
+    "deleteAnalytics": true,
+    "exportDataFirst": true,
+    "notifyTenant": true,
+    "deletionNote": "Customer submitted account deletion request via support ticket #12345",
+    "gracePeriodDays": 7
+  }'
+```
+
+```javascript Node.js
+const response = await fetch(
+  'https://api.talkos.io/api/tenants/tenant_abc123',
+  {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': 'admin-api-key'
+    },
+    body: JSON.stringify({
+      confirmation: 'DELETE_PERMANENTLY',
+      reason: 'customer_request',
+      deleteRecordings: true,
+      deleteAnalytics: true,
+      exportDataFirst: true,
+      notifyTenant: true,
+      deletionNote: 'Customer submitted account deletion request via support ticket #12345',
+      gracePeriodDays: 7
+    })
+  }
+);
+
+const data = await response.json();
+console.log(`Deletion status: ${data.deletionStatus}`);
+```
+
+```python Python
+import requests
+
+response = requests.delete(
+    'https://api.talkos.io/api/tenants/tenant_abc123',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'admin-api-key'
+    },
+    json={
+        'confirmation': 'DELETE_PERMANENTLY',
+        'reason': 'customer_request',
+        'deleteRecordings': True,
+        'deleteAnalytics': True,
+        'exportDataFirst': True,
+        'notifyTenant': True,
+        'deletionNote': 'Customer submitted account deletion request via support ticket #12345',
+        'gracePeriodDays': 7
+    }
+)
+
+data = response.json()
+print(f"Deletion status: {data['deletionStatus']}")
+```
+</CodeGroup>
+
+## Example Response (Immediate Deletion)
+
+```json
+{
+  "success": true,
+  "deletionStatus": "completed",
+  "tenant": {
+    "tenantId": "tenant_abc123",
+    "name": "Acme Corp",
+    "status": "deleted",
+    "deletedAt": "2026-02-18T10:30:00.000Z",
+    "deletionReason": "customer_request",
+    "gracePeriodEnds": null,
+    "canRestore": false
+  },
+  "deletedResources": {
+    "calls": 15420,
+    "recordings": 12350,
+    "transcripts": 15420,
+    "analyticsRecords": 15420,
+    "knowledgeBases": 3,
+    "phoneNumbers": 5,
+    "apiKeys": 8,
+    "webhooks": 12,
+    "storageMb": 45678
+  },
+  "exportUrl": null,
+  "auditId": "audit_del_xyz789"
+}
+```
+
+## Example Response (Grace Period)
+
+```json
+{
+  "success": true,
+  "deletionStatus": "pending",
+  "tenant": {
+    "tenantId": "tenant_abc123",
+    "name": "Acme Corp",
+    "status": "pending_deletion",
+    "deletedAt": "2026-02-25T10:30:00.000Z",
+    "deletionReason": "customer_request",
+    "gracePeriodEnds": "2026-02-25T10:30:00.000Z",
+    "canRestore": true
+  },
+  "deletedResources": null,
+  "exportUrl": "https://api.talkos.io/exports/tenant_abc123_export_20260218.zip",
+  "auditId": "audit_del_xyz789"
+}
+```
+
+## Error Responses
+
+<ResponseField name="400 Bad Request - Missing Confirmation">
+```json
+{
+  "success": false,
+  "error": "Confirmation required",
+  "code": "CONFIRMATION_REQUIRED",
+  "details": {
+    "message": "You must provide confirmation: 'DELETE_PERMANENTLY' to delete this tenant"
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="400 Bad Request - Invalid Confirmation">
+```json
+{
+  "success": false,
+  "error": "Invalid confirmation",
+  "code": "INVALID_CONFIRMATION",
+  "details": {
+    "expected": "DELETE_PERMANENTLY",
+    "received": "delete"
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="401 Unauthorized">
+```json
+{
+  "success": false,
+  "error": "Invalid API key",
+  "code": "UNAUTHORIZED"
+}
+```
+</ResponseField>
+
+<ResponseField name="403 Forbidden">
+```json
+{
+  "success": false,
+  "error": "Insufficient permissions",
+  "code": "FORBIDDEN",
+  "details": {
+    "required": "admin:tenant:delete",
+    "message": "API key does not have tenant deletion permissions"
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="404 Not Found">
+```json
+{
+  "success": false,
+  "error": "Tenant not found",
+  "code": "TENANT_NOT_FOUND",
+  "details": {
+    "tenantId": "tenant_invalid"
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="409 Conflict">
+```json
+{
+  "success": false,
+  "error": "Tenant has active calls",
+  "code": "ACTIVE_CALLS_EXIST",
+  "details": {
+    "activeCalls": 5,
+    "message": "Cannot delete tenant with active calls. Terminate calls first or wait for completion."
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="409 Conflict - Already Deleted">
+```json
+{
+  "success": false,
+  "error": "Tenant already deleted",
+  "code": "ALREADY_DELETED",
+  "details": {
+    "deletedAt": "2026-02-10T08:00:00.000Z"
+  }
+}
+```
+</ResponseField>
+
+<ResponseField name="500 Internal Server Error">
+```json
+{
+  "success": false,
+  "error": "Internal server error",
+  "code": "INTERNAL_ERROR"
+}
+```
+</ResponseField>
+
+## Restoring a Pending Deletion
+
+If the tenant is within the grace period, you can restore it using the Activate Tenant endpoint:
+
+```bash
+curl -X POST "https://api.talkos.io/api/tenants/tenant_abc123/activate" \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: admin-api-key" \
+  -d '{
+    "reason": "deletion_cancelled",
+    "activationNote": "Customer cancelled deletion request"
+  }'
+```
+
+## Notes
+
+- **This action is irreversible** once the grace period ends
+- All API keys associated with the tenant are immediately revoked
+- Phone numbers are released and may be reassigned to other customers
+- All recordings, transcripts, and data are permanently deleted from storage
+- A compliance record is maintained for audit purposes (metadata only, no content)
+- Data export includes: call records, recordings, transcripts, analytics, configuration
+- Export URLs expire after 24 hours
+- Large tenants with significant data may have deletion processed in the background
+- Grace period allows accounts to be restored if deletion was accidental
+- For GDPR compliance: use `reason: "gdpr_request"` to ensure proper documentation
+- Active calls must be terminated before deletion can proceed

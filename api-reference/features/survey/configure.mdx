@@ -1,0 +1,222 @@
+---
+title: "Configure Survey"
+description: "Configure post-call survey settings for your tenant"
+api: "POST https://api.talkos.io/api/features/survey/configure"
+---
+
+# Configure Survey
+
+Configure post-call survey settings for your tenant including survey type, delivery method, trigger conditions, and follow-up actions.
+
+## Endpoint
+
+```
+POST /api/features/survey/configure
+```
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key for authentication
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your unique tenant identifier
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be `application/json`
+</ParamField>
+
+## Request Body
+
+<ParamField body="enabled" type="boolean" default="true">
+  Whether surveys are enabled for this tenant
+</ParamField>
+
+<ParamField body="template" type="string" default="csat">
+  Survey template to use. Options:
+  - `csat` - Customer Satisfaction (1-5 scale)
+  - `nps` - Net Promoter Score (0-10 scale)
+  - `quick` - Quick single-question feedback
+</ParamField>
+
+<ParamField body="customQuestions" type="array">
+  Array of custom questions to add to the survey. See Add Questions endpoint for question schema.
+</ParamField>
+
+<ParamField body="deliveryMethod" type="string" default="ivr">
+  How the survey is delivered to the customer:
+  - `ivr` - Stay on the line after call end
+  - `sms` - Send survey via SMS
+  - `webhook` - Deliver via webhook for custom handling
+</ParamField>
+
+<ParamField body="alwaysTrigger" type="boolean" default="false">
+  If true, trigger survey for all calls regardless of other conditions
+</ParamField>
+
+<ParamField body="minCallDuration" type="number" default="30">
+  Minimum call duration in seconds required to trigger a survey
+</ParamField>
+
+<ParamField body="excludeEscalated" type="boolean" default="false">
+  If true, don't trigger surveys for calls that were escalated to a human agent
+</ParamField>
+
+<ParamField body="sampleRate" type="number" default="1.0">
+  Percentage of eligible calls to survey (0.0 to 1.0). Use 0.5 for 50% sampling.
+</ParamField>
+
+<ParamField body="rateLimitEnabled" type="boolean" default="true">
+  Enable rate limiting to prevent surveying the same customer too frequently
+</ParamField>
+
+<ParamField body="cooldownHours" type="number" default="24">
+  Hours to wait before surveying the same phone number again
+</ParamField>
+
+<ParamField body="followUpEnabled" type="boolean" default="false">
+  Enable automatic follow-up actions for low scores
+</ParamField>
+
+<ParamField body="lowScoreThreshold" type="number" default="2">
+  Score at or below which triggers follow-up action (for CSAT: 1-5 scale)
+</ParamField>
+
+<ParamField body="lowScoreAction" type="string" default="flag">
+  Action to take on low scores:
+  - `flag` - Flag for review
+  - `ticket` - Create support ticket
+  - `callback` - Schedule callback
+</ParamField>
+
+<ParamField body="lowScoreWebhook" type="string">
+  Webhook URL to call when a low score is received
+</ParamField>
+
+<ParamField body="smsConfig" type="object">
+  SMS delivery configuration (required if deliveryMethod is `sms`):
+  - `message` (string): SMS message template with survey link
+  - `from` (string): Sender phone number
+</ParamField>
+
+<ParamField body="optOutNumbers" type="array">
+  Array of phone numbers that have opted out of surveys
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the configuration was saved successfully
+</ResponseField>
+
+<ResponseField name="config" type="object">
+  The saved survey configuration
+</ResponseField>
+
+<ResponseField name="config.tenantId" type="string">
+  Your tenant identifier
+</ResponseField>
+
+<ResponseField name="config.enabled" type="boolean">
+  Whether surveys are enabled
+</ResponseField>
+
+<ResponseField name="config.template" type="string">
+  The survey template being used
+</ResponseField>
+
+<ResponseField name="config.deliveryMethod" type="string">
+  How surveys are delivered
+</ResponseField>
+
+<ResponseField name="config.triggerConditions" type="object">
+  Survey trigger conditions
+</ResponseField>
+
+<ResponseField name="config.rateLimiting" type="object">
+  Rate limiting settings
+</ResponseField>
+
+<ResponseField name="config.followUp" type="object">
+  Follow-up action settings
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST https://api.talkos.io/api/features/survey/configure \
+  -H "x-api-key: tk_live_xxxxxxxxxxxxxxxxxxxx" \
+  -H "x-tenant-id: tenant_abc123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "enabled": true,
+    "template": "csat",
+    "deliveryMethod": "ivr",
+    "minCallDuration": 60,
+    "sampleRate": 0.5,
+    "followUpEnabled": true,
+    "lowScoreThreshold": 2,
+    "lowScoreAction": "ticket",
+    "lowScoreWebhook": "https://example.com/webhooks/low-score"
+  }'
+```
+
+## Example Response
+
+```json
+{
+  "success": true,
+  "config": {
+    "tenantId": "tenant_abc123",
+    "enabled": true,
+    "template": "csat",
+    "customQuestions": [],
+    "deliveryMethod": "ivr",
+    "triggerConditions": {
+      "alwaysTrigger": false,
+      "minCallDuration": 60,
+      "excludeEscalated": false,
+      "sampleRate": 0.5
+    },
+    "rateLimiting": {
+      "enabled": true,
+      "cooldownHours": 24
+    },
+    "followUp": {
+      "enabled": true,
+      "lowScoreThreshold": 2,
+      "lowScoreAction": "ticket",
+      "lowScoreWebhook": "https://example.com/webhooks/low-score"
+    },
+    "updatedAt": 1739836800000
+  }
+}
+```
+
+## Survey Templates
+
+### CSAT (Customer Satisfaction)
+
+Default 3-question survey:
+1. Satisfaction rating (1-5 scale)
+2. Issue resolution (yes/no)
+3. Additional feedback (open text)
+
+### NPS (Net Promoter Score)
+
+2-question survey:
+1. Likelihood to recommend (0-10 scale)
+2. Reason for score (open text)
+
+### Quick
+
+Single-question survey:
+1. Call rating (1-5 scale)
+
+## Notes
+
+- Survey configuration persists across calls until updated
+- Opt-out list is stored separately and not returned in the config response
+- Rate limiting prevents survey fatigue by limiting how often the same customer is surveyed

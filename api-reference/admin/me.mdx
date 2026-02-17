@@ -1,0 +1,95 @@
+---
+title: "Get Current Admin"
+api: "GET https://api.talkos.io/api/auth/admin/me"
+description: "Get the currently authenticated admin user's profile"
+---
+
+Retrieve the profile information of the currently authenticated admin user. Requires a valid JWT token.
+
+## Authentication
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token from login. Format: `Bearer {token}`
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request was successful.
+</ResponseField>
+
+<ResponseField name="user" type="object">
+  The authenticated admin user object.
+  <Expandable title="properties">
+    <ResponseField name="id" type="string">
+      Unique identifier for the admin user.
+    </ResponseField>
+    <ResponseField name="username" type="string">
+      The admin's username.
+    </ResponseField>
+    <ResponseField name="email" type="string">
+      The admin's email address.
+    </ResponseField>
+    <ResponseField name="role" type="string">
+      The admin's role.
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Account status (e.g., "active", "inactive").
+    </ResponseField>
+    <ResponseField name="permissions" type="object">
+      The admin's permissions.
+    </ResponseField>
+    <ResponseField name="lastLogin" type="string">
+      ISO 8601 timestamp of last login.
+    </ResponseField>
+    <ResponseField name="lastLoginIP" type="string">
+      IP address of last login.
+    </ResponseField>
+    <ResponseField name="createdAt" type="string">
+      ISO 8601 timestamp when account was created.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET https://api.talkos.io/api/auth/admin/me \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "user": {
+    "id": "507f1f77bcf86cd799439011",
+    "username": "admin",
+    "email": "admin@example.com",
+    "role": "admin",
+    "status": "active",
+    "permissions": {
+      "canViewConfig": true,
+      "canEditConfig": true,
+      "canViewLogs": true,
+      "canManagePM2": true
+    },
+    "lastLogin": "2026-02-18T09:15:00.000Z",
+    "lastLoginIP": "192.168.1.100",
+    "createdAt": "2026-02-01T00:00:00.000Z"
+  }
+}
+```
+
+```json 401
+{
+  "error": "No token provided"
+}
+```
+
+```json 404
+{
+  "error": "User not found"
+}
+```
+</ResponseExample>

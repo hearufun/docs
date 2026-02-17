@@ -1,0 +1,261 @@
+---
+title: "Start Web Session"
+api: "POST https://api.talkos.io/api/web-sessions/start"
+description: "Start a browser-based AI conversation session"
+---
+
+Start a new web-based AI conversation session. Returns a session ID and WebSocket URL for real-time communication.
+
+## Request Body
+
+<ParamField body="prompt" type="string">
+  Custom system prompt defining the agent's personality and behavior.
+</ParamField>
+
+<ParamField body="greeting" type="string">
+  Custom greeting text the agent will speak first.
+</ParamField>
+
+<ParamField body="agentName" type="string">
+  Display name for the agent (e.g., "Interview Bot", "Support Agent").
+</ParamField>
+
+<ParamField body="agentType" type="string">
+  Free-form type label (e.g., "interviewer", "sales", "custom-bot").
+</ParamField>
+
+<ParamField body="maxDuration" type="number" default="5400">
+  Maximum session duration in seconds.
+</ParamField>
+
+<ParamField body="analyticsPrompt" type="string">
+  Custom prompt for post-session analysis.
+</ParamField>
+
+<ParamField body="webhookUrl" type="string">
+  URL where session data will be POSTed when session ends.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Any extra data to attach to the session.
+</ParamField>
+
+<ParamField body="reengagement" type="object">
+  Re-engagement configuration for handling silence.
+  <Expandable title="properties">
+    <ParamField body="enabled" type="boolean" default="true">
+      Enable/disable re-engagement nudges.
+    </ParamField>
+    <ParamField body="intervalSeconds" type="number" default="15">
+      Seconds of silence before nudge.
+    </ParamField>
+    <ParamField body="maxAttempts" type="number" default="3">
+      Maximum nudge attempts.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="language" type="string">
+  Language code ("en", "hi", "es", "auto"). Use "auto" for auto-detection.
+</ParamField>
+
+<ParamField body="voiceId" type="string">
+  ElevenLabs voice ID for text-to-speech.
+</ParamField>
+
+<ParamField body="speed" type="number">
+  TTS speed multiplier (0.5-2.0).
+</ParamField>
+
+<ParamField body="pitch" type="number">
+  TTS pitch adjustment (-20 to 20).
+</ParamField>
+
+<ParamField body="tools" type="array">
+  Tool definitions for function calling capabilities.
+</ParamField>
+
+<ParamField body="knowledgeBaseId" type="string">
+  Knowledge base ID for RAG-powered responses.
+</ParamField>
+
+<ParamField body="guardrails" type="object">
+  Content guardrails configuration.
+  <Expandable title="properties">
+    <ParamField body="enabled" type="boolean">
+      Enable guardrails.
+    </ParamField>
+    <ParamField body="allowedTopics" type="array">
+      List of allowed conversation topics.
+    </ParamField>
+    <ParamField body="blockedTopics" type="array">
+      List of blocked conversation topics.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="scoring" type="object">
+  Enable conversation scoring.
+  <Expandable title="properties">
+    <ParamField body="enabled" type="boolean">
+      Enable scoring.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="recording" type="object">
+  Enable session recording.
+  <Expandable title="properties">
+    <ParamField body="enabled" type="boolean">
+      Enable recording.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="noiseFilter" type="object">
+  Enable noise filtering.
+  <Expandable title="properties">
+    <ParamField body="enabled" type="boolean">
+      Enable noise filter.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="audioQuality" type="object">
+  Audio quality enhancement.
+  <Expandable title="properties">
+    <ParamField body="enabled" type="boolean">
+      Enable audio quality enhancement.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="ttsFormat" type="string">
+  TTS output format (e.g., "mp3_44100_128").
+</ParamField>
+
+<ParamField body="maxHistoryTurns" type="number">
+  Maximum conversation turns sent to LLM for context.
+</ParamField>
+
+<ParamField body="autoSummary" type="object">
+  Auto-summary configuration.
+  <Expandable title="properties">
+    <ParamField body="enabled" type="boolean">
+      Enable auto-summary.
+    </ParamField>
+    <ParamField body="intervalTurns" type="number" default="5">
+      Generate summary every N turns.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="bargeIn" type="object">
+  Barge-in (interruption) configuration.
+  <Expandable title="properties">
+    <ParamField body="enabled" type="boolean">
+      Enable barge-in.
+    </ParamField>
+    <ParamField body="minSpeechMs" type="number" default="0">
+      Minimum speech duration to trigger barge-in.
+    </ParamField>
+    <ParamField body="mode" type="string">
+      Barge-in mode: "full" or "soft".
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="turnHooks" type="object">
+  Webhook hooks for conversation turns.
+  <Expandable title="properties">
+    <ParamField body="beforeTurn" type="string">
+      URL to call before each turn.
+    </ParamField>
+    <ParamField body="afterTurn" type="string">
+      URL to call after each turn.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="llmTemperature" type="number">
+  Override LLM temperature (0-2).
+</ParamField>
+
+<ParamField body="llmMaxTokens" type="number">
+  Override LLM max tokens.
+</ParamField>
+
+<ParamField body="video" type="object">
+  Video recording configuration.
+  <Expandable title="properties">
+    <ParamField body="enabled" type="boolean">
+      Enable video recording with chunked S3 upload.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="flowControl" type="object">
+  Conversation stage control.
+  <Expandable title="properties">
+    <ParamField body="stages" type="array">
+      List of conversation stages.
+    </ParamField>
+    <ParamField body="transitionTurns" type="array">
+      Turn counts for stage transitions.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.talkos.io/api/web-sessions/start \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -d '{
+    "agentName": "Support Agent",
+    "agentType": "support",
+    "prompt": "You are a helpful customer support agent. Be friendly and concise.",
+    "greeting": "Hello! How can I help you today?",
+    "language": "en",
+    "maxDuration": 1800,
+    "webhookUrl": "https://your-app.com/webhooks/session-end",
+    "reengagement": {
+      "enabled": true,
+      "intervalSeconds": 20,
+      "maxAttempts": 2
+    },
+    "metadata": {
+      "customerId": "cust_123",
+      "source": "website"
+    }
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201
+{
+  "success": true,
+  "sessionId": "ws-42e299e5-6bbf-4503-af0a-f8218524f8cf",
+  "wsUrl": "wss://api.talkos.io/web-session?sessionId=ws-42e299e5-6bbf-4503-af0a-f8218524f8cf",
+  "message": "Session created. Connect to wsUrl via WebSocket to start conversation."
+}
+```
+
+```json 400
+{
+  "error": "Invalid configuration",
+  "errors": [
+    "maxDuration must be between 60 and 7200 seconds"
+  ]
+}
+```
+
+```json 429
+{
+  "error": "Too many sessions",
+  "code": "RATE_LIMIT_EXCEEDED",
+  "message": "Maximum concurrent sessions reached"
+}
+```
+</ResponseExample>

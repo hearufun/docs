@@ -1,0 +1,252 @@
+---
+title: "Buy Phone Number"
+api: "POST https://api.talkos.io/api/numbers/buy"
+description: "Purchase a phone number from a supported dialer provider"
+---
+
+Purchase a new phone number from a supported dialer provider. The number will be provisioned and immediately available for use with your TalkOS tenant.
+
+## Authentication
+
+<ParamField header="x-api-key" type="string" required>
+  Your TalkOS API key
+</ParamField>
+
+<ParamField header="x-tenant-id" type="string" required>
+  Your tenant identifier
+</ParamField>
+
+## Request Body
+
+<ParamField body="dialerProvider" type="string" required>
+  The dialer provider to purchase from
+  - `plivo` - Plivo Communications
+  - `exotel` - Exotel (India)
+</ParamField>
+
+<ParamField body="country" type="string" required>
+  ISO 3166-1 alpha-2 country code (e.g., `US`, `IN`, `GB`)
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Type of phone number to purchase
+  - `local` - Local geographic number
+  - `toll-free` - Toll-free number
+  - `mobile` - Mobile number
+</ParamField>
+
+<ParamField body="areaCode" type="string">
+  Preferred area code or prefix. If not available, a nearby area code may be assigned.
+</ParamField>
+
+<ParamField body="number" type="string">
+  Specific phone number to purchase (from search results). If not provided, a random number matching criteria will be assigned.
+</ParamField>
+
+<ParamField body="direction" type="string" default="both">
+  Call direction configuration for the number
+  - `outbound` - Outbound calls only
+  - `inbound` - Inbound calls only
+  - `both` - Both inbound and outbound calls
+</ParamField>
+
+<ParamField body="friendlyName" type="string">
+  A friendly name or label for the number (e.g., "Sales Hotline", "Support Line")
+</ParamField>
+
+<ParamField body="webhookUrl" type="string">
+  Webhook URL for inbound call notifications
+</ParamField>
+
+<ParamField body="fallbackUrl" type="string">
+  Fallback webhook URL if primary webhook fails
+</ParamField>
+
+<ParamField body="tags" type="object">
+  Custom key-value tags for organizing numbers
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="id" type="string">
+      Unique identifier for the purchased number
+    </ResponseField>
+    <ResponseField name="number" type="string">
+      The purchased phone number in E.164 format
+    </ResponseField>
+    <ResponseField name="country" type="string">
+      Country code
+    </ResponseField>
+    <ResponseField name="type" type="string">
+      Number type (local, toll-free, mobile)
+    </ResponseField>
+    <ResponseField name="direction" type="string">
+      Call direction configuration
+    </ResponseField>
+    <ResponseField name="friendlyName" type="string">
+      Friendly name for the number
+    </ResponseField>
+    <ResponseField name="dialerProvider" type="string">
+      The provider the number was purchased from
+    </ResponseField>
+    <ResponseField name="providerNumberId" type="string">
+      Provider's unique identifier for the number
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Number status (active, pending, suspended)
+    </ResponseField>
+    <ResponseField name="capabilities" type="object">
+      Number capabilities (voice, SMS, MMS)
+    </ResponseField>
+    <ResponseField name="monthlyPrice" type="number">
+      Monthly rental cost
+    </ResponseField>
+    <ResponseField name="currency" type="string">
+      Billing currency
+    </ResponseField>
+    <ResponseField name="webhookUrl" type="string">
+      Configured webhook URL
+    </ResponseField>
+    <ResponseField name="purchasedAt" type="string">
+      ISO 8601 timestamp of purchase
+    </ResponseField>
+    <ResponseField name="renewsAt" type="string">
+      Next billing date
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST "https://api.talkos.io/api/numbers/buy" \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "dialerProvider": "plivo",
+    "country": "US",
+    "type": "local",
+    "areaCode": "415",
+    "direction": "both",
+    "friendlyName": "Sales Hotline",
+    "webhookUrl": "https://your-server.com/webhooks/inbound"
+  }'
+```
+
+```javascript Node.js
+const response = await fetch(
+  'https://api.talkos.io/api/numbers/buy',
+  {
+    method: 'POST',
+    headers: {
+      'x-api-key': 'your-api-key',
+      'x-tenant-id': 'your-tenant-id',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      dialerProvider: 'plivo',
+      country: 'US',
+      type: 'local',
+      areaCode: '415',
+      direction: 'both',
+      friendlyName: 'Sales Hotline',
+      webhookUrl: 'https://your-server.com/webhooks/inbound'
+    })
+  }
+);
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.talkos.io/api/numbers/buy',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'dialerProvider': 'plivo',
+        'country': 'US',
+        'type': 'local',
+        'areaCode': '415',
+        'direction': 'both',
+        'friendlyName': 'Sales Hotline',
+        'webhookUrl': 'https://your-server.com/webhooks/inbound'
+    }
+)
+
+data = response.json()
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201
+{
+  "success": true,
+  "data": {
+    "id": "num_abc123xyz",
+    "number": "+14155551234",
+    "country": "US",
+    "type": "local",
+    "direction": "both",
+    "friendlyName": "Sales Hotline",
+    "dialerProvider": "plivo",
+    "providerNumberId": "17778889999",
+    "status": "active",
+    "capabilities": {
+      "voice": true,
+      "sms": true,
+      "mms": true
+    },
+    "monthlyPrice": 1.00,
+    "currency": "USD",
+    "webhookUrl": "https://your-server.com/webhooks/inbound",
+    "purchasedAt": "2026-02-18T10:30:00Z",
+    "renewsAt": "2026-03-18T10:30:00Z"
+  }
+}
+```
+
+```json 400
+{
+  "success": false,
+  "error": {
+    "code": "NUMBER_UNAVAILABLE",
+    "message": "The requested number is no longer available"
+  }
+}
+```
+
+```json 402
+{
+  "success": false,
+  "error": {
+    "code": "INSUFFICIENT_BALANCE",
+    "message": "Insufficient account balance to purchase this number"
+  }
+}
+```
+
+```json 422
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid request parameters",
+    "details": {
+      "dialerProvider": "dialerProvider is required"
+    }
+  }
+}
+```
+</ResponseExample>
