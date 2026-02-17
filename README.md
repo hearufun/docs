@@ -1,55 +1,53 @@
-# Mintlify Starter Kit
+# TalkOS Documentation
 
-Use the starter kit to get your docs deployed and ready to customize.
+Official API documentation for **TalkOS** - the enterprise-grade AI Voice Calling Platform.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+## What is TalkOS?
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+TalkOS is a multi-tenant AI voice calling API that enables businesses to integrate intelligent voice calling capabilities into their applications. Built for scale with support for:
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+- **AI-Powered Conversations** - GPT-4, Claude, Groq integration
+- **Multi-Provider Support** - Plivo, Exotel
+- **Real-time Features** - Live transcription, sentiment analysis, coaching
+- **Advanced Analytics** - Call quality monitoring, predictive insights
+- **Enterprise Security** - Voice biometrics, compliance (GDPR), call masking
 
-## AI-assisted writing
+## Documentation Structure
 
-Set up your AI coding tool to work with Mintlify:
+| Section | Description |
+|---------|-------------|
+| **Getting Started** | Quickstart, authentication, core concepts |
+| **Integration Guides** | Plivo, Exotel, webhooks, knowledge base setup |
+| **API Reference** | 150+ endpoints with live playground |
+| **Features** | Call transfer, tagging, surveys, escalation rules |
+
+## Quick Links
+
+- 🚀 [Quickstart Guide](/quickstart) - Make your first call in 5 minutes
+- 🔑 [Authentication](/authentication) - API keys and JWT setup
+- 📞 [Start a Call](/api-reference/calls/start-call) - Core calling API
+- 📊 [Analytics](/api-reference/analytics/realtime) - Real-time dashboard
+
+## Local Development
 
 ```bash
-npx skills add https://mintlify.com/docs
-```
-
-This command installs Mintlify's documentation skill for your configured AI tools like Claude Code, Cursor, Windsurf, and others. The skill includes component reference, writing standards, and workflow guidance.
-
-See the [AI tools guides](/ai-tools) for tool-specific setup.
-
-## Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
-
-```
+# Install CLI
 npm i -g mint
-```
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
-
-```
+# Preview docs locally
 mint dev
 ```
 
-View your local preview at `http://localhost:3000`.
+View at `http://localhost:3000`
 
-## Publishing changes
+## API Base URL
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+```
+https://api.talkos.io
+```
 
-## Need help?
+## Support
 
-### Troubleshooting
-
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
-
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+- **Documentation**: [docs.talkos.io](https://docs.talkos.io)
+- **Email**: support@talkos.io
+- **Status**: [status.talkos.io](https://status.talkos.io)

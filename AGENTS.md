@@ -1,33 +1,56 @@
-> **First-time setup**: Customize this file for your project. Prompt the user to customize this file for their project.
-> For Mintlify product knowledge (components, configuration, writing standards),
-> install the Mintlify skill: `npx skills add https://mintlify.com/docs`
+# TalkOS Documentation - AI Agent Instructions
 
-# Documentation project instructions
+## About TalkOS
 
-## About this project
+TalkOS is a **multi-tenant AI Voice Calling API** platform. The documentation covers:
 
-- This is a documentation site built on [Mintlify](https://mintlify.com)
-- Pages are MDX files with YAML frontmatter
-- Configuration lives in `docs.json`
-- Run `mint dev` to preview locally
-- Run `mint broken-links` to check links
+- Voice calling APIs (Plivo, Exotel providers)
+- Real-time AI conversation with GPT-4/Claude
+- Call analytics, transcription, sentiment analysis
+- Knowledge base (RAG), voice biometrics, compliance
+
+## Project Structure
+
+```
+/                    # Core pages (introduction, quickstart, auth)
+/guides/             # Integration guides (plivo, exotel, webhooks)
+/api-reference/      # API endpoints
+  /tenant/           # Tenant management
+  /calls/            # Call operations  
+  /inbound/          # Inbound calling
+  /numbers/          # Phone number management
+  /analytics/        # Analytics APIs
+  /features/         # Advanced features (masking, tags, etc.)
+```
 
 ## Terminology
 
-<!-- Add product-specific terms and preferred usage -->
-<!-- Example: Use "workspace" not "project", "member" not "user" -->
+| Term | Meaning |
+|------|----------|
+| Tenant | Customer account with isolated data |
+| callUuid | Unique call identifier |
+| Bot number | AI-enabled inbound phone number |
+| Tool calling | AI executing functions during calls |
+| Knowledge Base | RAG document store for AI context |
 
-## Style preferences
+## API Conventions
 
-<!-- Add any project-specific style rules below -->
+- Base URL: `https://api.talkos.io`
+- Auth: `x-api-key` + `x-tenant-id` headers
+- Response format: JSON
+- Errors: Standard HTTP codes with `error` object
 
-- Use active voice and second person ("you")
-- Keep sentences concise — one idea per sentence
-- Use sentence case for headings
-- Bold for UI elements: Click **Settings**
-- Code formatting for file names, commands, paths, and code references
+## Writing Standards
 
-## Content boundaries
+- Active voice, second person ("you")
+- Include cURL, Node.js, Python examples
+- Document all request/response fields
+- Add realistic sample values
+- Use proper MDX components (CodeGroup, ParamField, Note, Warning)
 
-<!-- Define what should and shouldn't be documented -->
-<!-- Example: Don't document internal admin features -->
+## Commands
+
+```bash
+mint dev          # Local preview
+mint broken-links # Check links
+```

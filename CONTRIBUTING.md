@@ -1,34 +1,75 @@
-> **Customize this file**: Tailor this template to your project by noting specific contribution types you're looking for, adding a Code of Conduct, or adjusting the writing guidelines to match your style.
+# Contributing to TalkOS Documentation
 
-# Contribute to the documentation
+Thank you for your interest in improving TalkOS documentation! We welcome contributions from the community.
 
-Thank you for your interest in contributing to our documentation! This guide will help you get started.
+## Documentation Structure
 
-## How to contribute
+| Directory | Content |
+|-----------|----------|
+| `/` | Core pages (introduction, quickstart, concepts) |
+| `/guides` | Integration guides (Plivo, Exotel, webhooks) |
+| `/api-reference` | API endpoint documentation |
+| `/api-reference/features` | Feature-specific APIs |
 
-### Option 1: Edit directly on GitHub
+## How to Contribute
+
+### Quick Edits (GitHub)
 
 1. Navigate to the page you want to edit
-2. Click the "Edit this file" button (the pencil icon)
-3. Make your changes and submit a pull request
+2. Click the pencil icon ("Edit this file")
+3. Make your changes
+4. Submit a pull request with a clear description
 
-### Option 2: Local development
+### Local Development
 
-1. Fork and clone this repository
-2. Install the Mintlify CLI: `npm i -g mint`
-3. Create a branch for your changes
-4. Make changes
-5. Navigate to the docs directory and run `mint dev`
-6. Preview your changes at `http://localhost:3000`
-7. Commit your changes and submit a pull request
+```bash
+# Clone the repository
+git clone https://github.com/hearufun/docs.git
+cd docs
 
-For more details on local development, see our [development guide](development.mdx).
+# Install CLI
+npm i -g mint
 
-## Writing guidelines
+# Preview locally
+mint dev
+```
 
-- **Use active voice**: "Run the command" not "The command should be run"
-- **Address the reader directly**: Use "you" instead of "the user"
-- **Keep sentences concise**: Aim for one idea per sentence
-- **Lead with the goal**: Start instructions with what the user wants to accomplish
-- **Use consistent terminology**: Don't alternate between synonyms for the same concept
-- **Include examples**: Show, don't just tell
+View at `http://localhost:3000`
+
+## Writing Guidelines
+
+### Voice & Tone
+- **Active voice**: "Run the command" not "The command should be run"
+- **Direct address**: Use "you" instead of "the user"
+- **Concise**: One idea per sentence
+- **Goal-first**: Start with what the user wants to accomplish
+
+### API Documentation
+- Include cURL, Node.js, and Python examples
+- Document all request/response fields
+- Add error response examples
+- Use realistic sample data
+
+### Code Examples
+```bash
+# Good: Specific, copyable
+curl -X POST https://api.talkos.io/api/calls/start \
+  -H "x-api-key: your_api_key" \
+  -H "x-tenant-id: tenant_123"
+
+# Avoid: Vague placeholders
+curl -X POST <url> -H <headers>
+```
+
+## TalkOS Terminology
+
+| Use | Instead of |
+|-----|------------|
+| tenant | organization, account |
+| call session | call instance |
+| knowledge base | document store |
+| webhook | callback URL |
+
+## Need Help?
+
+Email: docs@talkos.io
