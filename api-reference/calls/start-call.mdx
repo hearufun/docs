@@ -36,15 +36,17 @@ POST /api/calls/start
   Phone number to call in E.164 format (e.g., `+14155551234`). Must include country code with `+` prefix.
 </ParamField>
 
-<ParamField body="from" type="string" required>
-  Your caller ID number in E.164 format. This number must be verified and registered with your account.
-</ParamField>
-
 <ParamField body="prompt" type="string" required>
   AI system prompt defining the agent's behavior, personality, and conversation guidelines. This is the core instruction set that shapes how the AI conducts the call.
 </ParamField>
 
 ### Optional Fields
+
+<ParamField body="tenantId" type="string">
+  Tenant ID for per-tenant provider configuration. If the specified tenant has custom `providerConfig` with their own Plivo/Exotel credentials, those will be used for the call. If omitted or tenant has no custom config, the system default provider is used.
+  
+  **Example:** `"tenant_01HXYZ123456"`
+</ParamField>
 
 <ParamField body="greeting" type="string">
   The first message the AI speaks when the call connects. If not provided, the AI will generate an appropriate greeting based on the prompt.
@@ -160,6 +162,11 @@ POST /api/calls/start
 
 ## Example Request
 
+<Note>
+  When your tenant has `providerConfig` configured with a `fromNumber` (Plivo) or `callerId` (Exotel), 
+  the `from` parameter becomes optional. The system will automatically use your tenant's configured number.
+</Note>
+
 <CodeGroup>
 ```bash cURL
 curl -X POST https://api.talkos.io/api/calls/start \
@@ -168,7 +175,7 @@ curl -X POST https://api.talkos.io/api/calls/start \
   -H "x-tenant-id: your-tenant-id" \
   -d '{
     "to": "+14155551234",
-    "from": "+14155550000",
+    "tenantId": "tenant_abc123",
     "prompt": "You are Sarah, a friendly customer service representative for TechCorp. Your goal is to help customers with their technical issues. Be patient, empathetic, and solution-oriented. If you cannot resolve an issue, offer to escalate to a human agent.",
     "greeting": "Hi! This is Sarah from TechCorp. How can I help you today?",
     "webhookUrl": "https://yourapp.com/webhooks/call-complete",
@@ -219,7 +226,7 @@ const response = await fetch('https://api.talkos.io/api/calls/start', {
   },
   body: JSON.stringify({
     to: '+14155551234',
-    from: '+14155550000',
+    tenantId: 'tenant_abc123', // Uses tenant's configured provider
     prompt: 'You are Sarah, a friendly customer service representative...',
     greeting: 'Hi! This is Sarah from TechCorp. How can I help you today?',
     webhookUrl: 'https://yourapp.com/webhooks/call-complete',
@@ -248,7 +255,7 @@ response = requests.post(
     },
     json={
         'to': '+14155551234',
-        'from': '+14155550000',
+        'tenantId': 'tenant_abc123',  # Uses tenant's configured provider
         'prompt': 'You are Sarah, a friendly customer service representative...',
         'greeting': 'Hi! This is Sarah from TechCorp. How can I help you today?',
         'webhookUrl': 'https://yourapp.com/webhooks/call-complete',

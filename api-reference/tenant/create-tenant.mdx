@@ -55,13 +55,21 @@ POST https://api.talkos.io/api/tenants/create
   **Example:** `"growth"`
 </ParamField>
 
-<ParamField body="config" type="object" required>
-  Telephony provider configuration. At least one provider must be configured.
+<ParamField body="providerConfig" type="object">
+  Custom telephony provider configuration. If not provided, the tenant will use TalkOS's default provider credentials. Set this when the tenant wants to use their own Plivo or Exotel account.
 </ParamField>
 
-<Expandable title="config properties">
-  <ParamField body="config.defaultProvider" type="string" required>
-    The default telephony provider to use for outbound calls.
+<Expandable title="providerConfig properties">
+  <ParamField body="providerConfig.useCustomProvider" type="boolean" required>
+    Set to `true` to use the tenant's own provider credentials. If `false` or omitted, TalkOS's default provider is used.
+    
+    **Default:** `false`
+    
+    **Example:** `true`
+  </ParamField>
+
+  <ParamField body="providerConfig.defaultProvider" type="string">
+    The telephony provider to use for this tenant's calls. Required if `useCustomProvider` is `true`.
     
     **Allowed values:**
     - `plivo` - Plivo Communications
@@ -70,12 +78,12 @@ POST https://api.talkos.io/api/tenants/create
     **Example:** `"plivo"`
   </ParamField>
 
-  <ParamField body="config.plivo" type="object">
-    Plivo provider configuration. Required if `defaultProvider` is `plivo`.
+  <ParamField body="providerConfig.plivo" type="object">
+    Plivo provider configuration. Required if `defaultProvider` is `plivo` and `useCustomProvider` is `true`.
   </ParamField>
 
-  <Expandable title="config.plivo properties">
-    <ParamField body="config.plivo.authId" type="string" required>
+  <Expandable title="providerConfig.plivo properties">
+    <ParamField body="providerConfig.plivo.authId" type="string" required>
       Your Plivo Auth ID. Found in your Plivo Console dashboard.
       
       - Format: Alphanumeric string
@@ -84,7 +92,7 @@ POST https://api.talkos.io/api/tenants/create
       **Example:** `"MAXXXXXXXXXXXXXXXXXX"`
     </ParamField>
 
-    <ParamField body="config.plivo.authToken" type="string" required>
+    <ParamField body="providerConfig.plivo.authToken" type="string" required>
       Your Plivo Auth Token. Found in your Plivo Console dashboard.
       
       - Keep this secret - never expose in client-side code
@@ -92,39 +100,55 @@ POST https://api.talkos.io/api/tenants/create
       
       **Example:** `"YzE4NGMyZWE4ZDk2MmI4NDhkYzU5YjQ1ZDk4Njk4"`
     </ParamField>
+
+    <ParamField body="providerConfig.plivo.fromNumber" type="string" required>
+      The phone number to use for outbound calls. Must be a number owned by the tenant's Plivo account.
+      
+      - Format: E.164 (e.g., +14155551234)
+      
+      **Example:** `"+14155551234"`
+    </ParamField>
   </Expandable>
 
-  <ParamField body="config.exotel" type="object">
-    Exotel provider configuration. Required if `defaultProvider` is `exotel`.
+  <ParamField body="providerConfig.exotel" type="object">
+    Exotel provider configuration. Required if `defaultProvider` is `exotel` and `useCustomProvider` is `true`.
   </ParamField>
 
-  <Expandable title="config.exotel properties">
-    <ParamField body="config.exotel.apiKey" type="string" required>
+  <Expandable title="providerConfig.exotel properties">
+    <ParamField body="providerConfig.exotel.apiKey" type="string" required>
       Your Exotel API Key. Found in your Exotel dashboard under API settings.
       
       **Example:** `"exo_api_key_abc123"`
     </ParamField>
 
-    <ParamField body="config.exotel.apiToken" type="string" required>
+    <ParamField body="providerConfig.exotel.apiToken" type="string" required>
       Your Exotel API Token. Found in your Exotel dashboard under API settings.
       
       **Example:** `"exo_token_xyz789"`
     </ParamField>
 
-    <ParamField body="config.exotel.accountSid" type="string" required>
+    <ParamField body="providerConfig.exotel.accountSid" type="string" required>
       Your Exotel Account SID. This is your unique account identifier.
       
       **Example:** `"acme_corp"`
     </ParamField>
 
-    <ParamField body="config.exotel.subdomain" type="string" required>
+    <ParamField body="providerConfig.exotel.callerId" type="string" required>
+      Your ExoPhone number (virtual number) for outbound calls.
+      
+      **Example:** `"0XXXXXXXXXX"`
+    </ParamField>
+
+    <ParamField body="providerConfig.exotel.subdomain" type="string">
       Your Exotel subdomain. Determines the API endpoint region.
       
       **Allowed values:**
-      - `api.exotel.com` - Singapore region
+      - `api.exotel.com` - Singapore region (default)
       - `api.in.exotel.com` - India region
       
-      **Example:** `"api.exotel.com"`
+      **Default:** `"api.exotel.com"`
+      
+      **Example:** `"api.in.exotel.com"`
     </ParamField>
   </Expandable>
 </Expandable>
@@ -176,8 +200,8 @@ POST https://api.talkos.io/api/tenants/create
     **Example:** `"tk_live_abc123xyz789def456uvw"`
   </ResponseField>
 
-  <ResponseField name="data.config" type="object">
-    The provider configuration (sensitive values are masked).
+  <ResponseField name="data.providerConfig" type="object">
+    The custom provider configuration (sensitive values are masked). Only present if `useCustomProvider` is `true`.
   </ResponseField>
 
   <ResponseField name="data.status" type="string">
@@ -229,14 +253,15 @@ curl -X POST https://api.talkos.io/api/tenants/create \
     "name": "Acme Corporation",
     "email": "admin@acme.com",
     "plan": "growth",
-    "config": {
+    "providerConfig": {
+      "useCustomProvider": true,
       "defaultProvider": "plivo",
       "plivo": {
         "authId": "MAXXXXXXXXXXXXXXXXXX",
-        "authToken": "YzE4NGMyZWE4ZDk2MmI4NDhkYzU5YjQ1ZDk4Njk4"
+        "authToken": "YzE4NGMyZWE4ZDk2MmI4NDhkYzU5YjQ1ZDk4Njk4",
+        "fromNumber": "+14155551234"
       }
     },
-    "webhookUrl": "https://api.acme.com/webhooks/talkos",
     "metadata": {
       "internalId": "cust_12345",
       "salesRep": "john@internal.com"
@@ -255,14 +280,15 @@ const response = await fetch('https://api.talkos.io/api/tenants/create', {
     name: 'Acme Corporation',
     email: 'admin@acme.com',
     plan: 'growth',
-    config: {
+    providerConfig: {
+      useCustomProvider: true,
       defaultProvider: 'plivo',
       plivo: {
         authId: 'MAXXXXXXXXXXXXXXXXXX',
-        authToken: 'YzE4NGMyZWE4ZDk2MmI4NDhkYzU5YjQ1ZDk4Njk4'
+        authToken: 'YzE4NGMyZWE4ZDk2MmI4NDhkYzU5YjQ1ZDk4Njk4',
+        fromNumber: '+14155551234'
       }
     },
-    webhookUrl: 'https://api.acme.com/webhooks/talkos',
     metadata: {
       internalId: 'cust_12345',
       salesRep: 'john@internal.com'
@@ -287,14 +313,15 @@ response = requests.post(
         'name': 'Acme Corporation',
         'email': 'admin@acme.com',
         'plan': 'growth',
-        'config': {
+        'providerConfig': {
+            'useCustomProvider': True,
             'defaultProvider': 'plivo',
             'plivo': {
                 'authId': 'MAXXXXXXXXXXXXXXXXXX',
-                'authToken': 'YzE4NGMyZWE4ZDk2MmI4NDhkYzU5YjQ1ZDk4Njk4'
+                'authToken': 'YzE4NGMyZWE4ZDk2MmI4NDhkYzU5YjQ1ZDk4Njk4',
+                'fromNumber': '+14155551234'
             }
         },
-        'webhookUrl': 'https://api.acme.com/webhooks/talkos',
         'metadata': {
             'internalId': 'cust_12345',
             'salesRep': 'john@internal.com'
@@ -318,14 +345,15 @@ print(response.json())
     "email": "admin@acme.com",
     "plan": "growth",
     "apiKey": "tk_live_abc123xyz789def456uvw012rst345",
-    "config": {
+    "providerConfig": {
+      "useCustomProvider": true,
       "defaultProvider": "plivo",
       "plivo": {
-        "authId": "MAXXXXXXXXXXXXXXXXXX",
-        "authToken": "••••••••••••••••••••"
+        "authId": "MAXX****",
+        "authToken": "****",
+        "fromNumber": "+14155551234"
       }
     },
-    "webhookUrl": "https://api.acme.com/webhooks/talkos",
     "metadata": {
       "internalId": "cust_12345",
       "salesRep": "john@internal.com"
@@ -375,10 +403,10 @@ print(response.json())
   "success": false,
   "error": {
     "code": "INVALID_PROVIDER_CONFIG",
-    "message": "Provider configuration is incomplete",
+    "message": "Invalid providerConfig: plivo.fromNumber is required when using custom Plivo provider",
     "details": {
       "provider": "plivo",
-      "missing": ["authToken"]
+      "missing": ["fromNumber"]
     }
   },
   "requestId": "req_def456uvw012"
