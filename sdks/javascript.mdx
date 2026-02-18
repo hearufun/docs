@@ -1,0 +1,329 @@
+---
+title: "JavaScript SDK"
+description: "Full reference for the TalkOS JavaScript/TypeScript SDK — @talkos/sdk"
+---
+
+## Installation
+
+```bash
+npm install @talkos/sdk
+# or
+yarn add @talkos/sdk
+# or
+pnpm add @talkos/sdk
+```
+
+**Requirements:** Node.js 18+ or any modern browser
+
+---
+
+## Initialization
+
+```javascript
+import TalkOS from '@talkos/sdk';
+
+const client = new TalkOS({
+  apiKey: process.env.TALKOS_API_KEY,
+  tenantId: process.env.TALKOS_TENANT_ID,
+  baseUrl: 'https://api.talkos.io'  // optional, defaults to production
+});
+```
+
+---
+
+## Calls
+
+### Initiate a Call
+
+```javascript
+const call = await client.calls.initiate({
+  to: '+14155551234',
+  systemPrompt: 'You are a helpful customer support agent.',
+  voice: { voiceId: 'rachel', speed: 1.0 },
+  maxDuration: 300,
+  webhookUrl: 'https://your-app.com/webhook',
+  metadata: { customerId: 'cust-001' }
+});
+
+console.log(call.callUuid);  // "call-uuid-123"
+console.log(call.status);    // "queued"
+```
+
+### Batch Calls
+
+```javascript
+const batch = await client.calls.batch({
+  calls: [
+    { to: '+14155551001', systemPrompt: '...' },
+    { to: '+14155551002', systemPrompt: '...' },
+  ],
+  concurrency: 5,
+  retryPolicy: { maxRetries: 2, retryOn: ['no_answer'] }
+});
+
+console.log(batch.batchId);
+console.log(batch.totalCalls);
+```
+
+### Get Call Status
+
+```javascript
+const status = await client.calls.get('call-uuid-123');
+console.log(status.state);     // "in-progress" | "completed" | "failed"
+console.log(status.duration);   // 145
+console.log(status.sentiment);  // 0.7
+```
+
+### Hang Up
+
+```javascript
+await client.calls.hangup('call-uuid-123');
+```
+
+### List Calls
+
+```javascript
+const calls = await client.calls.list({
+  dateFrom: '2026-01-01',
+  dateTo: '2026-02-18',
+  limit: 50
+});
+```
+
+---
+
+## Web Sessions
+
+### Create a Session
+
+```javascript
+const session = await client.sessions.create({
+  systemPrompt: 'You are a helpful assistant.',
+  voice: { voiceId: 'rachel' },
+  language: 'en',
+  enableVideo: false
+});
+```
+
+### Connect via WebSocket
+
+```javascript
+session.connect();
+
+// Listen for events
+session.on('connected', () => console.log('Session started'));
+session.on('transcript', (data) => {
+  console.log(`[${data.role}]: ${data.text}`);
+});
+session.on('audio', (chunk) => {
+  // Play audio chunk in browser
+  audioPlayer.play(chunk);
+});
+session.on('ended', (data) => {
+  console.log('Session ended:', data.reason);
+});
+session.on('error', (err) => console.error(err));
+
+// Send audio from microphone
+navigator.mediaDevices.getUserMedia({ audio: true })
+  .then(stream => {
+    const recorder = new MediaRecorder(stream);
+    recorder.ondataavailable = (e) => session.sendAudio(e.data);
+    recorder.start(100);  // Send chunks every 100ms
+  });
+```
+
+### Control Session
+
+```javascript
+await session.pause();
+await session.resume();
+await session.updateConfig({ voice: { speed: 1.2 } });
+await session.end();
+```
+
+### Get Transcript
+
+```javascript
+const transcript = await client.sessions.getTranscript('session-id');
+```
+
+---
+
+## Analytics
+
+```javascript
+// Real-time dashboard
+const realtime = await client.analytics.realtime();
+
+// Call analytics
+const calls = await client.analytics.calls({
+  dateFrom: '2026-01-01',
+  groupBy: 'day'
+});
+
+// Sentiment trends
+const sentiment = await client.analytics.sentiment({
+  dateFrom: '2026-01-01'
+});
+
+// Cost breakdown
+const cost = await client.analytics.cost({ dateFrom: '2026-01-01' });
+
+// Capacity planning
+const capacity = await client.analytics.capacity();
+```
+
+---
+
+## Tenants
+
+```javascript
+// Create tenant
+const tenant = await client.tenants.create({
+  name: 'Acme Corp',
+  plan: 'professional',
+  config: { maxConcurrentCalls: 20 }
+});
+
+// List tenants
+const tenants = await client.tenants.list();
+
+// Get usage
+const usage = await client.tenants.getUsage(tenant.id);
+
+// Rotate API key
+const newKey = await client.tenants.rotateKey(tenant.id);
+```
+
+---
+
+## Knowledge Base
+
+```javascript
+// Create
+const kb = await client.knowledgeBase.create({
+  name: 'FAQ',
+  content: 'Question: What is your return policy?\nAnswer: 30 days...'
+});
+
+// Query
+const results = await client.knowledgeBase.query(kb.id, 'return policy');
+
+// Update
+await client.knowledgeBase.update(kb.id, { content: 'Updated content...' });
+
+// Delete
+await client.knowledgeBase.delete(kb.id);
+```
+
+---
+
+## Voices
+
+```javascript
+// List available voices
+const voices = await client.voices.list();
+
+// Clone a voice
+const clone = await client.voices.clone({
+  name: 'Custom Agent Voice',
+  audioFile: fs.readFileSync('sample.mp3')
+});
+
+// Delete voice
+await client.voices.delete(clone.voiceId);
+```
+
+---
+
+## Transfer & Agents
+
+```javascript
+// Register agent
+await client.agents.create({
+  agentId: 'agent-001',
+  name: 'Sarah Johnson',
+  phoneNumber: '+14155551234',
+  skills: ['billing', 'technical']
+});
+
+// Initiate transfer
+await client.transfer.initiate({
+  callUuid: 'call-uuid-123',
+  targetAgentId: 'agent-001',
+  transferType: 'warm'
+});
+```
+
+---
+
+## Real-time Coaching
+
+```javascript
+// Get active calls
+const activeCalls = await client.realtime.activeCalls();
+
+// Send coaching message
+await client.realtime.coach({
+  callUuid: 'call-uuid-123',
+  message: 'Offer the 20% discount'
+});
+
+// Get live transcript
+const transcript = await client.realtime.transcript('call-uuid-123');
+```
+
+---
+
+## Compliance
+
+```javascript
+// PII detection
+const pii = await client.compliance.detectPII({
+  text: 'My SSN is 123-45-6789',
+  redact: true
+});
+
+// GDPR erasure
+await client.compliance.gdprErase({
+  subjectIdentifier: '+14155551234',
+  identifierType: 'phone'
+});
+
+// Biometric enrollment
+await client.biometrics.enroll({
+  speakerId: 'customer-001',
+  callUuid: 'call-uuid-123'
+});
+
+// Voice verification
+const result = await client.biometrics.verify({
+  speakerId: 'customer-001',
+  callUuid: 'current-call'
+});
+```
+
+---
+
+## TypeScript Support
+
+The SDK ships with full TypeScript definitions:
+
+```typescript
+import TalkOS, { 
+  Call, 
+  Session, 
+  Tenant, 
+  AnalyticsResponse,
+  CallInitiateOptions 
+} from '@talkos/sdk';
+
+const options: CallInitiateOptions = {
+  to: '+14155551234',
+  systemPrompt: 'You are helpful.',
+  maxDuration: 300
+};
+
+const call: Call = await client.calls.initiate(options);
+```

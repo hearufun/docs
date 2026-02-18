@@ -1,0 +1,365 @@
+---
+title: "Python SDK"
+description: "Full reference for the TalkOS Python SDK — talkos"
+---
+
+## Installation
+
+```bash
+pip install talkos
+# or
+poetry add talkos
+```
+
+**Requirements:** Python 3.8+
+
+---
+
+## Initialization
+
+```python
+from talkos import TalkOS
+
+client = TalkOS(
+    api_key="sk-your-api-key",
+    tenant_id="your-tenant-id",
+    base_url="https://api.talkos.io"  # optional
+)
+```
+
+### Async Client
+
+```python
+from talkos import AsyncTalkOS
+
+client = AsyncTalkOS(
+    api_key="sk-your-api-key",
+    tenant_id="your-tenant-id"
+)
+
+# Use with async/await
+call = await client.calls.initiate(to="+14155551234", system_prompt="...")
+```
+
+---
+
+## Calls
+
+### Initiate a Call
+
+```python
+call = client.calls.initiate(
+    to="+14155551234",
+    system_prompt="You are a helpful customer support agent.",
+    voice={"voice_id": "rachel", "speed": 1.0},
+    max_duration=300,
+    webhook_url="https://your-app.com/webhook",
+    metadata={"customer_id": "cust-001"}
+)
+
+print(call.call_uuid)  # "call-uuid-123"
+print(call.status)     # "queued"
+```
+
+### Batch Calls
+
+```python
+batch = client.calls.batch(
+    calls=[
+        {"to": "+14155551001", "system_prompt": "..."},
+        {"to": "+14155551002", "system_prompt": "..."},
+    ],
+    concurrency=5,
+    retry_policy={"max_retries": 2, "retry_on": ["no_answer"]}
+)
+
+print(f"Batch {batch.batch_id}: {batch.total_calls} calls queued")
+```
+
+### Get Call Status
+
+```python
+status = client.calls.get("call-uuid-123")
+print(f"State: {status.state}")       # "completed"
+print(f"Duration: {status.duration}s")  # 145
+print(f"Sentiment: {status.sentiment}") # 0.7
+```
+
+### Hang Up
+
+```python
+client.calls.hangup("call-uuid-123")
+```
+
+### List Calls
+
+```python
+calls = client.calls.list(
+    date_from="2026-01-01",
+    date_to="2026-02-18",
+    limit=50
+)
+
+for call in calls:
+    print(f"{call.call_uuid}: {call.state} ({call.duration}s)")
+```
+
+---
+
+## Web Sessions
+
+### Create and Connect
+
+```python
+from talkos import AsyncTalkOS
+import asyncio
+
+async def main():
+    client = AsyncTalkOS(api_key="...", tenant_id="...")
+    
+    session = await client.sessions.create(
+        system_prompt="You are a helpful assistant.",
+        voice={"voice_id": "rachel"},
+        language="en"
+    )
+    
+    @session.on("transcript")
+    async def on_transcript(data):
+        print(f"[{data['role']}]: {data['text']}")
+    
+    @session.on("ended")
+    async def on_ended(data):
+        print(f"Session ended: {data['reason']}")
+    
+    await session.connect()
+    
+    # Send audio data
+    await session.send_audio(audio_bytes)
+    
+    # Control
+    await session.pause()
+    await session.resume()
+    await session.end()
+
+asyncio.run(main())
+```
+
+---
+
+## Analytics
+
+```python
+# Real-time dashboard
+realtime = client.analytics.realtime()
+print(f"Active calls: {realtime['worker']['activeCalls']}")
+
+# Call analytics
+stats = client.analytics.calls(date_from="2026-01-01", group_by="day")
+
+# Sentiment trends
+sentiment = client.analytics.sentiment(date_from="2026-01-01")
+
+# Cost breakdown
+cost = client.analytics.cost(date_from="2026-01-01")
+print(f"Total cost: ${cost['total']}")
+```
+
+---
+
+## Tenants
+
+```python
+# Create tenant
+tenant = client.tenants.create(
+    name="Acme Corp",
+    plan="professional",
+    config={"max_concurrent_calls": 20}
+)
+
+# List tenants
+tenants = client.tenants.list()
+
+# Get usage
+usage = client.tenants.get_usage(tenant.id)
+
+# Rotate API key
+new_key = client.tenants.rotate_key(tenant.id)
+```
+
+---
+
+## Knowledge Base
+
+```python
+# Create
+kb = client.knowledge_base.create(
+    name="FAQ",
+    content="Q: Return policy?\nA: 30 days from purchase..."
+)
+
+# Query
+results = client.knowledge_base.query(kb.id, "return policy")
+
+# Update
+client.knowledge_base.update(kb.id, content="Updated...")
+
+# Delete
+client.knowledge_base.delete(kb.id)
+```
+
+---
+
+## Voices
+
+```python
+# List voices
+voices = client.voices.list()
+for v in voices:
+    print(f"{v['voice_id']}: {v['name']}")
+
+# Clone voice
+with open("sample.mp3", "rb") as f:
+    clone = client.voices.clone(name="Custom Voice", audio_file=f)
+```
+
+---
+
+## Compliance
+
+```python
+# PII detection
+pii = client.compliance.detect_pii(
+    text="My SSN is 123-45-6789",
+    redact=True
+)
+print(pii["redacted"])  # "My SSN is [SSN]"
+
+# GDPR erasure
+result = client.compliance.gdpr_erase(
+    subject_identifier="+14155551234",
+    identifier_type="phone"
+)
+print(f"Erased {result['erasedRecords']['total']} records")
+
+# Voice biometrics
+client.biometrics.enroll(speaker_id="cust-001", call_uuid="call-123")
+verification = client.biometrics.verify(speaker_id="cust-001", call_uuid="call-456")
+print(f"Verified: {verification['verified']} ({verification['confidence']})")
+```
+
+---
+
+## Transfer & Agents
+
+```python
+# Register agent
+client.agents.create(
+    agent_id="agent-001",
+    name="Sarah Johnson",
+    phone_number="+14155551234",
+    skills=["billing", "technical"]
+)
+
+# Transfer call
+client.transfer.initiate(
+    call_uuid="call-uuid-123",
+    target_agent_id="agent-001",
+    transfer_type="warm",
+    context={"summary": "Customer needs billing help"}
+)
+```
+
+---
+
+## Real-time Coaching
+
+```python
+# Active calls
+active = client.realtime.active_calls()
+for call in active:
+    print(f"{call['callUuid']}: {call['sentiment']}")
+
+# Send coaching
+client.realtime.coach(
+    call_uuid="call-uuid-123",
+    message="Offer the 20% discount code SAVE20"
+)
+```
+
+---
+
+## Django Integration
+
+```python
+# views.py
+from django.http import JsonResponse
+from talkos import TalkOS
+
+client = TalkOS(api_key=settings.TALKOS_API_KEY, tenant_id=settings.TALKOS_TENANT_ID)
+
+def initiate_call(request):
+    call = client.calls.initiate(
+        to=request.POST["phone"],
+        system_prompt="You are a helpful assistant."
+    )
+    return JsonResponse({"call_uuid": call.call_uuid})
+
+def webhook(request):
+    data = json.loads(request.body)
+    # Process call event
+    return JsonResponse({"status": "ok"})
+```
+
+---
+
+## Flask Integration
+
+```python
+from flask import Flask, request, jsonify
+from talkos import TalkOS
+
+app = Flask(__name__)
+client = TalkOS(api_key="...", tenant_id="...")
+
+@app.route("/call", methods=["POST"])
+def make_call():
+    data = request.json
+    call = client.calls.initiate(
+        to=data["phone"],
+        system_prompt=data.get("prompt", "You are helpful.")
+    )
+    return jsonify({"call_uuid": call.call_uuid})
+
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    event = request.json
+    # Process event
+    return "", 200
+```
+
+---
+
+## Error Handling
+
+```python
+from talkos.exceptions import (
+    TalkOSError,
+    AuthenticationError,
+    RateLimitError,
+    ValidationError,
+    ProviderError
+)
+
+try:
+    call = client.calls.initiate(to="+14155551234")
+except AuthenticationError:
+    print("Invalid API key")
+except RateLimitError as e:
+    print(f"Rate limited. Retry after {e.retry_after}s")
+except ValidationError as e:
+    print(f"Invalid params: {e.details}")
+except ProviderError:
+    print("Upstream provider error")
+except TalkOSError as e:
+    print(f"TalkOS error: {e.code} - {e.message}")
+```

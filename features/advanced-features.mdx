@@ -1,0 +1,519 @@
+---
+title: "Advanced Features"
+description: "Escalation rules, call tagging, hold music, in-call chat, post-call surveys, and predictive analytics"
+---
+
+## Overview
+
+Beyond core calling and AI, TalkOS provides a rich set of features for advanced call center operations. These features work together to create a complete voice AI platform.
+
+---
+
+## Escalation Rules Engine
+
+Define rules that automatically escalate calls based on conditions:
+
+### Create an Escalation Rule
+
+```bash
+curl -X POST https://api.talkos.io/api/features/escalation/rules \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -d '{
+    "name": "Negative Sentiment Escalation",
+    "conditions": {
+      "sentimentBelow": -0.5,
+      "durationAbove": 120,
+      "turnCountAbove": 10
+    },
+    "action": {
+      "type": "transfer_to_agent",
+      "targetSkill": "retention",
+      "priority": "high",
+      "notifySupervisor": true
+    },
+    "enabled": true
+  }'
+```
+
+### Rule Conditions
+
+| Condition | Type | Description |
+|-----------|------|-------------|
+| `sentimentBelow` | number | Trigger when sentiment drops below threshold |
+| `sentimentAbove` | number | Trigger on positive sentiment (upsell opportunity) |
+| `durationAbove` | seconds | Long call escalation |
+| `turnCountAbove` | number | Too many back-and-forth turns |
+| `keywordDetected` | string[] | Specific words spoken (e.g., "lawyer", "cancel") |
+| `silenceDuration` | seconds | Extended silence detected |
+| `customerRequestsAgent` | boolean | Customer explicitly asks for human |
+
+### List Rules
+
+```bash
+curl https://api.talkos.io/api/features/escalation/rules \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+### Update Rule
+
+```bash
+curl -X PUT https://api.talkos.io/api/features/escalation/rules/RULE_ID \
+  -H "x-api-key: YOUR_KEY" \
+  -d '{ "enabled": false }'
+```
+
+### Delete Rule
+
+```bash
+curl -X DELETE https://api.talkos.io/api/features/escalation/rules/RULE_ID \
+  -H "x-api-key: YOUR_KEY"
+```
+
+### Check Escalation for Active Call
+
+```bash
+curl -X POST https://api.talkos.io/api/features/escalation/check \
+  -H "x-api-key: YOUR_KEY" \
+  -d '{
+    "callUuid": "call-uuid-123",
+    "currentSentiment": -0.6,
+    "duration": 180,
+    "turnCount": 12
+  }'
+```
+
+### Escalation History & Analytics
+
+```bash
+# History of escalations
+curl https://api.talkos.io/api/features/escalation/history \
+  -H "x-api-key: YOUR_KEY"
+
+# Escalation analytics
+curl https://api.talkos.io/api/features/escalation/analytics \
+  -H "x-api-key: YOUR_KEY"
+```
+
+---
+
+## Call Tagging
+
+Categorize and label calls for organization and analysis:
+
+### Add Tags to a Call
+
+```bash
+curl -X POST https://api.talkos.io/api/features/tags/calls/CALL_UUID \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -d '{
+    "tags": ["billing", "refund-request", "high-priority"]
+  }'
+```
+
+### Auto-Tagging Rules
+
+Create rules to automatically tag calls:
+
+```bash
+curl -X POST https://api.talkos.io/api/features/tags/auto-rules \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -d '{
+    "name": "Refund Detection",
+    "keywords": ["refund", "money back", "return"],
+    "tags": ["refund-request"],
+    "applyTo": "all_calls"
+  }'
+```
+
+### Search by Tags
+
+```bash
+curl "https://api.talkos.io/api/features/tags/search?tags=refund-request,high-priority&match=any" \
+  -H "x-api-key: YOUR_KEY"
+```
+
+### Tag Analytics
+
+```bash
+curl https://api.talkos.io/api/features/tags/analytics \
+  -H "x-api-key: YOUR_KEY"
+```
+
+```json
+{
+  "topTags": [
+    { "tag": "billing", "count": 145, "percentage": 28 },
+    { "tag": "technical", "count": 89, "percentage": 17 },
+    { "tag": "refund-request", "count": 67, "percentage": 13 }
+  ],
+  "tagTrends": { "billing": "+12%", "refund-request": "-5%" }
+}
+```
+
+### Remove Tags
+
+```bash
+curl -X DELETE "https://api.talkos.io/api/features/tags/calls/CALL_UUID?tags=high-priority" \
+  -H "x-api-key: YOUR_KEY"
+```
+
+---
+
+## Hold Music
+
+Manage hold music for call transfers and queues:
+
+### Upload Hold Music
+
+```bash
+curl -X POST https://api.talkos.io/api/features/hold-music \
+  -F "file=@hold-music.mp3" \
+  -F "name=Jazz Lounge" \
+  -F "isDefault=true" \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+### List Music
+
+```bash
+curl https://api.talkos.io/api/features/hold-music \
+  -H "x-api-key: YOUR_KEY"
+```
+
+### Set Default
+
+```bash
+curl -X PUT https://api.talkos.io/api/features/hold-music/MUSIC_ID/default \
+  -H "x-api-key: YOUR_KEY"
+```
+
+### Play During Call
+
+```bash
+curl -X POST https://api.talkos.io/api/features/hold-music/play \
+  -H "x-api-key: YOUR_KEY" \
+  -d '{
+    "callUuid": "call-uuid-123",
+    "musicId": "music-001",
+    "duration": 30
+  }'
+```
+
+### Stop Music
+
+```bash
+curl -X POST https://api.talkos.io/api/features/hold-music/stop \
+  -H "x-api-key: YOUR_KEY" \
+  -d '{ "callUuid": "call-uuid-123" }'
+```
+
+### Delete Music
+
+```bash
+curl -X DELETE https://api.talkos.io/api/features/hold-music/MUSIC_ID \
+  -H "x-api-key: YOUR_KEY"
+```
+
+---
+
+## In-Call Chat
+
+Send text messages to participants during active calls:
+
+### Send Chat Message
+
+```bash
+curl -X POST https://api.talkos.io/api/features/chat/send \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -d '{
+    "callUuid": "call-uuid-123",
+    "message": "Your order #12345 has been updated",
+    "sender": "system",
+    "metadata": { "orderId": "12345" }
+  }'
+```
+
+### Get Chat History
+
+```bash
+curl https://api.talkos.io/api/features/chat/history/CALL_UUID \
+  -H "x-api-key: YOUR_KEY"
+```
+
+### Send Formatted Content
+
+```bash
+curl -X POST https://api.talkos.io/api/features/chat/send-rich \
+  -d '{
+    "callUuid": "call-uuid-123",
+    "type": "card",
+    "content": {
+      "title": "Order Update",
+      "body": "Your order has shipped",
+      "imageUrl": "https://example.com/tracking.png",
+      "actions": [
+        { "label": "Track Order", "url": "https://example.com/track/12345" }
+      ]
+    }
+  }'
+```
+
+### Chat Participants
+
+```bash
+curl https://api.talkos.io/api/features/chat/participants/CALL_UUID \
+  -H "x-api-key: YOUR_KEY"
+```
+
+### Typing Indicator
+
+```bash
+curl -X POST https://api.talkos.io/api/features/chat/typing \
+  -d '{ "callUuid": "call-uuid-123", "sender": "agent", "isTyping": true }'
+```
+
+### Pin Message
+
+```bash
+curl -X POST https://api.talkos.io/api/features/chat/pin \
+  -d '{ "callUuid": "call-uuid-123", "messageId": "msg-001" }'
+```
+
+### Chat Analytics
+
+```bash
+curl https://api.talkos.io/api/features/chat/analytics \
+  -H "x-api-key: YOUR_KEY"
+```
+
+---
+
+## Post-Call Survey
+
+Collect customer feedback after calls:
+
+### Create Survey Template
+
+```bash
+curl -X POST https://api.talkos.io/api/features/survey/templates \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -d '{
+    "name": "Customer Satisfaction",
+    "questions": [
+      {
+        "id": "q1",
+        "type": "rating",
+        "text": "How would you rate your experience today?",
+        "scale": { "min": 1, "max": 5 }
+      },
+      {
+        "id": "q2",
+        "type": "yes_no",
+        "text": "Was your issue resolved?"
+      },
+      {
+        "id": "q3",
+        "type": "open_ended",
+        "text": "Any additional feedback?"
+      }
+    ],
+    "deliveryMethod": "voice",
+    "isDefault": true
+  }'
+```
+
+### Trigger Survey
+
+```bash
+# Auto-trigger after call
+curl -X POST https://api.talkos.io/api/features/survey/trigger \
+  -d '{ "callUuid": "call-uuid-123", "templateId": "template-001" }'
+
+# Or configure auto-survey for all calls
+curl -X POST https://api.talkos.io/api/features/survey/auto-config \
+  -d '{ "enabled": true, "templateId": "template-001", "triggerOn": "call_end" }'
+```
+
+### Get Survey Responses
+
+```bash
+# Single call survey
+curl https://api.talkos.io/api/features/survey/responses/CALL_UUID
+
+# All responses with filters
+curl "https://api.talkos.io/api/features/survey/responses?dateFrom=2026-01-01&templateId=template-001"
+```
+
+### Survey Analytics
+
+```bash
+# Summary dashboard
+curl https://api.talkos.io/api/features/survey/analytics/summary
+
+# Trend analysis
+curl "https://api.talkos.io/api/features/survey/analytics/trends?period=weekly"
+```
+
+```json
+{
+  "totalResponses": 1234,
+  "averageRating": 4.2,
+  "npsScore": 45,
+  "resolutionRate": "82%",
+  "trendsOverTime": [
+    { "week": "2026-W06", "avgRating": 4.1, "responses": 156 },
+    { "week": "2026-W07", "avgRating": 4.3, "responses": 178 }
+  ]
+}
+```
+
+---
+
+## Predictive Analytics
+
+AI-powered predictions for proactive management:
+
+### Volume Forecast
+
+Predict call volumes for capacity planning:
+
+```bash
+curl "https://api.talkos.io/api/features/predictions/forecast?hours=24" \
+  -H "x-api-key: YOUR_KEY"
+```
+
+```json
+{
+  "forecast": [
+    { "hour": "2026-02-18T13:00", "predictedCalls": 45, "confidence": 0.85 },
+    { "hour": "2026-02-18T14:00", "predictedCalls": 62, "confidence": 0.82 },
+    { "hour": "2026-02-18T15:00", "predictedCalls": 38, "confidence": 0.78 }
+  ],
+  "peakHour": "14:00",
+  "recommendations": ["Schedule 3 additional agents for 14:00-15:00"]
+}
+```
+
+### Escalation Risk
+
+Predict which active calls are likely to escalate:
+
+```bash
+curl -X POST https://api.talkos.io/api/features/predictions/escalation-risk \
+  -d '{
+    "callUuid": "call-uuid-123",
+    "sentiment": -0.5,
+    "duration": 120,
+    "turnCount": 15,
+    "topic": "billing_dispute"
+  }'
+```
+
+### Churn Risk
+
+Predict customer churn likelihood:
+
+```bash
+curl -X POST https://api.talkos.io/api/features/predictions/churn \
+  -d '{
+    "customerId": "cust-001",
+    "recentCalls": 5,
+    "avgSentiment": -0.3,
+    "unresolvedIssues": 2,
+    "daysSinceLastPositive": 30
+  }'
+```
+
+### Prediction History
+
+```bash
+curl https://api.talkos.io/api/features/predictions/history \
+  -H "x-api-key: YOUR_KEY"
+```
+
+### Model Performance
+
+```bash
+curl https://api.talkos.io/api/features/predictions/model-performance \
+  -H "x-api-key: YOUR_KEY"
+```
+
+---
+
+## Configuration Management
+
+Manage tenant-level configuration:
+
+### Get Configuration
+
+```bash
+curl https://api.talkos.io/api/config \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+### Update Configuration
+
+```bash
+curl -X PUT https://api.talkos.io/api/config \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -d '{
+    "llm": {
+      "provider": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "temperature": 0.7,
+      "maxTokens": 1024,
+      "failoverChain": ["groq", "openai", "anthropic"]
+    },
+    "voice": {
+      "voiceId": "rachel",
+      "speed": 1.0,
+      "stability": 0.5
+    },
+    "call": {
+      "maxDuration": 600,
+      "silenceTimeout": 15,
+      "recordingEnabled": true
+    }
+  }'
+```
+
+### Reset to Defaults
+
+```bash
+curl -X POST https://api.talkos.io/api/config/reset \
+  -H "x-api-key: YOUR_KEY"
+```
+
+### Validate Configuration
+
+```bash
+curl -X POST https://api.talkos.io/api/config/validate \
+  -d '{ "llm": { "provider": "groq", "model": "invalid-model" } }'
+```
+
+---
+
+## Feature Matrix
+
+| Feature | API Endpoints | Real-time | Analytics |
+|---------|:---:|:---:|:---:|
+| Escalation Rules | 7 | ✅ | ✅ |
+| Call Tagging | 6 | ✅ | ✅ |
+| Hold Music | 8 | ✅ | — |
+| In-Call Chat | 8 | ✅ | ✅ |
+| Post-Call Survey | 8 | — | ✅ |
+| Predictions | 5 | ✅ | ✅ |
+| Configuration | 5 | — | — |
+
+<Tip>
+All features are available per-tenant. Each tenant can have independent configurations, rules, and templates.
+</Tip>

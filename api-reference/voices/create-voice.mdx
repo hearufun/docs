@@ -1,12 +1,12 @@
 ---
 title: "Create Voice"
 api: "POST https://api.talkos.io/api/voices"
-description: "Clone or create a custom voice for your AI agents"
+description: "Clone or create a custom voice for your AI agents using audio samples"
 ---
 
 ## Overview
 
-Create a custom voice by cloning from an audio sample or configuring voice parameters. Custom voices allow your AI agents to speak with a consistent, branded voice identity tailored to your use case.
+Create a custom voice by cloning from audio samples. Custom voices allow your AI agents to speak with a consistent, branded voice identity. Voice cloning uses ElevenLabs' advanced voice cloning technology to generate natural-sounding speech based on your audio samples.
 
 ## Headers
 
@@ -22,176 +22,213 @@ Create a custom voice by cloning from an audio sample or configuring voice param
   Must be `application/json`
 </ParamField>
 
-## Body Parameters
+## Request Body
 
 <ParamField body="name" type="string" required>
-  Name for the custom voice. Must be unique within your tenant.
+  Unique name for your custom voice. Must be unique within your tenant.
 </ParamField>
 
-<ParamField body="description" type="string" required>
-  Description of the voice characteristics and intended use case.
+<ParamField body="description" type="string">
+  Optional description of the voice (e.g., "Professional sales agent", "Friendly support")
 </ParamField>
 
-<ParamField body="sampleUrl" type="string" required>
-  URL to an audio file for voice cloning. The audio should be:
-  - Clear speech with minimal background noise
-  - 30 seconds to 5 minutes in length
-  - Single speaker only
-  - Supported formats: MP3, WAV, M4A, FLAC
-</ParamField>
-
-<ParamField body="language" type="string">
-  Primary language of the voice. Default: `en-US`. See [List Languages](/api-reference/voices/list-languages) for supported options.
-</ParamField>
-
-<ParamField body="settings" type="object">
-  Voice configuration settings
-  <Expandable title="properties">
-    <ParamField body="stability" type="number">
-      Voice stability (0-1). Higher values produce more consistent output. Default: `0.75`.
+<ParamField body="files" type="array" required>
+  Array of audio file objects. Minimum 1 file required.
+  <Expandable title="File object properties">
+    <ParamField body="data" type="string">
+      Base64-encoded audio file. Supported formats: MP3, WAV, M4A, FLAC
     </ParamField>
-    <ParamField body="similarityBoost" type="number">
-      Similarity to original voice (0-1). Higher values sound more like the sample. Default: `0.75`.
-    </ParamField>
-    <ParamField body="style" type="number">
-      Speaking style expressiveness (0-1). Higher values are more expressive. Default: `0.5`.
-    </ParamField>
-    <ParamField body="speakerBoost" type="boolean">
-      Enable speaker clarity boost. Default: `true`.
+    <ParamField body="filename" type="string">
+      Original filename (e.g., "sample1.wav")
     </ParamField>
   </Expandable>
+</ParamField>
+
+<ParamField body="labels" type="array">
+  Optional labels to categorize the voice (e.g., ["accent:british", "gender:female"])
 </ParamField>
 
 ## Response
 
 <ResponseField name="success" type="boolean">
-  Indicates if the voice was created successfully
+  Whether the voice was cloned successfully
 </ResponseField>
 
-<ResponseField name="voice" type="object">
+<ResponseField name="message" type="string">
+  Confirmation message
+</ResponseField>
+
+<ResponseField name="data" type="object">
   <Expandable title="properties">
-    <ResponseField name="id" type="string">
-      Unique identifier for the voice
+    <ResponseField name="voiceId" type="string">
+      Unique ElevenLabs voice ID (use this in text-to-speech calls)
     </ResponseField>
     <ResponseField name="name" type="string">
-      Name of the voice
-    </ResponseField>
-    <ResponseField name="description" type="string">
-      Voice description
-    </ResponseField>
-    <ResponseField name="type" type="string">
-      Voice type: `cloned` or `preset`
-    </ResponseField>
-    <ResponseField name="language" type="string">
-      Primary language code
-    </ResponseField>
-    <ResponseField name="status" type="string">
-      Processing status: `processing`, `ready`, `failed`
-    </ResponseField>
-    <ResponseField name="previewUrl" type="string">
-      URL to a preview audio sample (available when status is `ready`)
-    </ResponseField>
-    <ResponseField name="settings" type="object">
-      Voice settings configuration
-    </ResponseField>
-    <ResponseField name="createdAt" type="string">
-      ISO 8601 timestamp of creation
+      The voice name you provided
     </ResponseField>
   </Expandable>
 </ResponseField>
 
+## Audio Sample Requirements
+
+<Info>
+Voice cloning works best with high-quality audio samples:
+- **Duration:** 30 seconds to 5 minutes (single speaker)
+- **Quality:** Clear speech, minimal background noise
+- **Format:** MP3, WAV, M4A, or FLAC
+- **Sample Rate:** 44.1kHz or higher recommended
+- **Speaker:** Single consistent speaker for best results
+</Info>
+
+<Tip>
+**For best results:**
+- Use natural, conversational speech with varied intonation
+- Include diverse phonemes and word endings
+- Avoid monotone or artificial-sounding speech
+- Multiple samples improve cloning quality
+</Tip>
+
 <RequestExample>
 ```bash cURL
+# First, encode your audio file to base64
+# On macOS: base64 -i sample.wav | tr -d '\n' > sample_b64.txt
+
 curl -X POST https://api.talkos.io/api/voices \
   -H "x-api-key: your-api-key" \
   -H "x-tenant-id: your-tenant-id" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Emma - Support Agent",
-    "description": "Friendly, professional female voice for customer support",
-    "sampleUrl": "https://storage.example.com/voice-samples/emma-sample.mp3",
-    "language": "en-US",
-    "settings": {
-      "stability": 0.8,
-      "similarityBoost": 0.75,
-      "style": 0.4,
-      "speakerBoost": true
-    }
+    "name": "Emma Support",
+    "description": "Friendly, professional support agent voice",
+    "files": [
+      {
+        "data": "UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==",
+        "filename": "sample1.wav"
+      },
+      {
+        "data": "UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==",
+        "filename": "sample2.wav"
+      }
+    ],
+    "labels": ["accent:american", "tone:professional"]
   }'
 ```
 
-```bash cURL (Minimal)
-curl -X POST https://api.talkos.io/api/voices \
-  -H "x-api-key: your-api-key" \
-  -H "x-tenant-id: your-tenant-id" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Sales Voice",
-    "description": "Confident, engaging voice for sales calls",
-    "sampleUrl": "https://storage.example.com/voice-samples/sales-voice.wav"
-  }'
+```javascript Node.js
+const axios = require('axios');
+const fs = require('fs');
+
+// Read and encode audio file
+const audioFile = fs.readFileSync('sample.wav');
+const base64Audio = audioFile.toString('base64');
+
+const response = await axios.post('https://api.talkos.io/api/voices', {
+  name: 'Emma Support',
+  description: 'Professional support agent',
+  files: [
+    {
+      data: base64Audio,
+      filename: 'sample.wav'
+    }
+  ],
+  labels: ['accent:american']
+}, {
+  headers: {
+    'x-api-key': 'your-api-key',
+    'x-tenant-id': 'your-tenant-id',
+    'Content-Type': 'application/json'
+  }
+});
+
+console.log('Voice cloned:', response.data.data.voiceId);
+```
+
+```python Python
+import base64
+import requests
+import json
+
+# Read and encode audio file
+with open('sample.wav', 'rb') as f:
+    audio_bytes = f.read()
+    base64_audio = base64.b64encode(audio_bytes).decode('utf-8')
+
+response = requests.post(
+    'https://api.talkos.io/api/voices',
+    headers={
+        'x-api-key': 'your-api-key',
+        'x-tenant-id': 'your-tenant-id',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'name': 'Emma Support',
+        'description': 'Professional support agent',
+        'files': [
+            {
+                'data': base64_audio,
+                'filename': 'sample.wav'
+            }
+        ],
+        'labels': ['accent:american', 'tone:professional']
+    }
+)
+
+print('Voice ID:', response.json()['data']['voiceId'])
 ```
 </RequestExample>
 
 <ResponseExample>
-```json 201
+```json 201 Success
 {
   "success": true,
-  "voice": {
-    "id": "voice_4e5f6a7b-8c9d-0e1f-2a3b-4c5d6e7f8a9b",
-    "name": "Emma - Support Agent",
-    "description": "Friendly, professional female voice for customer support",
-    "type": "cloned",
-    "language": "en-US",
-    "status": "processing",
-    "previewUrl": null,
-    "settings": {
-      "stability": 0.8,
-      "similarityBoost": 0.75,
-      "style": 0.4,
-      "speakerBoost": true
-    },
-    "createdAt": "2026-02-18T11:00:00.000Z"
+  "message": "Voice cloned successfully",
+  "data": {
+    "voiceId": "JBFqnCBsd6RMkjVDRZzb",
+    "name": "Emma Support"
   }
 }
 ```
 
-```json 400
+```json 400 Missing Files
 {
   "success": false,
-  "error": "Invalid audio sample URL or format"
+  "error": "Missing required fields: name, files (array of audio samples)"
 }
 ```
 
-```json 400
+```json 400 Invalid Audio
 {
   "success": false,
-  "error": "Audio sample too short. Minimum 30 seconds required."
+  "error": "Invalid or corrupted audio file"
 }
 ```
 
-```json 409
+```json 500 Cloning Failed
 {
   "success": false,
-  "error": "A voice with this name already exists"
+  "error": "Voice cloning failed: Voice stability too low, try a clearer audio sample"
 }
 ```
 </ResponseExample>
 
-## Voice Cloning Requirements
+## Using Cloned Voices
 
-<Note>
-Voice cloning typically takes 1-3 minutes to process. The voice will have a status of `processing` initially and will update to `ready` once complete.
-</Note>
+After cloning, use your `voiceId` in any text-to-speech call:
 
-<Tip>
-**For best cloning results:**
-- Use high-quality audio (44.1kHz or higher sample rate)
-- Ensure clean speech without music or background noise
-- Include varied intonation and natural speech patterns
-- Avoid whispered or shouted speech
-</Tip>
+```bash
+curl -X POST https://api.talkos.io/api/calls/start \
+  -H "x-api-key: your-api-key" \
+  -H "x-tenant-id: your-tenant-id" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phoneNumber": "+15551234567",
+    "message": "Hello, this is Emma speaking!",
+    "voiceId": "JBFqnCBsd6RMkjVDRZzb"
+  }'
+```
 
-<Warning>
-You must have rights to use the voice sample. Do not clone voices without proper authorization from the voice owner.
-</Warning>
+## Next Steps
+
+- [List Available Voices](/api-reference/voices/list-voices) - See all your cloned voices
+- [Delete Voice](/api-reference/voices/delete-voice) - Remove a cloned voice
+- [Start Call](/api-reference/calls/start-call) - Make calls with your custom voice

@@ -42,6 +42,43 @@
             ]
           },
           {
+            "group": "Platform",
+            "pages": [
+              "platform/overview",
+              "platform/multi-tenancy",
+              "platform/security"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/ai-conversations",
+              "features/calling",
+              "features/web-sessions",
+              "features/analytics",
+              "features/agent-management",
+              "features/compliance",
+              "features/advanced-features"
+            ]
+          },
+          {
+            "group": "Use Cases",
+            "pages": [
+              "use-cases/customer-support",
+              "use-cases/sales-campaigns",
+              "use-cases/appointment-reminders",
+              "use-cases/lead-qualification"
+            ]
+          },
+          {
+            "group": "SDKs",
+            "pages": [
+              "sdks/overview",
+              "sdks/javascript",
+              "sdks/python"
+            ]
+          },
+          {
             "group": "Integration Guides",
             "pages": [
               "guides/plivo-setup",
@@ -51,6 +88,12 @@
               "guides/webhooks",
               "guides/knowledge-base",
               "guides/best-practices"
+            ]
+          },
+          {
+            "group": "Changelog",
+            "pages": [
+              "changelog/v8"
             ]
           }
         ]

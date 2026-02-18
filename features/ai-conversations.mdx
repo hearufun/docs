@@ -1,0 +1,290 @@
+---
+title: "AI Voice Conversations"
+description: "How TalkOS AI conversations work — LLM providers, custom prompts, tool calling, and voice cloning"
+---
+
+## Overview
+
+TalkOS powers AI voice conversations by orchestrating three components in real-time:
+
+1. **Speech-to-Text (STT)** — Deepgram converts caller audio to text (~150ms)
+2. **Large Language Model (LLM)** — GPT-4, Claude, or Groq generates a response (~100-300ms)
+3. **Text-to-Speech (TTS)** — ElevenLabs converts AI response to natural speech (~200ms)
+
+The total round-trip latency is typically **500-800ms**, creating a natural, human-like conversation experience.
+
+---
+
+## LLM Providers
+
+TalkOS supports multiple LLM providers with automatic failover:
+
+| Provider | Model | Avg Latency | Best For |
+|----------|-------|:-----------:|----------|
+| **Groq** | Llama 3.1 70B | ~100ms | Default — fastest inference |
+| **OpenAI** | GPT-4o | ~300ms | Best reasoning & tool calling |
+| **Anthropic** | Claude 3.5 Sonnet | ~250ms | Best instruction following |
+
+### Failover Chain
+
+```mermaid
+graph LR
+    A[Groq — Primary] -->|Timeout/Error| B[OpenAI — Fallback]
+    B -->|Timeout/Error| C[Claude — Backup]
+```
+
+If Groq fails, TalkOS automatically retries with OpenAI. If OpenAI fails, it falls back to Claude. This happens transparently during the call — the customer doesn't notice.
+
+### Switching Providers
+
+```bash
+curl -X PUT https://api.talkos.io/api/config \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -d '{"llmProvider": "openai"}'
+```
+
+Available values: `groq`, `openai`, `anthropic`
+
+---
+
+## Custom Prompts
+
+Every call can have a unique AI personality, defined by a prompt:
+
+```bash
+curl -X POST https://api.talkos.io/api/calls/start \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -d '{
+    "to": "+15551234567",
+    "prompt": "You are Sarah, a friendly customer support agent for TechStore. You help customers with order tracking, returns, and product questions. Be concise, empathetic, and always offer to help further. If the customer is angry, acknowledge their frustration before solving the problem. Never reveal you are an AI.",
+    "greeting": "Hi! This is Sarah from TechStore. How can I help you today?",
+    "language": "en",
+    "maxDuration": 300
+  }'
+```
+
+### Prompt Best Practices
+
+<Tip>
+1. **Define the persona**: Name, role, personality traits
+2. **Set boundaries**: What the AI should and shouldn't discuss
+3. **Include context**: Product info, pricing, policies
+4. **Handle edge cases**: What to do if asked unknown questions
+5. **Set the tone**: Professional, casual, empathetic
+</Tip>
+
+### Prompt Examples
+
+**Sales Agent:**
+```text
+You are Alex, a persuasive but friendly sales agent for SolarPro.  
+Your goal is to schedule a free solar panel consultation.
+- Ask about their electricity bill and roof type
+- Mention the 30% federal tax credit
+- If interested, ask for their preferred appointment time
+- If not interested, thank them politely and end the call
+- Never be pushy or aggressive
+```
+
+**Appointment Reminder:**
+```text
+You are calling from Dr. Smith's office to remind the patient about their appointment.
+- Confirm the appointment date and time
+- Ask if they need to reschedule
+- If rescheduling, offer available slots: Mon-Fri, 9am-5pm
+- Remind them to bring their insurance card
+- Keep the call under 2 minutes
+```
+
+**Survey Caller:**
+```text
+You are conducting a brief customer satisfaction survey for AutoService.
+- Ask 3 questions: overall satisfaction (1-5), service quality, recommendations
+- Record their answers
+- Thank them for their time
+- Keep it under 3 minutes
+```
+
+---
+
+## Tool Calling (Function Calling)
+
+AI can execute real functions during a call — check databases, book appointments, look up orders:
+
+```bash
+curl -X POST https://api.talkos.io/api/calls/start \
+  -d '{
+    "to": "+15551234567",
+    "prompt": "You are a support agent. Use the tools to look up order status when customers ask.",
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "lookup_order",
+          "description": "Look up order status by order ID",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "orderId": {
+                "type": "string",
+                "description": "The order ID (e.g., ORD-12345)"
+              }
+            },
+            "required": ["orderId"]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "book_appointment",
+          "description": "Book a service appointment",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "date": { "type": "string", "description": "Date (YYYY-MM-DD)" },
+              "time": { "type": "string", "description": "Time (HH:MM)" },
+              "service": { "type": "string", "description": "Service type" }
+            },
+            "required": ["date", "time", "service"]
+          }
+        }
+      }
+    ]
+  }'
+```
+
+When the AI decides to call a function, TalkOS:
+1. Pauses the conversation
+2. Sends the function call to your webhook
+3. Receives the result
+4. AI incorporates the result into its response
+
+---
+
+## Knowledge Base (RAG)
+
+Upload documents and the AI will use them to answer questions:
+
+### Step 1: Create a Knowledge Base
+
+```bash
+curl -X POST https://api.talkos.io/api/knowledge-base/create \
+  -d '{"name": "Product FAQ", "description": "Product information and FAQ"}'
+```
+
+### Step 2: Upload Documents
+
+```bash
+curl -X POST https://api.talkos.io/api/knowledge-base/upload \
+  -d '{
+    "knowledgeBaseId": "kb-123",
+    "content": "Our return policy allows returns within 30 days...",
+    "title": "Return Policy"
+  }'
+```
+
+### Step 3: Use in Calls
+
+```bash
+curl -X POST https://api.talkos.io/api/calls/start \
+  -d '{
+    "to": "+15551234567",
+    "prompt": "You are a support agent. Use the knowledge base to answer questions.",
+    "knowledgeBaseId": "kb-123"
+  }'
+```
+
+The AI automatically searches the knowledge base when it needs information, delivering accurate answers from your documents.
+
+---
+
+## Voice Cloning
+
+Create custom voices for brand-consistent AI agents:
+
+```bash
+# Clone a voice from audio samples
+curl -X POST https://api.talkos.io/api/voices \
+  -d '{
+    "name": "Emma Support",
+    "description": "Professional, warm female voice",
+    "files": [
+      {"data": "base64_audio_data", "filename": "sample.wav"}
+    ]
+  }'
+
+# Use the cloned voice in calls
+curl -X POST https://api.talkos.io/api/calls/start \
+  -d '{
+    "to": "+15551234567",
+    "voiceId": "cloned-voice-id",
+    "prompt": "..."
+  }'
+```
+
+### Voice Requirements
+
+- **Duration**: 30 seconds to 5 minutes of clear speech
+- **Quality**: Minimal background noise, single speaker
+- **Formats**: MP3, WAV, M4A, FLAC
+- **Samples**: 1-3 samples recommended for best quality
+
+---
+
+## Language Support
+
+TalkOS supports 28+ languages:
+
+| Language | Code | Language | Code |
+|----------|------|----------|------|
+| English | `en` | Hindi | `hi` |
+| Spanish | `es` | Arabic | `ar` |
+| French | `fr` | Portuguese | `pt` |
+| German | `de` | Japanese | `ja` |
+| Italian | `it` | Korean | `ko` |
+| Chinese | `zh` | Russian | `ru` |
+| Dutch | `nl` | Turkish | `tr` |
+| Swedish | `sv` | Polish | `pl` |
+
+```bash
+# List all supported languages
+curl https://api.talkos.io/api/languages \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+---
+
+## Advanced Options
+
+### Speed & Pitch Control
+
+```bash
+curl -X POST https://api.talkos.io/api/calls/start \
+  -d '{
+    "to": "+15551234567",
+    "speed": 1.2,
+    "pitch": 0,
+    "prompt": "..."
+  }'
+```
+
+- **Speed**: 0.5 (slow) to 2.0 (fast), default 1.0
+- **Pitch**: Currently reserved for future use
+
+### LLM Parameters
+
+```bash
+{
+  "llmTemperature": 0.7,
+  "llmMaxTokens": 150,
+  "maxHistoryTurns": 10
+}
+```
+
+- **Temperature**: 0.0 (deterministic) to 1.0 (creative), default 0.7
+- **Max Tokens**: Limit response length per turn
+- **History Turns**: How many conversation turns the AI remembers

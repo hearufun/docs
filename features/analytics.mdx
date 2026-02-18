@@ -1,0 +1,301 @@
+---
+title: "Analytics & Dashboard"
+description: "Real-time analytics, sentiment tracking, cost analysis, quality metrics, and predictive insights"
+---
+
+## Overview
+
+TalkOS provides comprehensive analytics across every dimension of your voice AI operations. From real-time monitoring to historical trends, cost tracking, and predictive forecasting — everything is accessible via API.
+
+---
+
+## Real-Time Dashboard
+
+Monitor your live operations:
+
+```bash
+curl https://api.talkos.io/api/analytics/realtime \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+```json
+{
+  "timestamp": "2026-02-18T12:00:00Z",
+  "worker": {
+    "activeCalls": 12,
+    "queuedCalls": 5,
+    "completedToday": 234
+  },
+  "queue": {
+    "waiting": 5,
+    "active": 12,
+    "completed": 234,
+    "failed": 3
+  },
+  "infrastructure": {
+    "memoryUsage": "128MB",
+    "cpuLoad": 0.45,
+    "uptime": "48h"
+  }
+}
+```
+
+### Supervisor Dashboard (WebSocket)
+
+For real-time updates, connect to the supervisor WebSocket:
+
+```javascript
+const ws = new WebSocket('wss://api.talkos.io/supervisor-dashboard');
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  // Updates: active calls, agent status, queue changes, alerts
+  updateDashboard(data);
+};
+```
+
+---
+
+## Call Analytics
+
+Aggregate call metrics over time:
+
+```bash
+curl "https://api.talkos.io/api/analytics/calls?dateFrom=2026-01-01&dateTo=2026-02-18&groupBy=day" \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+**Metrics returned:**
+- Total calls (successful, failed, no-answer)
+- Average duration
+- Calls by hour/day/week
+- Answer rate & pickup rate
+- Hangup causes breakdown
+- Peak hours identification
+
+---
+
+## Sentiment Analysis
+
+Track customer sentiment in real-time and over time:
+
+### Sentiment Trends
+
+```bash
+curl "https://api.talkos.io/api/analytics/sentiment?dateFrom=2026-01-01&dateTo=2026-02-18" \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+### Per-Call Sentiment
+
+```bash
+curl https://api.talkos.io/api/analytics/sentiment/CALL_UUID \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+```json
+{
+  "callUuid": "call-uuid-123",
+  "overallSentiment": 0.7,
+  "sentimentLabel": "positive",
+  "sentimentTimeline": [
+    {"turn": 1, "score": 0.2, "text": "I have a problem with my order"},
+    {"turn": 2, "score": 0.5, "text": "Oh, you can track it? Great"},
+    {"turn": 3, "score": 0.9, "text": "Wonderful, thank you so much!"}
+  ]
+}
+```
+
+---
+
+## Performance Metrics
+
+Track system performance and latency:
+
+```bash
+curl "https://api.talkos.io/api/analytics/performance?dateFrom=2026-01-01" \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+**Metrics:**
+- STT latency (Speech-to-Text)
+- LLM latency (AI response time)
+- TTS latency (Text-to-Speech)
+- Total round-trip time
+- P50, P95, P99 latencies
+- Error rates by component
+
+---
+
+## Cost Analytics
+
+Track spending per call, per tenant, per day:
+
+```bash
+curl "https://api.talkos.io/api/analytics/cost?dateFrom=2026-01-01" \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+**Breakdown:**
+- Voice minutes (Plivo/Exotel charges)
+- AI processing (LLM token costs)
+- Transcription (Deepgram STT)
+- TTS (ElevenLabs voice synthesis)
+- Total cost per call
+- Daily/weekly/monthly trends
+
+---
+
+## Call Quality
+
+Monitor audio quality and conversation effectiveness:
+
+### Quality Overview
+
+```bash
+curl "https://api.talkos.io/api/analytics/quality?minutes=60" \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+### Per-Call Quality Report
+
+```bash
+curl https://api.talkos.io/api/analytics/quality/CALL_UUID \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+**Quality metrics:**
+- Audio clarity score
+- Interruption count
+- Silence gaps
+- Turn-taking quality
+- Barge-in frequency
+- AI relevance score
+- Customer satisfaction proxy
+
+---
+
+## Capacity Planning
+
+Know when to scale:
+
+```bash
+curl https://api.talkos.io/api/analytics/capacity \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+```json
+{
+  "capacity": {
+    "currentConcurrent": 12,
+    "maxConcurrent": 40,
+    "utilization": "30%"
+  },
+  "rateLimit": {
+    "callsThisMinute": 3,
+    "maxPerMinute": 10
+  },
+  "recommendations": [
+    "Current utilization is healthy",
+    "Consider scaling at 70% utilization"
+  ],
+  "scalingGuidance": {
+    "addWorker": "When sustained utilization > 70%",
+    "addCore": "When CPU load average > 0.8"
+  }
+}
+```
+
+---
+
+## Predictive Analytics
+
+AI-powered predictions for proactive management:
+
+### Call Volume Forecast
+
+```bash
+curl "https://api.talkos.io/api/features/predictions/forecast?hours=24" \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+### Escalation Risk
+
+```bash
+curl -X POST https://api.talkos.io/api/features/predictions/escalation-risk \
+  -d '{"callUuid": "call-uuid", "sentiment": -0.5, "duration": 120, "turnCount": 15}'
+```
+
+### Churn Risk
+
+```bash
+curl -X POST https://api.talkos.io/api/features/predictions/churn \
+  -d '{"customerId": "cust-001", "recentCalls": 5, "avgSentiment": -0.3}'
+```
+
+---
+
+## Transcription Analytics
+
+Search and analyze call transcripts:
+
+```bash
+# Search transcripts
+curl "https://api.talkos.io/api/transcripts/search?q=cancel+subscription&limit=20" \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+
+# Analytics summary
+curl https://api.talkos.io/api/transcripts/analytics/summary \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+
+# Export specific transcript
+curl "https://api.talkos.io/api/transcripts/CALL_UUID/export?format=txt"
+```
+
+---
+
+## Building Your Dashboard
+
+TalkOS provides all the data you need to build custom dashboards:
+
+### Admin Dashboard Metrics
+
+| Metric | API Endpoint |
+|--------|-------------|
+| Active calls | `GET /api/analytics/realtime` |
+| Call volume chart | `GET /api/analytics/calls?groupBy=hour` |
+| Sentiment trend | `GET /api/analytics/sentiment` |
+| Cost breakdown | `GET /api/analytics/cost` |
+| Quality scores | `GET /api/analytics/quality` |
+| Agent performance | `GET /api/realtime/agent-stats` |
+| Queue health | `GET /api/calls/queue` |
+| System health | `GET /api/health` |
+| Capacity usage | `GET /api/analytics/capacity` |
+
+### Tenant Dashboard Metrics
+
+| Metric | API Endpoint |
+|--------|-------------|
+| Usage stats | `GET /api/tenants/:id/usage` |
+| Call history | `GET /api/analytics/calls` |
+| Transcript search | `GET /api/transcripts/search` |
+| Sentiment reports | `GET /api/analytics/sentiment` |
+| Cost tracking | `GET /api/analytics/cost` |
+| Survey results | `GET /api/features/survey/analytics/summary` |
+
+<Tip>
+For real-time dashboards, use the WebSocket endpoints instead of polling:
+- `ws://host/agent-dashboard` — Agent metrics
+- `ws://host/supervisor-dashboard` — Supervisor overview
+</Tip>

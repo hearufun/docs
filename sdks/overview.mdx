@@ -1,0 +1,152 @@
+---
+title: "SDK Overview"
+description: "Integrate TalkOS into your applications with our JavaScript and Python SDKs"
+---
+
+## Official SDKs
+
+TalkOS provides first-party SDKs for the most popular languages. All SDKs wrap the REST API and add type safety, WebSocket helpers, and convenience methods.
+
+| SDK | Language | Package | Status |
+|-----|----------|---------|--------|
+| [JavaScript/Node.js](/sdks/javascript) | TypeScript/JavaScript | `@talkos/sdk` | ✅ GA |
+| [Python](/sdks/python) | Python 3.8+ | `talkos` | ✅ GA |
+
+---
+
+## Quick Comparison
+
+<CodeGroup>
+
+```javascript JavaScript
+import TalkOS from '@talkos/sdk';
+
+const client = new TalkOS({
+  apiKey: 'your-api-key',
+  tenantId: 'your-tenant-id'
+});
+
+const call = await client.calls.initiate({
+  to: '+14155551234',
+  systemPrompt: 'You are a helpful assistant.'
+});
+
+console.log(call.callUuid);
+```
+
+```python Python
+from talkos import TalkOS
+
+client = TalkOS(
+    api_key="your-api-key",
+    tenant_id="your-tenant-id"
+)
+
+call = client.calls.initiate(
+    to="+14155551234",
+    system_prompt="You are a helpful assistant."
+)
+
+print(call.call_uuid)
+```
+
+</CodeGroup>
+
+---
+
+## REST API Direct
+
+If your language isn't listed, use the REST API directly. Every TalkOS feature is accessible via HTTP:
+
+```bash
+curl -X POST https://api.talkos.io/api/calls/initiate \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -H "Content-Type: application/json" \
+  -d '{"to": "+14155551234", "systemPrompt": "..."}'
+```
+
+**Headers required for all requests:**
+
+| Header | Description | Required |
+|--------|-------------|----------|
+| `x-api-key` | Your API key | Yes |
+| `X-Tenant-ID` | Your tenant ID | Yes |
+| `Content-Type` | `application/json` | For POST/PUT |
+
+---
+
+## Authentication
+
+All SDKs support the same authentication methods:
+
+### API Key (Standard)
+```javascript
+const client = new TalkOS({ apiKey: 'sk-...' });
+```
+
+### Admin JWT (Dashboard)
+```javascript
+const client = new TalkOS({ adminToken: 'eyJhbG...' });
+```
+
+---
+
+## WebSocket Support
+
+Both SDKs include built-in WebSocket support for:
+
+- **Web Sessions** — Browser-based AI conversations
+- **Real-time Monitoring** — Live call status updates
+- **Supervisor Dashboard** — Agent coaching and oversight
+
+```javascript
+const session = await client.sessions.create({
+  systemPrompt: 'You are a helpful assistant.'
+});
+
+session.on('transcript', (data) => {
+  console.log(`${data.role}: ${data.text}`);
+});
+
+session.on('ended', (data) => {
+  console.log('Session ended:', data.reason);
+});
+```
+
+---
+
+## Error Handling
+
+All SDKs use consistent error types:
+
+| Error Code | HTTP Status | Description |
+|------------|-------------|-------------|
+| `AUTH_FAILED` | 401 | Invalid API key |
+| `TENANT_NOT_FOUND` | 404 | Invalid tenant ID |
+| `RATE_LIMITED` | 429 | Too many requests (200/min) |
+| `VALIDATION_ERROR` | 400 | Invalid request parameters |
+| `PROVIDER_ERROR` | 502 | Upstream provider failure |
+| `INTERNAL_ERROR` | 500 | Server error |
+
+```javascript
+try {
+  await client.calls.initiate({ to: '+14155551234' });
+} catch (error) {
+  if (error.code === 'RATE_LIMITED') {
+    await sleep(error.retryAfter * 1000);
+    // Retry...
+  }
+}
+```
+
+---
+
+## Rate Limits
+
+| Resource | Limit | Window |
+|----------|-------|--------|
+| API Requests | 200 | Per minute |
+| Concurrent Calls | Varies by plan | — |
+| Batch Size | 1000 | Per request |
+| WebSocket Connections | 50 | Per tenant |

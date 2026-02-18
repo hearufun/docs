@@ -1,0 +1,358 @@
+---
+title: "Compliance & Privacy"
+description: "PII detection, GDPR compliance, voice biometrics, call masking, consent management, and data retention"
+---
+
+## Overview
+
+TalkOS provides enterprise-grade compliance tools for handling sensitive voice data. Detect PII automatically, manage GDPR workflows, verify caller identity with voice biometrics, mask phone numbers, and enforce data retention policies — all via API.
+
+---
+
+## PII Detection
+
+Automatically detect and redact personally identifiable information from transcripts.
+
+### Analyze Text for PII
+
+```bash
+curl -X POST https://api.talkos.io/api/features/compliance/pii/detect \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -d '{
+    "text": "My name is John Smith, my SSN is 123-45-6789, and my credit card is 4111-1111-1111-1111. Please call me at 555-123-4567.",
+    "redact": true
+  }'
+```
+
+```json
+{
+  "original": "My name is John Smith, my SSN is 123-45-6789...",
+  "redacted": "My name is [NAME], my SSN is [SSN], and my credit card is [CREDIT_CARD]. Please call me at [PHONE].",
+  "detections": [
+    { "type": "NAME", "value": "John Smith", "start": 11, "end": 21, "confidence": 0.95 },
+    { "type": "SSN", "value": "123-45-6789", "start": 33, "end": 44, "confidence": 0.99 },
+    { "type": "CREDIT_CARD", "value": "4111-1111-1111-1111", "start": 68, "end": 87, "confidence": 0.99 },
+    { "type": "PHONE", "value": "555-123-4567", "start": 108, "end": 120, "confidence": 0.92 }
+  ],
+  "riskLevel": "high"
+}
+```
+
+### Supported PII Types
+
+| PII Type | Description | Example |
+|----------|-------------|---------|
+| `NAME` | Full names | John Smith |
+| `EMAIL` | Email addresses | john@example.com |
+| `PHONE` | Phone numbers | +1-555-123-4567 |
+| `SSN` | Social Security Numbers | 123-45-6789 |
+| `CREDIT_CARD` | Credit/debit card numbers | 4111-1111-1111-1111 |
+| `ADDRESS` | Physical addresses | 123 Main St, NYC |
+| `DOB` | Dates of birth | January 15, 1990 |
+| `PASSPORT` | Passport numbers | AB1234567 |
+| `DRIVER_LICENSE` | Driver's license | D123-456-78-901 |
+| `BANK_ACCOUNT` | Bank account numbers | 1234567890 |
+| `IP_ADDRESS` | IP addresses | 192.168.1.1 |
+| `AADHAAR` | Indian Aadhaar numbers | 1234-5678-9012 |
+| `PAN` | Indian PAN numbers | ABCDE1234F |
+| `MEDICAL_ID` | Medical record numbers | MRN-12345 |
+| `TAX_ID` | Tax identification | 12-3456789 |
+
+### Auto-Redaction in Transcripts
+
+Enable automatic PII redaction for all call transcripts:
+
+```bash
+curl -X POST https://api.talkos.io/api/features/compliance/pii/auto-redact \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -d '{
+    "enabled": true,
+    "types": ["SSN", "CREDIT_CARD", "BANK_ACCOUNT"],
+    "action": "redact"
+  }'
+```
+
+### Get PII Report
+
+```bash
+curl https://api.talkos.io/api/features/compliance/pii/report \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+---
+
+## GDPR Compliance
+
+Full GDPR workflow support for European data protection:
+
+### Subject Access Request (SAR)
+
+Retrieve all data associated with a subject:
+
+```bash
+curl -X POST https://api.talkos.io/api/features/compliance/gdpr/sar \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -d '{
+    "subjectIdentifier": "+14155551234",
+    "identifierType": "phone",
+    "format": "json"
+  }'
+```
+
+Returns: All call records, transcripts, analytics, consent records, and biometric data linked to that phone number.
+
+### Right to Erasure
+
+Delete all data for a subject:
+
+```bash
+curl -X POST https://api.talkos.io/api/features/compliance/gdpr/erase \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -d '{
+    "subjectIdentifier": "+14155551234",
+    "identifierType": "phone",
+    "confirm": true
+  }'
+```
+
+```json
+{
+  "status": "completed",
+  "erasedRecords": {
+    "callSessions": 15,
+    "transcripts": 15,
+    "analytics": 30,
+    "biometrics": 1,
+    "consentRecords": 3
+  },
+  "certificate": "erasure-cert-abc123"
+}
+```
+
+### Consent Management
+
+Record and track user consent:
+
+```bash
+# Record consent
+curl -X POST https://api.talkos.io/api/features/compliance/gdpr/consent \
+  -d '{
+    "subjectIdentifier": "+14155551234",
+    "consentType": "recording",
+    "granted": true,
+    "source": "verbal_during_call",
+    "callUuid": "call-uuid-123"
+  }'
+
+# Check consent status
+curl "https://api.talkos.io/api/features/compliance/gdpr/consent?subject=%2B14155551234"
+
+# Revoke consent
+curl -X DELETE "https://api.talkos.io/api/features/compliance/gdpr/consent?subject=%2B14155551234&type=recording"
+```
+
+### GDPR Compliance Report
+
+```bash
+curl https://api.talkos.io/api/features/compliance/gdpr/report \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+---
+
+## Voice Biometrics
+
+Verify caller identity using voice prints:
+
+### Enrollment
+
+Enroll a voice print for a new speaker:
+
+```bash
+curl -X POST https://api.talkos.io/api/features/biometrics/enroll \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -d '{
+    "speakerId": "customer-001",
+    "callUuid": "call-uuid-123",
+    "audioSegment": {
+      "startSecond": 10,
+      "endSecond": 40
+    }
+  }'
+```
+
+<Note>
+Enrollment requires at least 15 seconds of clear speech. Longer samples improve accuracy.
+</Note>
+
+### Verification
+
+Verify a caller's identity:
+
+```bash
+curl -X POST https://api.talkos.io/api/features/biometrics/verify \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -d '{
+    "speakerId": "customer-001",
+    "callUuid": "current-call-uuid",
+    "threshold": 0.85
+  }'
+```
+
+```json
+{
+  "verified": true,
+  "confidence": 0.92,
+  "speakerId": "customer-001",
+  "matchDetails": {
+    "pitchMatch": 0.94,
+    "toneMatch": 0.91,
+    "rhythmMatch": 0.89
+  }
+}
+```
+
+### List Voice Prints
+
+```bash
+curl https://api.talkos.io/api/features/biometrics/voiceprints \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+### Delete Voice Print
+
+```bash
+curl -X DELETE https://api.talkos.io/api/features/biometrics/voiceprints/customer-001 \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+### Biometrics Report
+
+```bash
+curl https://api.talkos.io/api/features/biometrics/report \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+---
+
+## Call Masking
+
+Hide real phone numbers during calls for privacy:
+
+### Create Masked Session
+
+```bash
+curl -X POST https://api.talkos.io/api/features/masking/sessions \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -d '{
+    "callerNumber": "+14155551234",
+    "calleeNumber": "+14155559876",
+    "expiresInMinutes": 60,
+    "maskingType": "both"
+  }'
+```
+
+```json
+{
+  "sessionId": "mask-session-001",
+  "maskedCallerNumber": "+14155550100",
+  "maskedCalleeNumber": "+14155550101",
+  "expiresAt": "2026-02-18T13:00:00Z",
+  "status": "active"
+}
+```
+
+### List Masked Sessions
+
+```bash
+curl https://api.talkos.io/api/features/masking/sessions \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+### Unmask (Authorized)
+
+```bash
+curl -X POST https://api.talkos.io/api/features/masking/unmask/mask-session-001 \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -d '{ "reason": "fraud_investigation", "approvedBy": "supervisor-001" }'
+```
+
+### Expire Masked Session
+
+```bash
+curl -X DELETE https://api.talkos.io/api/features/masking/sessions/mask-session-001 \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+---
+
+## Audit Trail
+
+Every action in TalkOS is logged for compliance:
+
+```bash
+curl "https://api.talkos.io/api/features/compliance/audit-log?dateFrom=2026-01-01&limit=100" \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT"
+```
+
+**Logged events include:**
+- API key creation/rotation
+- Call initiation/termination
+- Transfer events
+- PII access/redaction
+- GDPR requests (SAR, erasure)
+- Biometric enrollment/verification
+- Configuration changes
+- Admin actions
+
+---
+
+## Data Retention
+
+Configure automatic data cleanup:
+
+```bash
+curl -X POST https://api.talkos.io/api/features/compliance/retention \
+  -H "x-api-key: YOUR_KEY" \
+  -H "X-Tenant-ID: YOUR_TENANT" \
+  -d '{
+    "callRecords": { "retainDays": 90 },
+    "transcripts": { "retainDays": 60 },
+    "analytics": { "retainDays": 365 },
+    "biometrics": { "retainDays": 180 },
+    "auditLogs": { "retainDays": 730 }
+  }'
+```
+
+---
+
+## Compliance Checklist
+
+| Requirement | TalkOS Feature | Status |
+|------------|----------------|--------|
+| PII redaction | Auto-detect 15+ PII types | ✅ |
+| GDPR SAR | Subject access request API | ✅ |
+| GDPR erasure | Right to be forgotten API | ✅ |
+| Consent tracking | Consent management API | ✅ |
+| Voice ID | Biometric enrollment/verification | ✅ |
+| Number masking | Masked call sessions | ✅ |
+| Audit logging | Full audit trail | ✅ |
+| Data retention | Configurable retention policies | ✅ |
+| Encryption | TLS 1.3 in transit, AES-256 at rest | ✅ |
+| Access control | API key + JWT + tenant isolation | ✅ |
